@@ -40,6 +40,7 @@ use rustbusters_drone::RustBustersDrone;
 use rusteze_drone::RustezeDrone;
 use fungi_drone::FungiDrone;
 use bagel_bomber::BagelBomber;
+use eframe::egui::util::hash;
 use skylink::SkyLinkDrone;
 use RF_drone::RustAndFurious;
 //use bobry_w_locie::drone::BoberDrone;
@@ -86,25 +87,44 @@ impl DroneBrand {
 }
 
 pub struct NetworkInitializer {
+    pub(crate) simulation_controller: SimulationController,
     drone_channels: HashMap<NodeId, Sender<Packet>>,
     client_channels: HashMap<NodeId, (Sender<Packet>, ClientType)>,
     server_channels: HashMap<NodeId, (Sender<Packet>, ServerType)>,
     drone_brand_usage: HashMap<DroneBrand, UsingTimes>,
     client_type_usage: HashMap<ClientType, UsingTimes>,
-    sender_to_gui: mpsc::Sender<String>
+    sender_to_gui: mpsc::Sender<String>,
+    command_senders: HashMap<NodeId, Sender<DroneCommand>>, // Add this field
     //sender_to_gui: mpsc::Sender<Vec<u8>> for message packet
 
 }
 
 impl NetworkInitializer {
-    pub fn new(sender_to_gui: mpsc::Sender<String>) -> Self {
+    pub fn new( sender_to_gui: mpsc::Sender<String>) -> Self {
+        // Create event channels for drones, clients, and servers
+        let (drone_event_sender, drone_event_receiver) = unbounded();
+        let (client_event_sender, client_event_receiver) = unbounded();
+        let (server_event_sender, server_event_receiver) = unbounded();
+
+        // Initialize SimulationController internally
+        let simulation_controller = SimulationController::new(
+            drone_event_sender,
+            drone_event_receiver,
+            client_event_sender,
+            client_event_receiver,
+            server_event_sender,
+            server_event_receiver,
+        );
+
         Self {
-            drone_channels: HashMap::new(),
-            client_channels: HashMap::new(),
-            server_channels: HashMap::new(),
+            simulation_controller,
+            drone_channels:HashMap::new(),
+            client_channels:HashMap::new(),
+            server_channels:HashMap::new(),
             drone_brand_usage: DroneBrand::iter().map(|brand| (brand, 0)).collect(),
             client_type_usage: ClientType::iter().map(|client_type| (client_type, 0)).collect(),
             sender_to_gui,
+            command_senders: HashMap::new(),
         }
     }
     pub fn initialize_from_file(&mut self, config_path: &str) {
@@ -132,32 +152,13 @@ impl NetworkInitializer {
             topology.insert(server.id, server.connected_drone_ids.clone());
         }
 
-        // Create event channels for drones, clients, and servers
-        let (drone_event_sender, drone_event_receiver) = unbounded();
-        let (client_event_sender, client_event_receiver) = unbounded();
-        let (server_event_sender, server_event_receiver) = unbounded();
-
-        // Initialize the simulation controller
-        let mut controller = SimulationController::new(
-            drone_event_sender.clone(),
-            drone_event_receiver,
-            client_event_sender.clone(),
-            client_event_receiver,
-            server_event_sender.clone(),
-            server_event_receiver,
-        );
-
         // Initialize drones, clients, and servers
-        self.create_drones(config.drone, &mut controller, drone_event_sender, topology.clone());
-        self.create_clients(config.client, &mut controller, client_event_sender, topology.clone());
-        self.create_servers(config.server, &mut controller, server_event_sender, topology.clone());
+        self.create_drones(config.drone);
+        self.create_clients(config.client);
+        self.create_servers(config.server);
 
         //Connecting the network
-        self.connect_nodes(&mut controller, topology);
-
-        /*// Start the user interface
-        println!("Starting User Interface");
-        start_ui(controller);*/
+        self.connect_nodes(topology);
     }
 
     ///DRONES GENERATION
@@ -165,14 +166,11 @@ impl NetworkInitializer {
     fn create_drones(
         &mut self,
         drones: Vec<Drone>,
-        controller: &mut SimulationController,
-        drone_events_sender: Sender<DroneEvent>,
-        topology: HashMap<NodeId, Vec<NodeId>>,
     ) {
         for drone in drones {
             // Adding channel to controller
             let (command_sender, command_receiver) = unbounded();
-            controller.register_drone(drone.id, command_sender);
+            self.simulation_controller.register_drone(drone.id, command_sender);
 
             // Creating channels with the connected nodes
             let (packet_sender, packet_receiver) = unbounded();
@@ -181,7 +179,7 @@ impl NetworkInitializer {
             self.drone_channels.insert(drone.id, packet_sender);
 
             // Clone sender for drone events
-            let drone_events_sender_clone = drone_events_sender.clone();
+            let drone_events_sender_clone = self.simulation_controller.drone_event_sender.clone();
 
             // Prepare parameters array for the macro
 
@@ -196,22 +194,21 @@ impl NetworkInitializer {
 
             // Use helper function or macro (in this case function) to create and spawn drones based on their brand
             match self.choose_drone_brand_evenly() {
-                DroneBrand::RustyDrone => self.create_and_spawn_drone::<RustyDrone>(controller, drone_params),
-                DroneBrand::RollingDrones => self.create_and_spawn_drone::<RollingDrone>(controller, drone_params),
-                DroneBrand::Rustable => self.create_and_spawn_drone::<RustableDrone>(controller, drone_params),
+                DroneBrand::RustyDrone => self.create_and_spawn_drone::<RustyDrone>(drone_params),
+                DroneBrand::RollingDrones => self.create_and_spawn_drone::<RollingDrone>(drone_params),
+                DroneBrand::Rustable => self.create_and_spawn_drone::<RustableDrone>(drone_params),
                 //DroneBrand::RustBusters => self.create_and_spawn_drone::<RustBustersDrone>(controller, drone_params),
-                DroneBrand::RustEze => self.create_and_spawn_drone::<RustezeDrone>(controller, drone_params),
-                DroneBrand::Fungi => self.create_and_spawn_drone::<FungiDrone>(controller, drone_params),
-                DroneBrand::BagelBomber => self.create_and_spawn_drone::<BagelBomber>(controller, drone_params),
-                DroneBrand::SkyLink => self.create_and_spawn_drone::<SkyLinkDrone>(controller, drone_params),
-                DroneBrand::RustAndFurious => self.create_and_spawn_drone::<RustAndFurious>(controller, drone_params),
+                DroneBrand::RustEze => self.create_and_spawn_drone::<RustezeDrone>(drone_params),
+                DroneBrand::Fungi => self.create_and_spawn_drone::<FungiDrone>(drone_params),
+                DroneBrand::BagelBomber => self.create_and_spawn_drone::<BagelBomber>(drone_params),
+                DroneBrand::SkyLink => self.create_and_spawn_drone::<SkyLinkDrone>(drone_params),
+                DroneBrand::RustAndFurious => self.create_and_spawn_drone::<RustAndFurious>(drone_params),
                 //DroneBrand::BobryWLucie => self.create_and_spawn_drone::<BoberDrone>(controller, drone_params),
             }
         }
     }
     fn create_and_spawn_drone<T>(
         &mut self,
-        controller: &mut SimulationController,
         drone_params: (
             DroneId,
             Sender<DroneEvent>,
@@ -225,7 +222,7 @@ impl NetworkInitializer {
     {
         let (drone_id, event_sender, cmd_receiver, pkt_receiver, pkt_senders, pdr) = drone_params;
 
-        let drone_instance = controller.create_drone::<T>(
+        let drone_instance = self.simulation_controller.create_drone::<T>(
             drone_id,
             event_sender,
             cmd_receiver,
@@ -268,9 +265,6 @@ impl NetworkInitializer {
     fn create_clients(
         &mut self,
         clients: Vec<Client>,
-        controller: &mut SimulationController,
-        client_events_sender: Sender<ClientEvent>,
-        topology: HashMap<NodeId, Vec<NodeId>>,
     ) {
         for client in clients {
             // Create command channel between controller and clients
@@ -280,7 +274,7 @@ impl NetworkInitializer {
             let (packet_sender, packet_receiver) = unbounded();
 
             // Clone sender for client events
-            let client_events_sender_clone = client_events_sender.clone();
+            let client_events_sender_clone = self.simulation_controller.client_event_sender.clone();
 
             let client_params = (
                 client.id,
@@ -290,22 +284,23 @@ impl NetworkInitializer {
                 HashMap::new(),
                 );
 
+            let tx_clone = self.sender_to_gui.clone();
             let mut client_type;
             match self.choose_client_type_evenly() {
                 ClientType::Web => {
                     client_type = ClientType::Chat;
-                    self.create_and_spawn_client_with_monitoring::<ClientChen>(self.sender_to_gui.clone(), client_params);
+                    self.create_and_spawn_client_with_monitoring::<ClientChen>(tx_clone, client_params);
                     self.client_channels.insert(client.id, (packet_sender , ClientType::Web));
                 },
 
                 ClientType::Chat=> {
                     client_type = ClientType::Chat;
-                    self.create_and_spawn_client_with_monitoring::<ClientChen>(self.sender_to_gui.clone(),client_params);
+                    self.create_and_spawn_client_with_monitoring::<ClientChen>(tx_clone,client_params);
                     self.client_channels.insert(client.id, (packet_sender , ClientType::Chat));
                 }
             };
 
-            controller.register_client(client.id, command_sender, client_type);
+            self.simulation_controller.register_client(client.id, command_sender, client_type);
 
         }
     }
@@ -394,9 +389,6 @@ impl NetworkInitializer {
     pub fn create_servers(
         &mut self,
         servers: Vec<Server>,
-        controller: &mut SimulationController,
-        server_events_sender: Sender<ServerEvent>,
-        topology: HashMap<NodeId, Vec<NodeId>>,
     ) {
         let mut text_server_used = false;
         let mut vec_files = Vec::new();
@@ -408,7 +400,7 @@ impl NetworkInitializer {
             let (packet_sender, packet_receiver) = unbounded();
 
             // Clone sender for server events
-            let server_events_sender_clone = server_events_sender.clone();
+            let server_events_sender_clone = self.simulation_controller.server_event_sender.clone();
 
             //Choosing type
             let server_type;
@@ -456,8 +448,7 @@ impl NetworkInitializer {
                 }
             };
 
-            controller.register_server(server.id, command_sender, server_type);
-
+            self.simulation_controller.register_server(server.id, command_sender, server_type);
             self.server_channels.insert(server.id, (packet_sender, server_type));
 
             // Create and run server
@@ -491,7 +482,7 @@ impl NetworkInitializer {
     ///CREATING NETWORK
     ///
     /// not needed function, you do it inside the create function.
-    fn connect_nodes(&self, controller: &mut SimulationController, topology: HashMap<NodeId, Vec<NodeId>>) {
+    fn connect_nodes(&mut self, topology: HashMap<NodeId, Vec<NodeId>>) {
         // Cloning to avoid problems in borrowing
         let cloned_topology = topology.clone();
 
@@ -505,9 +496,9 @@ impl NetworkInitializer {
 
                 // Add the senders to the connected nodes
                 match node_type {
-                    Some(NodeType::Drone) => controller.add_sender(*node_id, NodeType::Drone ,connected_node_id, sender),
-                    Some(NodeType::Client) => controller.add_sender(*node_id, NodeType::Client ,connected_node_id, sender),
-                    Some(NodeType::Server) => controller.add_sender(*node_id, NodeType::Server , connected_node_id, sender),
+                    Some(NodeType::Drone) => self.simulation_controller.add_sender(*node_id, NodeType::Drone ,connected_node_id, sender),
+                    Some(NodeType::Client) => self.simulation_controller.add_sender(*node_id, NodeType::Client ,connected_node_id, sender),
+                    Some(NodeType::Server) => self.simulation_controller.add_sender(*node_id, NodeType::Server , connected_node_id, sender),
 
                     None => panic!("Sender channel not found for node {}!", *node_id),
                 };
