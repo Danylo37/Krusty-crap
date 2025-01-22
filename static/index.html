@@ -1,187 +1,228 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>WebSocket Monitor</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        .message {
-            margin: 5px 0;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .panel {
-            margin-bottom: 20px;
-            position: relative;
-        }
-        .select-button {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            padding: 5px 10px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .ordering-button {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            padding: 5px 10px;
-            background-color: #ffc107;
-            color: black;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .confirm-button, .back-button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .back-button {
-            background-color: #dc3545; /* Red color for the back button */
-            display: none; /* Hidden by default */
-        }
-        .selection-square {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #007bff;
-            border-radius: 5px;
-            cursor: pointer;
-            display: none; /* Hidden by default */
-        }
-        .selection-square.selected::after {
-            content: "✔";
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #007bff;
-        }
-    </style>
-</head>
-<body>
-<h1>WebSocket Message Monitor</h1>
-
-<!-- Ordering Button -->
-<button class="ordering-button" onclick="orderPanelsByNodeId()">Ordering</button>
-
-<!-- Select Button -->
-<button class="select-button" onclick="toggleSelectionMode()">Select</button>
-
-<!-- Confirm Button (Initially Hidden) -->
-<button class="confirm-button" onclick="confirmSelection()" style="display: none;">Confirm</button>
-
-<!-- Back Button (Initially Hidden) -->
-<button class="back-button" onclick="goBackToAllNodes()" style="display: none;">Back</button>
-
-<!-- Message Display -->
-<div id="messages"></div>
-
-<script>
-    const panelsContainer = document.getElementById("messages"); // Container for all panels
-    const panels = {}; // Object to track panels by node_id
-    const selectedNodes = new Set(); // Set to track selected nodes
-    let isSelectionMode = false; // Flag to track selection mode
-
-    // Create a WebSocket connection to the Rust server
-    const wsHost = window.location.hostname;
-    const ws = new WebSocket(`ws://${wsHost}:8080`);
-
-    // Function to order panels by node_id
-    function orderPanelsByNodeId() {
-        const panelsArray = Object.values(panels);
-        panelsArray.sort((a, b) => {
-            const nodeIdA = parseInt(a.dataset.nodeId, 10);
-            const nodeIdB = parseInt(b.dataset.nodeId, 10);
-            return nodeIdA - nodeIdB;
-        });
-
-        // Clear the container and re-append panels in sorted order
-        panelsContainer.innerHTML = '';
-        panelsArray.forEach(panel => panelsContainer.appendChild(panel));
-    }
-
-    // Function to toggle selection mode
-    function toggleSelectionMode() {
-        isSelectionMode = !isSelectionMode;
-        document.querySelector('.confirm-button').style.display = isSelectionMode ? 'block' : 'none';
-        document.querySelector('.back-button').style.display = 'none'; // Hide back button in selection mode
-        updateSelectionSquaresVisibility();
-    }
-
-    // Function to update the visibility of selection squares
-    function updateSelectionSquaresVisibility() {
-        Object.values(panels).forEach(panel => {
-            const square = panel.querySelector('.selection-square');
-            if (square) {
-                square.style.display = isSelectionMode ? 'block' : 'none';
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <title>Network Manager & Real-Time Monitor</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 0;
+                background-color: #f5f7fa; /* Pleasant light background color */
             }
-        });
-    }
-
-    // Function to confirm the selection
-    function confirmSelection() {
-        isSelectionMode = false;
-        document.querySelector('.confirm-button').style.display = 'none';
-        document.querySelector('.back-button').style.display = 'block'; // Show back button after confirmation
-        updateSelectionSquaresVisibility();
-        filterPanelsBySelectedNodes();
-    }
-
-    // Function to filter panels based on selected nodes
-    function filterPanelsBySelectedNodes() {
-        Object.values(panels).forEach(panel => {
-            const nodeId = panel.dataset.nodeId;
-            if (selectedNodes.has(nodeId)) {
-                panel.style.display = 'block';
-            } else {
-                panel.style.display = 'none';
+            header {
+                background-color: #007bff; /* Header background */
+                color: white;
+                padding: 20px;
+                text-align: center;
+                font-size: 24px;
+                font-weight: bold;
+                border-bottom: 5px solid #0056b3; /* Bottom border for emphasis */
             }
-        });
-    }
-
-    // Function to go back to monitoring all nodes
-    function goBackToAllNodes() {
-        selectedNodes.clear(); // Clear selected nodes
-        document.querySelector('.back-button').style.display = 'none'; // Hide back button
-        document.querySelector('.confirm-button').style.display = 'none'; // Hide confirm button
-        Object.values(panels).forEach(panel => {
-            panel.style.display = 'block'; // Show all panels
-            const square = panel.querySelector('.selection-square');
-            if (square) {
-                square.classList.remove('selected'); // Remove selection tick
+            @keyframes slide-in {
+                from {
+                    transform: translateX(-200px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
             }
-        });
-    }
+            @keyframes slide-out {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(-200px);
+                    opacity: 0;
+                }
+            }
+            .dropdown {
+                position: fixed;
+                top: 10px;
+                left: 20px;
+                display: inline-block;
+            }
+            .dropdown button {
+                padding: 10px 20px;
+                background-color: #007bff;
+                color: white;
+                font-size: 16px;
+                cursor: pointer;
+                border-radius: 5px;
+            }
+            .dropdown button:hover {
+                background-color: #0056b3;
+            }
+            .dropdown-content {
+                display: none; /* Hidden by default */
+                position: absolute;
+                background-color: white;
+                min-width: 150px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                border-radius: 5px;
+                z-index: 1;
+                transform: translateX(-200px); /* Start hidden on the left */
+                opacity: 0; /* Start fully transparent */
+                transition: none; /* No transition since animation will handle it */
+            }
 
-    // Handle WebSocket messages
-    ws.onmessage = async (event) => {
-        try {
-            const text = await event.data;
-            const data = JSON.parse(text);
-            console.log('Decoded data:', data);
+            .dropdown-content.active {
+                display: block; /* Show the content */
+                animation: slide-in 0.3s ease-out forwards;
+            }
 
-            // Update the DOM with the decoded data
-            let panel = panels[data.node_id];
-            if (!panel) {
-                panel = document.createElement("div");
-                panel.className = "panel";
-                panel.dataset.nodeId = data.node_id;
-                panel.innerHTML = `
+            .dropdown-content.closing {
+                animation: slide-out 0.3s ease-out forwards;
+            }
+
+            .dropdown-content button {
+                padding: 10px 20px;
+                background-color: white;
+                color: #007bff;
+                border: none;
+                font-size: 14px;
+                cursor: pointer;
+                text-align: left;
+                width: 100%;
+            }
+            .dropdown-content button:hover {
+                background-color: #f1f1f1;
+            }
+            .panel {
+                margin: 20px auto;
+                padding: 15px;
+                background-color: white;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                max-width: 800px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            .confirm-button, .back-button {
+                margin-top: 20px;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+            .confirm-button {
+                background-color: #28a745;
+                color: white;
+            }
+            .back-button {
+                background-color: #dc3545;
+                color: white;
+            }
+        </style>
+    </head>
+    <body>
+    <header>Network Manager & Real-Time Monitor</header>
+
+    <div class="dropdown">
+        <button onclick="toggleDropdown()">Menu</button>
+        <div class="dropdown-content" id="dropdown-menu">
+            <button onclick="orderPanelsByNodeId()">Ordering</button>
+            <button onclick="toggleSelectionMode()">Select</button>
+            <button class="confirm-button" onclick="confirmSelection()" style="display: none;">Confirm</button>
+            <button class="back-button" onclick="goBackToAllNodes()" style="display: none;">Back</button>
+        </div>
+    </div>
+
+    <!-- Message Display -->
+    <div id="messages"></div>
+
+    <script>
+        const panelsContainer = document.getElementById("messages"); // Container for all panels
+        const panels = {}; // Object to track panels by node_id
+        const selectedNodes = new Set(); // Set to track selected nodes
+        let isSelectionMode = false; // Flag to track selection mode
+
+        // Create a WebSocket connection to the Rust server
+        const wsHost = window.location.hostname || 'localhost';
+        const ws = new WebSocket(`ws://${wsHost}:8080`);
+
+        // Function to order panels by node_id
+        function orderPanelsByNodeId() {
+            const panelsArray = Object.values(panels);
+            panelsArray.sort((a, b) => {
+                const nodeIdA = parseInt(a.dataset.nodeId, 10);
+                const nodeIdB = parseInt(b.dataset.nodeId, 10);
+                return nodeIdA - nodeIdB;
+            });
+
+            // Clear the container and re-append panels in sorted order
+            panelsContainer.innerHTML = '';
+            panelsArray.forEach(panel => panelsContainer.appendChild(panel));
+        }
+
+        // Function to toggle selection mode
+        function toggleSelectionMode() {
+            isSelectionMode = !isSelectionMode;
+            document.querySelector('.confirm-button').style.display = isSelectionMode ? 'block' : 'none';
+            document.querySelector('.back-button').style.display = 'none'; // Hide back button in selection mode
+            updateSelectionSquaresVisibility();
+        }
+
+        // Function to update the visibility of selection squares
+        function updateSelectionSquaresVisibility() {
+            Object.values(panels).forEach(panel => {
+                const square = panel.querySelector('.selection-square');
+                if (square) {
+                    square.style.display = isSelectionMode ? 'block' : 'none';
+                }
+            });
+        }
+
+        // Function to confirm the selection
+        function confirmSelection() {
+            isSelectionMode = false;
+            document.querySelector('.confirm-button').style.display = 'none';
+            document.querySelector('.back-button').style.display = 'block'; // Show back button after confirmation
+            updateSelectionSquaresVisibility();
+            filterPanelsBySelectedNodes();
+        }
+
+        // Function to filter panels based on selected nodes
+        function filterPanelsBySelectedNodes() {
+            Object.values(panels).forEach(panel => {
+                const nodeId = panel.dataset.nodeId;
+                if (selectedNodes.has(nodeId)) {
+                    panel.style.display = 'block';
+                } else {
+                    panel.style.display = 'none';
+                }
+            });
+        }
+
+        // Function to go back to monitoring all nodes
+        function goBackToAllNodes() {
+            selectedNodes.clear(); // Clear selected nodes
+            document.querySelector('.back-button').style.display = 'none'; // Hide back button
+            document.querySelector('.confirm-button').style.display = 'none'; // Hide confirm button
+            Object.values(panels).forEach(panel => {
+                panel.style.display = 'block'; // Show all panels
+                const square = panel.querySelector('.selection-square');
+                if (square) {
+                    square.classList.remove('selected'); // Remove selection tick
+                }
+            });
+        }
+
+        // Handle WebSocket messages
+        ws.onmessage = async (event) => {
+            try {
+                const text = await event.data;
+                const data = JSON.parse(text);
+                console.log('Decoded data:', data);
+
+                // Update the DOM with the decoded data
+                let panel = panels[data.node_id];
+                if (!panel) {
+                    panel = document.createElement("div");
+                    panel.className = "panel";
+                    panel.dataset.nodeId = data.node_id;
+                    panel.innerHTML = `
                     <div class="selection-square" onclick="toggleNodeSelection('${data.node_id}')"></div>
                     <h2>Node ${data.node_id} (${data.node_type})</h2>
                     <div class="session">Session ID: <span id="session-${data.node_id}">${data.session_id}</span></div>
@@ -191,55 +232,92 @@
                     <div class="routing-table">Routing Table: <pre id="routing-table-${data.node_id}">${JSON.stringify(data.routing_table, null, 2)}</pre></div>
                     <div class="message-chat">Message Chat: <pre id="message-chat-${data.node_id}">${JSON.stringify(data.message_chat, null, 2)}</pre></div>
                 `;
-                panelsContainer.appendChild(panel);
-                panels[data.node_id] = panel;
-                console.log('Created new panel for node:', data.node_id);
-            } else {
-                // Update the existing panel with new data
-                document.getElementById(`session-${data.node_id}`).textContent = data.session_id;
-                document.getElementById(`connected-nodes-${data.node_id}`).textContent = Array.from(data.connected_node_ids).join(', ');
-                document.getElementById(`registered-communication-servers-${data.node_id}`).textContent = JSON.stringify(data.registered_communication_servers, null, 2);
-                document.getElementById(`registered-content-servers-${data.node_id}`).textContent = JSON.stringify(data.registered_content_servers, null, 2);
-                document.getElementById(`routing-table-${data.node_id}`).textContent = JSON.stringify(data.routing_table, null, 2);
-                document.getElementById(`message-chat-${data.node_id}`).textContent = JSON.stringify(data.message_chat, null, 2);
+                    panelsContainer.appendChild(panel);
+                    panels[data.node_id] = panel;
+                    console.log('Created new panel for node:', data.node_id);
+                } else {
+                    // Update the existing panel with new data
+                    document.getElementById(`session-${data.node_id}`).textContent = data.session_id;
+                    document.getElementById(`connected-nodes-${data.node_id}`).textContent = Array.from(data.connected_node_ids).join(', ');
+                    document.getElementById(`registered-communication-servers-${data.node_id}`).textContent = JSON.stringify(data.registered_communication_servers, null, 2);
+                    document.getElementById(`registered-content-servers-${data.node_id}`).textContent = JSON.stringify(data.registered_content_servers, null, 2);
+                    document.getElementById(`routing-table-${data.node_id}`).textContent = JSON.stringify(data.routing_table, null, 2);
+                    document.getElementById(`message-chat-${data.node_id}`).textContent = JSON.stringify(data.message_chat, null, 2);
+                }
+            } catch (e) {
+                console.error('Error processing message:', e);
+                const msgDiv = document.createElement("div");
+                msgDiv.className = "message error";
+                msgDiv.textContent = `Error decoding message: ${e.message}`;
+                panelsContainer.appendChild(msgDiv);
             }
-        } catch (e) {
-            console.error('Error processing message:', e);
+        };
+
+        // Function to toggle node selection
+        function toggleNodeSelection(nodeId) {
+            if (selectedNodes.has(nodeId)) {
+                selectedNodes.delete(nodeId);
+            } else {
+                selectedNodes.add(nodeId);
+            }
+            const square = document.querySelector(`.panel[data-node-id="${nodeId}"] .selection-square`);
+            square.classList.toggle('selected');
+        }
+
+        // Handle WebSocket connection close
+        ws.onclose = () => {
             const msgDiv = document.createElement("div");
             msgDiv.className = "message error";
-            msgDiv.textContent = `Error decoding message: ${e.message}`;
+            msgDiv.textContent = 'WebSocket connection closed.';
             panelsContainer.appendChild(msgDiv);
+        };
+
+        // Handle WebSocket connection open
+        ws.onopen = () => {
+            console.log('WebSocket connection established');
+        };
+
+        // Handle WebSocket errors
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+
+        //NEW UI STUFF
+        // Function to toggle the dropdown menu visibility
+        function toggleDropdown() {
+            const dropdownMenu = document.getElementById('dropdown-menu');
+
+            if (dropdownMenu.classList.contains('active')) {
+                // Start slide-out animation
+                dropdownMenu.classList.remove('active');
+                dropdownMenu.classList.add('closing');
+
+                // After animation completes, hide the menu
+                dropdownMenu.addEventListener(
+                    'animationend',
+                    () => {
+                        dropdownMenu.classList.remove('closing');
+                        dropdownMenu.style.display = 'none';
+                    },
+                    { once: true } // Ensure the listener runs only once
+                );
+            } else {
+                // Start slide-in animation
+                dropdownMenu.style.display = 'block'; // Ensure the content is displayed
+                dropdownMenu.classList.add('active');
+            }
         }
-    };
 
-    // Function to toggle node selection
-    function toggleNodeSelection(nodeId) {
-        if (selectedNodes.has(nodeId)) {
-            selectedNodes.delete(nodeId);
-        } else {
-            selectedNodes.add(nodeId);
-        }
-        const square = document.querySelector(`.panel[data-node-id="${nodeId}"] .selection-square`);
-        square.classList.toggle('selected');
-    }
+        // Close the dropdown if the user clicks outside
+        document.addEventListener('click', (event) => {
+            const dropdownMenu = document.getElementById('dropdown-menu');
+            const dropdownButton = document.querySelector('.dropdown button');
+            if (!dropdownMenu.contains(event.target) && !dropdownButton.contains(event.target)) {
+                dropdownMenu.style.display = 'none';
+            }
+        });
 
-    // Handle WebSocket connection close
-    ws.onclose = () => {
-        const msgDiv = document.createElement("div");
-        msgDiv.className = "message error";
-        msgDiv.textContent = 'WebSocket connection closed.';
-        panelsContainer.appendChild(msgDiv);
-    };
-
-    // Handle WebSocket connection open
-    ws.onopen = () => {
-        console.log('WebSocket connection established');
-    };
-
-    // Handle WebSocket errors
-    ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-    };
-</script>
-</body>
-</html>
+    </script>
+    </body>
+    </html>
