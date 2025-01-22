@@ -5,6 +5,7 @@ use std::collections::{HashMap, HashSet};
 use std::future::Future;
 use crossbeam_channel::Sender;
 use futures_util::select_biased;
+use log::info;
 use tokio::time::interval;
 use wg_2024::network::NodeId;
 use super::ChatClientDanylo;
@@ -51,27 +52,20 @@ impl Monitoring for ChatClientDanylo {
     fn run_with_monitoring(
         &mut self,
         sender_to_gui: Sender<String>,
-    ) {
-            loop {
-                select_biased! {
-                    // Handle incoming packets from the tokio mpsc channel
-                    packet_res = packet_tokio_rx.recv() => {
-                        if let Some(packet) = packet_res {
-                            self.handle_packet(packet);
-                        } else {
-                            //eprintln!("Error receiving packet");
-                        }
-                    },
-                    // Handle controller commands from the tokio mpsc channel
-                    command_res = controller_tokio_rx.recv() => {
-                        if let Some(command) = command_res {
-                            self.handle_command(command);
-                        } else {
-                            //eprintln!("Error receiving controller command");
-                        }
-                    },
-
-                }
+    )  {
+        info!("Running ChatClientDanylo with ID: {}", self.id);
+        loop {
+            crossbeam_channel::select_biased! {
+                recv(self.controller_recv) -> command_res => {
+                    if let Ok(command) = command_res {
+                        self.handle_command(command);
+                    }
+                },
+                recv(self.packet_recv) -> packet_res => {
+                    if let Ok(packet) = packet_res {
+                        self.handle_packet(packet);
+                    }
+                },
             }
         }
     }

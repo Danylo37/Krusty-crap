@@ -83,7 +83,7 @@ pub trait FragmentsHandler:PacketsReceiver{ //message fragments
     fn handle_fragment(&mut self, msg_packet: Packet, fragment: &Fragment);
 
     ///auxiliary functions
-    fn get_total_n_fragments(&mut self, session_id: SessionId) -> Option<u64>;
+    fn get_total_n_fragments(&self, session_id: SessionId) -> Option<u64>;
     fn get_fragments_quantity_for_session(&self, session_id: SessionId) -> Option<u64>;
     fn handle_fragments_in_buffer_with_checking_status(&mut self);  //when you run
 

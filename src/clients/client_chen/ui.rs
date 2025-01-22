@@ -57,26 +57,26 @@ impl Monitoring for ClientChen{
         &mut self,
         sender_to_gui:Sender<String>,
     ) {
-            loop {
-                select_biased!{
-                    recv(self.communication_tools.controller_recv) -> command_res => {
-                            if let Ok(command) = command_res {
-                                self.handle_controller_command(command);
-                            }
-                        },
-                    recv(self.communication_tools.packet_recv) -> packet_res => {
-                            if let Ok(packet) = packet_res {
-                                self.handle_received_packet(packet);
-                        }
-                    },
-
-                    //do it with event driven
-                                            //eprintln!("Handling periodic tasks"); // Debug
-                        // Handle fragments and send packet
-                        self.handle_fragments_in_buffer_with_checking_status();
-                        self.send_packets_in_buffer_with_checking_status(); // This can use crossbeam's send directly
-                        self.update_routing_checking_status();
-                }
+        loop {
+            select_biased! {
+                recv(self.communication_tools.controller_recv) -> command_res => {
+                    if let Ok(command) = command_res {
+                        self.handle_controller_command(command);
+                    }
+                },
+                recv(self.communication_tools.packet_recv) -> packet_res => {
+                    if let Ok(packet) = packet_res {
+                        self.handle_received_packet(packet);
+                    }
+                },
+                /*
+                default(std::time::Duration::from_millis(10)) => {
+                    self.handle_fragments_in_buffer_with_checking_status();
+                    self.send_packets_in_buffer_with_checking_status();
+                    self.update_routing_checking_status();
+                 },*/
+                //todo()! make it event driven
             }
+        }
     }
 }
