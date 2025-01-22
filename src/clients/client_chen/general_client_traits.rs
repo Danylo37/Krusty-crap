@@ -49,7 +49,6 @@ pub trait PacketCreator{
     fn create_ack_packet_from_receiving_packet(&mut self, packet: Packet) -> Packet;
 
     ///auxiliary methods
-    fn get_packet_destination(&mut self, packet: &Packet) -> NodeId;
     fn get_hops_from_path_trace(&mut self, path_trace: Vec<(NodeId, NodeType)>) -> Vec<NodeId>;
     fn get_source_routing_header(&mut self, destination_id: NodeId) -> Option<SourceRoutingHeader>;
 }
@@ -60,31 +59,32 @@ pub trait PacketsReceiver{
 }
 
 pub trait PacketResponseHandler:PacketsReceiver{   //Ack Nack
-    fn handle_ack(&mut self, ack_packet: Packet, ack: Ack);
-    fn handle_nack(&mut self, nack_packet: Packet, nack: Nack);
+    fn handle_ack(&mut self, ack_packet: Packet, ack: &Ack);
+    fn handle_nack(&mut self, nack_packet: Packet, nack: &Nack);
 
 
     ///nack handling (we could do also a sub trait of a sub trait)
-    fn handle_error_in_routing(&mut self, node_id: NodeId, nack_packet: Packet, nack: Nack);
-    fn handle_destination_is_drone(&mut self, nack_packet: Packet, nack: Nack);
-    fn handle_packdrop(&mut self, nack_packet: Packet, nack: Nack);
-    fn handle_unexpected_recipient(&mut self, node_id: NodeId, nack_packet: Packet, nack: Nack);
+    fn handle_error_in_routing(&mut self, node_id: NodeId, nack_packet: Packet, nack: &Nack);
+    fn handle_destination_is_drone(&mut self, nack_packet: Packet, nack: &Nack);
+    fn handle_packdrop(&mut self, nack_packet: Packet, nack: &Nack);
+    fn handle_unexpected_recipient(&mut self, node_id: NodeId, nack_packet: Packet, nack: &Nack);
 }
 
 
 
 
 pub trait FloodingPacketsHandler:PacketsReceiver{  //flood request/response
-    fn handle_flood_request(&mut self, packet: Packet, request: FloodRequest);
-    fn handle_flood_response(&mut self, packet: Packet, response: FloodResponse);
+    fn handle_flood_request(&mut self, packet: Packet, request: &FloodRequest);
+    fn handle_flood_response(&mut self, packet: Packet, response: &FloodResponse);
 
 }
 
 pub trait FragmentsHandler:PacketsReceiver{ //message fragments
-    fn handle_fragment(&mut self, msg_packet: Packet, fragment: Fragment);
+    fn handle_fragment(&mut self, msg_packet: Packet, fragment: &Fragment);
 
     ///auxiliary functions
     fn get_total_n_fragments(&mut self, session_id: SessionId) -> Option<u64>;
+    fn get_fragments_quantity_for_session(&self, session_id: SessionId) -> Option<u64>;
     fn handle_fragments_in_buffer_with_checking_status(&mut self);  //when you run
 
     fn process_message(&mut self, initiator_id: NodeId, message: Response);
@@ -98,7 +98,7 @@ pub trait FragmentsHandler:PacketsReceiver{ //message fragments
     fn register_client(&mut self, initiator_id: NodeId);
 
     ///principal methods
-    fn reassemble_fragments_in_buffer(&mut self) -> Result<Response, String>;
+    fn reassemble_fragments_in_buffer(&mut self, session_id: SessionId) -> Result<Response, String>;
 
 }
 

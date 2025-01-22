@@ -3,8 +3,8 @@ use crate::ui_traits::{crossbeam_to_tokio_bridge, Monitoring};
 use serde::Serialize;
 use std::collections::{HashMap, HashSet};
 use std::future::Future;
-use tokio::select;
-use tokio::sync::mpsc;
+use crossbeam_channel::Sender;
+use futures_util::select_biased;
 use tokio::time::interval;
 use wg_2024::network::NodeId;
 use super::ChatClientDanylo;
@@ -31,56 +31,29 @@ pub struct ChatClientDisplayData {
 
 
 impl Monitoring for ChatClientDanylo {
+    fn send_display_data(&mut self, sender_to_gui: Sender<String>) {
+        let display_data = ChatClientDisplayData {
+            node_id: self.id,
+            node_type: "ChatClientDanylo".to_string(),
+            flood_ids: self.flood_ids.clone(),
+            session_ids: self.session_ids.clone(),
+            neighbours: self.packet_send.keys().cloned().collect(),
+            discovered_servers: self.servers.clone(),
+            registered_communication_servers: self.is_registered.clone(),
+            available_clients: self.clients.clone(),
+            received_messages: self.inbox.clone(),
+        };
+
+        // Serialize the DisplayData to MessagePack binary
+        let json_string = serde_json::to_string(&display_data).unwrap();
+        let _ = sender_to_gui.send(json_string).is_err();
+    }
     fn run_with_monitoring(
         &mut self,
-        sender_to_gui: mpsc::Sender<String>,
-    ) -> impl Future<Output = ()> + Send {
-        async move {
-            // Create tokio mpsc channels for receiving controller commands and packets
-            let (controller_tokio_tx, mut controller_tokio_rx) = mpsc::channel(32);
-            let (packet_tokio_tx, mut packet_tokio_rx) = mpsc::channel(32);
-
-            // Spawn the bridge function for controller commands
-            let controller_crossbeam_rx = self.controller_recv.clone();
-            tokio::spawn(crossbeam_to_tokio_bridge(controller_crossbeam_rx, controller_tokio_tx));
-
-            // Spawn the bridge function for incoming packets
-            let packet_crossbeam_rx = self.packet_recv.clone();
-            tokio::spawn(crossbeam_to_tokio_bridge(packet_crossbeam_rx, packet_tokio_tx));
-
-            let mut interval = interval(std::time::Duration::from_millis(10));
+        sender_to_gui: Sender<String>,
+    ) {
             loop {
-                select! {
-                    biased;
-                    // Handle periodic tasks
-                    _ = interval.tick() => {
-                        //eprintln!("Handling periodic tasks"); // Debug
-                        // Handle fragments and send packet
-                        // self.handle_fragments_in_buffer_with_checking_status();  // todo what is this
-                        // self.send_packets_in_buffer_with_checking_status(); // This can use crossbeam's send directly    // todo what is this
-                        // self.update_routing_checking_status();   // todo what is this
-
-                        // Create the ChatClientDisplayData struct
-                        let display_data = ChatClientDisplayData {
-                            node_id: self.id,
-                            node_type: "ChatClientDanylo".to_string(),
-                            flood_ids: self.flood_ids.clone(),
-                            session_ids: self.session_ids.clone(),
-                            neighbours: self.packet_send.keys().cloned().collect(),
-                            discovered_servers: self.servers.clone(),
-                            registered_communication_servers: self.is_registered.clone(),
-                            available_clients: self.clients.clone(),
-                            received_messages: self.inbox.clone(),
-                        };
-
-                        // Serialize the DisplayData to MessagePack binary
-                        let json_string = serde_json::to_string(&display_data).unwrap();
-                        if sender_to_gui.send(json_string).await.is_err() {
-                            //eprintln!("Error sending data for Node {}", self.metadata.node_id);
-                            break; // Exit loop if sending fails
-                        }
-                    },
-
+                select_biased! {
                     // Handle incoming packets from the tokio mpsc channel
                     packet_res = packet_tokio_rx.recv() => {
                         if let Some(packet) = packet_res {

@@ -8,7 +8,6 @@ use std::sync::Arc;
 
 use crossbeam_channel::*;
 use rand::prelude::*;
-use tokio::sync::mpsc;
 //Wg libraries
 use wg_2024::{
     config::{Client, Config, Drone, Server},
@@ -93,14 +92,14 @@ pub struct NetworkInitializer {
     server_channels: HashMap<NodeId, (Sender<Packet>, ServerType)>,
     drone_brand_usage: HashMap<DroneBrand, UsingTimes>,
     client_type_usage: HashMap<ClientType, UsingTimes>,
-    sender_to_gui: mpsc::Sender<String>,
+    sender_to_gui: Sender<String>,
     command_senders: HashMap<NodeId, Sender<DroneCommand>>, // Add this field
     //sender_to_gui: mpsc::Sender<Vec<u8>> for message packet
 
 }
 
 impl NetworkInitializer {
-    pub fn new( sender_to_gui: mpsc::Sender<String>) -> Self {
+    pub fn new( sender_to_gui: Sender<String>) -> Self {
         // Create event channels for drones, clients, and servers
         let (drone_event_sender, drone_event_receiver) = unbounded();
         let (client_event_sender, client_event_receiver) = unbounded();
@@ -357,7 +356,7 @@ impl NetworkInitializer {
 
     fn create_and_spawn_client_with_monitoring<T: TraitClient + Monitoring + Send + 'static>(
         &mut self,
-        sender_to_gui: mpsc::Sender<String>,
+        sender_to_gui: Sender<String>,
         client_params: (
             ClientId,
             Sender<ClientEvent>,
@@ -368,7 +367,7 @@ impl NetworkInitializer {
     ) {
         let (client_id, event_sender, cmd_receiver, pkt_receiver, pkt_senders) = client_params;
 
-        let client_instance = T::new(
+        let mut client_instance = T::new(
             client_id,
             pkt_senders,
             pkt_receiver,
@@ -376,12 +375,8 @@ impl NetworkInitializer {
             cmd_receiver,
         );
 
-        // Wrap `client_instance` in `Arc<Mutex<T>>` (using tokio::sync::Mutex)
-        let client_instance = Arc::new(Mutex::new(client_instance));
-
-        tokio::spawn(async move {
-            let mut client_guard = client_instance.lock().await; // Now this can be awaited
-            client_guard.run_with_monitoring(sender_to_gui).await;
+        thread::spawn( move|| {
+            client_instance.run_with_monitoring(sender_to_gui);
         });
     }
 

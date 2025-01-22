@@ -47,7 +47,7 @@ impl TraitClient for ClientChen {
             // Status
             status: NodeStatus {
                 flood_id: 0, // Initial value to be 0 for every new client
-                session_id: (id as u64) << 56, // Put the id of the client in the first 8 bits
+                session_id:  (id as u64) * 10u64.pow(18), //(id as u64) << 56, not human-readable but more efficient and reserves more space for the sessions for each id.
             },
 
             // Communication-related data
@@ -145,11 +145,11 @@ pub(crate) struct CommunicationTools {
 #[derive(Clone)]
 pub struct NodeStorage {
     pub(crate) irresolute_path_traces: HashMap<NodeId, Vec<(NodeId, NodeType)>>,   //Temporary storage for the path_traces that are received, but we didn't know how to process them
-    pub(crate) fragment_assembling_buffer: HashMap<(SessionId, FragmentIndex), Packet>, // Temporary storage for recombining fragments
-    pub(crate) output_buffer: HashMap<(SessionId, FragmentIndex), Packet>,              // Buffer for outgoing messages
-    pub(crate) input_packet_disk: HashMap<(SessionId, FragmentIndex), Packet>,          // Storage for received packets
-    pub(crate) output_packet_disk: HashMap<(SessionId, FragmentIndex), Packet>,         // Storage for sent packets
-    pub(crate) packets_status: HashMap<(SessionId, FragmentIndex), PacketStatus>,       // Map every packet with the status of sending
+    pub(crate) fragment_assembling_buffer: HashMap<SessionId, HashMap<FragmentIndex, Packet>>, // Temporary storage for recombining fragments
+    pub(crate) output_buffer: HashMap<SessionId, HashMap<FragmentIndex, Packet>>,              // Buffer for outgoing messages
+    pub(crate) input_packet_disk: HashMap<SessionId, HashMap<FragmentIndex, Packet>>,          // Storage for received packets
+    pub(crate) output_packet_disk: HashMap<SessionId, HashMap<FragmentIndex, Packet>>,         // Storage for sent packets
+    pub(crate) packets_status: HashMap<SessionId, HashMap<FragmentIndex, PacketStatus>>,       // Map every packet with the status of sending
     pub(crate) message_chat: HashMap<ClientId, Vec<(Speaker, Message)>>,               // Chat messages with other clients
     pub(crate) file_storage: HashMap<ServerId, File>,                                  // Files received from media servers
 }

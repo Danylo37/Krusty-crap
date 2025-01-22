@@ -28,6 +28,7 @@ futures-util = "0.3.31"
 tokio-tungstenite = { version = "0.21.0", features = ["native-tls"] }
 tungstenite = "0.26.0"
 rmp-serde = "1.3.0"  # MessagePack serialization
+ctrlc = "3.4.5"
 
 krusty_drone = { git = "https://github.com/Danylo37/krusty_drone.git"}
 rustable-drone = {git = "https://github.com/SmL-Boi/RustableDroneLib.git"}

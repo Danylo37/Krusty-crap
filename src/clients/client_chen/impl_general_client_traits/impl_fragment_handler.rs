@@ -2,72 +2,90 @@ use serde::de::DeserializeOwned;
 use crate::clients::client_chen::{ClientChen, FragmentsHandler, PacketCreator, PacketsReceiver, Sending, SpecificInfo};
 use crate::clients::client_chen::prelude::*;
 use crate::clients::client_chen::general_client_traits::*;
-impl FragmentsHandler for ClientChen{
-    fn handle_fragment(&mut self, msg_packet: Packet, fragment: Fragment) {
+impl FragmentsHandler for ClientChen {
+    fn handle_fragment(&mut self, msg_packet: Packet, fragment: &Fragment) {
         self.decreasing_using_times_when_receiving_packet(&msg_packet);
-        self.storage
-            .input_packet_disk
-            .insert((msg_packet.session_id, fragment.fragment_index), msg_packet.clone());
-        self.storage
-            .fragment_assembling_buffer
-            .insert((msg_packet.session_id, fragment.fragment_index), msg_packet.clone());
-
+        self.storage.input_packet_disk
+            .entry(msg_packet.session_id)
+            .or_insert_with(HashMap::new)
+            .insert(fragment.fragment_index, msg_packet.clone());
+        self.storage.fragment_assembling_buffer
+            .entry(msg_packet.session_id)
+            .or_insert_with(HashMap::new)
+            .insert(fragment.fragment_index, msg_packet.clone());
         // Send an ACK instantly
         let ack_packet = self.create_ack_packet_from_receiving_packet(msg_packet.clone());
         self.send(ack_packet);
     }
 
-    fn get_total_n_fragments(&mut self, session_id: SessionId) -> Option<u64> {
+    fn get_total_n_fragments(&self, session_id: SessionId) -> Option<u64> {
         self.storage
             .fragment_assembling_buffer
-            .iter()
-            .find_map(|(&(session, _), packet)| {
-                if session == session_id {
-                    if let PacketType::MsgFragment(fragment) = &packet.pack_type {
-                        return Some(fragment.total_n_fragments);
-                    }
+            .get(&session_id)?
+            .values()
+            .next()  // Get first packet in the session
+            .and_then(|packet| {
+                if let PacketType::MsgFragment(fragment) = &packet.pack_type {
+                    Some(fragment.total_n_fragments)
+                } else {
+                    None
                 }
-                None
             })
     }
 
+    fn get_fragments_quantity_for_session(&self, session_id: SessionId) -> Option<u64> {
+        Some(
+            self.storage
+                .fragment_assembling_buffer
+                .get(&session_id)?
+                .len() as u64
+        )
+    }
+
     fn handle_fragments_in_buffer_with_checking_status(&mut self) {
-        // Aggregate session IDs and their corresponding fragment IDs
-        let sessions: HashMap<SessionId, Vec<FragmentIndex>> = self
+        // Collect session IDs to avoid borrowing issues during iteration
+        let session_ids: Vec<_> = self
             .storage
             .fragment_assembling_buffer
             .keys()
-            .fold(HashMap::new(), |mut acc, &(session_id, fragment_id)| {
-                acc.entry(session_id).or_insert_with(Vec::new).push(fragment_id);
-                acc
-            });
+            .cloned()
+            .collect();
 
         // Iterate over each session and process fragments
-        for (session_id, fragments) in sessions {
+        for session_id in session_ids {
             if let Some(total_n_fragments) = self.get_total_n_fragments(session_id) {
-                if fragments.len() as u64 == total_n_fragments {
-                    // Clone the first packet to avoid borrowing issues
-                    let first_packet = self
-                        .storage
-                        .fragment_assembling_buffer
-                        .iter()
-                        .find(|(&(session, _), _)| session == session_id)
-                        .map(|(_, packet)| packet.clone());
+                if let Some(fragments_quantity) = self.get_fragments_quantity_for_session(session_id) {
+                    if fragments_quantity == total_n_fragments {
+                        if let Some(first_packet) = self
+                            .storage
+                            .fragment_assembling_buffer
+                            .get(&session_id)
+                            .and_then(|fragments| fragments.values().next())
+                        {
+                            let initiator_id = first_packet.routing_header.destination();
 
-                    if let Some(first_packet) = first_packet {
-                        let initiator_id = self.get_packet_destination(&first_packet);
-
-                        // Reassemble fragments and process the message
-                        if let Ok(message) = self.reassemble_fragments_in_buffer() {
-                            self.process_message(initiator_id, message);
+                            // Reassemble fragments and process the message
+                            if let Ok(message) = self.reassemble_fragments_in_buffer(session_id) {
+                                if let Some(id) = initiator_id {
+                                    self.process_message(id, message);
+                                } else {
+                                    eprintln!("Initiator ID not found for session: {:?}", session_id);
+                                }
+                            } else {
+                                eprintln!(
+                                    "Failed to reassemble fragments for session: {:?}",
+                                    session_id
+                                );
+                            }
                         } else {
-                            eprintln!("Failed to reassemble fragments for session: {:?}", session_id);
+                            eprintln!("No fragments found for session: {:?}", session_id);
                         }
                     }
                 }
             }
         }
     }
+
 
     fn process_message(&mut self, initiator_id: NodeId, message: Response) {
         match message {
@@ -113,38 +131,38 @@ impl FragmentsHandler for ClientChen{
         }
     }
 
-    fn reassemble_fragments_in_buffer(&mut self) -> Result<Response, String> {
-        let mut keys: Vec<(SessionId, FragmentIndex)> = self
-            .storage
+    fn reassemble_fragments_in_buffer(&mut self, session_id: SessionId) -> Result<Response, String> {
+        // Get fragments once to avoid multiple lookups
+        let fragments = self.storage
             .fragment_assembling_buffer
-            .keys()
-            .cloned()
-            .collect();
+            .get(&session_id)
+            .ok_or_else(|| format!("Session {} not found in buffer", session_id))?;
 
-        // Sort the keys by fragment index
-        keys.sort_by_key(|key| key.1);
+        // Collect and sort fragment indices
+        let mut keys: Vec<FragmentIndex> = fragments.keys().cloned().collect();
+        keys.sort();
 
-        let mut serialized_entire_msg = String::new();
+        // Pre-allocate buffer for better performance
+        let mut raw_data = Vec::new();
 
         for key in keys {
-            if let Some(associated_packet) = self.storage.fragment_assembling_buffer.get(&key) {
-                match &associated_packet.pack_type {
-                    PacketType::MsgFragment(fragment) => {
-                        if let Ok(data_str) = std::str::from_utf8(&fragment.data) {
-                            serialized_entire_msg.push_str(data_str);
-                        } else {
-                            return Err(format!("Invalid UTF-8 sequence in fragment for key: {:?}", key));
-                        }
-                    }
-                    _ => {
-                        return Err(format!("Unexpected packet type for key: {:?}", key));
-                    }
+            let packet = fragments.get(&key)
+                .ok_or_else(|| format!("Fragment {} missing in session {}", key, session_id))?;
+
+            match &packet.pack_type {
+                PacketType::MsgFragment(fragment) => {
+                    raw_data.extend_from_slice(&fragment.data);
                 }
-            } else {
-                return Err(format!("Missing packet for key: {:?}", key));
+                _ => return Err(format!("Non-fragment packet type in session {} at index {}", session_id, key)),
             }
         }
 
-        serde_json::from_str(&serialized_entire_msg).map_err(|e| format!("Failed to deserialize message: {}", e))
+        // Convert bytes to String once at the end
+        let serialized_msg = String::from_utf8(raw_data)
+            .map_err(|e| format!("Invalid UTF-8 sequence: {}", e))?;
+
+        // Deserialize the complete message
+        serde_json::from_str(&serialized_msg)
+            .map_err(|e| format!("Deserialization failed: {}", e))
     }
 }

@@ -1,4 +1,4 @@
-use crossbeam_channel::Receiver;
+use crossbeam_channel::{Receiver, Sender};
 use std::future::Future;
 use tokio::sync::mpsc;
 
@@ -22,15 +22,9 @@ pub async fn crossbeam_to_tokio_bridge<T: Send + 'static>(
     }
 }
 pub trait Monitoring {
-    //code in message pack
-  /*  fn run_with_monitoring(
-        &mut self, // Use `&mut self` to allow mutation
-        sender_to_gui: mpsc::Sender<Vec<u8>>,
-    ) -> impl Future<Output = ()> + Send;*/
-
-    //in json
+    fn send_display_data(&mut self, sender_to_gui:Sender<String>);
     fn run_with_monitoring(
         &mut self, // Use `&mut self` to allow mutation
-        sender_to_gui: mpsc::Sender<String>,
-    ) -> impl Future<Output = ()> + Send;
+        sender_to_gui: Sender<String>,
+    );
 }

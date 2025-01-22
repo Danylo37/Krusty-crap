@@ -5,150 +5,166 @@ use crate::general_use::NotSentType::ToBeSent;
 
 impl Sending for ClientChen {
     fn send_packets_in_buffer_with_checking_status(&mut self) {
-        let keys: Vec<_> = self.storage.output_buffer.keys().cloned().collect(); // Collect keys into a Vec
-        for (session_id, fragment_index) in keys {
-            let packet = self.storage.output_packet_disk.get(&(session_id, fragment_index)).unwrap().clone();
-            self.packets_status_sending_actions(packet, self.storage.packets_status.get(&(session_id, fragment_index)).unwrap().clone());
+        let sessions: Vec<SessionId> = self.storage.output_buffer.keys().cloned().collect();
+
+        for session_id in sessions {
+            if let Some(fragments) = self.storage.output_buffer.get(&session_id) {
+                let fragment_indices: Vec<_> = fragments.keys().cloned().collect();
+
+                for fragment_index in fragment_indices {
+                    if let Some(packet) = self.storage.output_packet_disk
+                        .get(&session_id)
+                        .and_then(|frags| frags.get(&fragment_index))
+                    {
+                        if let Some(status) = self.storage.packets_status
+                            .get(&session_id)
+                            .and_then(|frags| frags.get(&fragment_index))
+                        {
+                            self.packets_status_sending_actions(packet.clone(), status.clone());
+                        } else {
+                            warn!("Missing status for session {} fragment {}", session_id, fragment_index);
+                        }
+                    } else {
+                        warn!("Missing packet in output_packet_disk for session {} fragment {}", session_id, fragment_index);
+                    }
+                }
+            }
         }
     }
 
-    ///principal sending methods
     fn send(&mut self, packet: Packet) {
         if let Some(next_hop) = packet.routing_header.next_hop() {
             self.send_packet_to_connected_node(next_hop, packet);
         } else {
-            // When there is no next hop, do nothing, the packet needs to be dropped.
-            eprintln!("No next hop available for packet: {:?}", packet);
+            warn!("No next hop available for packet: {:?}", packet);
         }
     }
 
-    fn send_events(&mut self, client_event: ClientEvent){
-        self.communication_tools.controller_send.send(client_event).expect("Client event not successfully sent");
+    fn send_events(&mut self, client_event: ClientEvent) {
+        self.communication_tools.controller_send.send(client_event)
+            .unwrap_or_else(|e| error!("Failed to send client event: {}", e));
     }
+
     fn send_query(&mut self, server_id: ServerId, query: Query) {
         if let Some(messages) = self.msg_to_fragments(query.clone(), server_id) {
             for message in messages {
-                // if you send the messages, it automatically updates the buffers and status and packet disk
                 self.send(message);
             }
         } else {
-            // Log or handle the case where no fragments are returned
-            warn!("No fragments returned for query: {:?}", query);
+            warn!("Failed to fragment query: {:?}", query);
         }
     }
+
     fn send_packet_to_connected_node(&mut self, target_node_id: NodeId, packet: Packet) {
-        // Increase `using_times` by 1 for the corresponding route
-        if let Some(routes) = self.communication.routing_table.get_mut(&packet.routing_header.destination().unwrap()) {
-            if let Some(using_times) = routes.get_mut(&packet.clone().routing_header.hops) { //there are always some using times because it is initialized to 0 for every route
-                *using_times += 1;
+        // Update routing metrics
+        if let Some(destination) = packet.routing_header.destination() {
+            if let Some(routes) = self.communication.routing_table.get_mut(&destination) {
+                routes.entry(packet.clone().routing_header.hops)
+                    .and_modify(|using_times| *using_times += 1);
             }
         }
-        //insert the packet in output buffer, output_packet_dist, packet_status
-        self.storage.output_buffer.insert((packet.session_id, match packet.clone().pack_type{
-            PacketType::MsgFragment(fragment) => fragment.fragment_index,
-            _=> 0,
-        }), packet.clone());
 
-        self.storage.output_packet_disk.insert((packet.session_id, 0), packet.clone());
+        // Store packet with proper nested structure
+        let (session_id, fragment_index) = match &packet.pack_type {
+            PacketType::MsgFragment(fragment) => (packet.session_id, fragment.fragment_index),
+            _ => (packet.session_id, 0),
+        };
 
-        if self.communication.connected_nodes_ids.contains(&target_node_id) {
-            if let Some(sender) = self.communication_tools.packet_send.get_mut(&target_node_id) {
+        self.storage.output_buffer
+            .entry(session_id)
+            .or_default()
+            .insert(fragment_index, packet.clone());
+
+        self.storage.output_packet_disk
+            .entry(session_id)
+            .or_default()
+            .insert(fragment_index, packet.clone());
+
+        // Attempt to send packet
+        match self.communication_tools.packet_send.get_mut(&target_node_id) {
+            Some(sender) if self.communication.connected_nodes_ids.contains(&target_node_id) => {
                 match sender.send(packet.clone()) {
                     Ok(_) => {
-                        debug!("Packet sent to node {}", target_node_id);
-                        self.storage.packets_status.insert((packet.session_id, 0), PacketStatus::InProgress);
+                        debug!("Successfully sent packet to {}", target_node_id);
+                        self.storage.packets_status
+                            .entry(session_id)
+                            .or_default()
+                            .insert(fragment_index, PacketStatus::InProgress);
                     },
-                    Err(err) => {
-                        error!("Failed to send packet to node {}: {}", target_node_id, err);
-                        self.storage.packets_status.insert((packet.session_id, 0), PacketStatus::NotSent(ToBeSent));
+                    Err(e) => {
+                        error!("Failed to send to {}: {}", target_node_id, e);
+                        self.storage.packets_status
+                            .entry(session_id)
+                            .or_default()
+                            .insert(fragment_index, PacketStatus::NotSent(ToBeSent));
                     }
                 }
-            } else {
-                warn!("No sender channel found for node {}", target_node_id);
-                self.storage.packets_status.insert((packet.session_id, 0), PacketStatus::NotSent(ToBeSent));
+            }
+            _ => {
+                warn!("No valid connection to {}", target_node_id);
+                self.storage.packets_status
+                    .entry(session_id)
+                    .or_default()
+                    .insert(fragment_index, PacketStatus::NotSent(ToBeSent));
             }
         }
     }
 
-    ///auxiliary methods
-    ///
     fn packets_status_sending_actions(&mut self, packet: Packet, packet_status: PacketStatus) {
-        let destination = self.get_packet_destination(&packet.clone());
+        let destination = packet.routing_header.destination();
 
         match packet_status {
             PacketStatus::NotSent(not_sent_type) => {
-                self.handle_not_sent_packet(packet, not_sent_type, destination);
+                self.handle_not_sent_packet(packet, not_sent_type, destination.unwrap());
             }
             PacketStatus::Sent => {
                 self.handle_sent_packet(packet);
             }
-            _ => {
-                //do nothing, just wait
-            }
+            _ => {} // No action needed
         }
     }
 
     fn handle_sent_packet(&mut self, packet: Packet) {
-        self.storage.output_buffer.remove(&(
-            packet.session_id,
-            match packet.pack_type {
-                PacketType::MsgFragment(fragment) => fragment.fragment_index,
-                _ => 0,
-            },
-        ));
+        let (session_id, fragment_index) = match &packet.pack_type {
+            PacketType::MsgFragment(fragment) => (packet.session_id, fragment.fragment_index),
+            _ => (packet.session_id, 0),
+        };
+
+        self.storage.output_buffer
+            .entry(session_id)
+            .and_modify(|frags| { frags.remove(&fragment_index); });
     }
+
     fn handle_not_sent_packet(&mut self, packet: Packet, not_sent_type: NotSentType, destination: NodeId) {
+        let routes = self.communication.routing_table.get(&destination);
+
         match not_sent_type {
-            NotSentType::RoutingError => {
-                if let Some(routes) = self.communication.routing_table.get_mut(&destination) {
-                    if !routes.is_empty() {
-                        self.send(packet);
-                    } else {
-                        // The packet is already enqueued for later processing when routes are updated
-                    }
+            NotSentType::RoutingError | NotSentType::ToBeSent | NotSentType::Dropped => {
+                if routes.map_or(false, |r| !r.is_empty()) {
+                    self.send(packet);
                 } else {
-                    // The packet is already enqueued for later processing when routes are updated
-                }
-            }
-            NotSentType::ToBeSent | NotSentType::Dropped => {
-                if let Some(routes) = self.communication.routing_table.get(&destination) {
-                    if !routes.is_empty() {
-                        self.send(packet);
-                    } else {
-                        // Log a warning since we expected to have routes but don't
-                        warn!("Attempted to send packet to {} but no routes found", destination);
-                    }
-                } else {
-                    // Log a warning since the destination is not in the routing table
-                    warn!("Destination {} not found in routing table", destination);
+                    warn!("No valid routes to {}", destination);
                 }
             }
             NotSentType::BeenInWrongRecipient => {
-                //in the handle nack we send a client_event to the simulation controller that some senders are messed up
-
-                //todo()! here we just wait (let the packet be stored in the buffer) until some command from the simulation
-                //controller to send again the packet when the senders are again fixed.
-
+                // Implement logic for wrong recipient scenario
             }
             NotSentType::DroneDestination => {
-                //remove the packet from the buffer, and let it drop.
-                self.storage.output_buffer.remove(&(packet.session_id, match packet.pack_type{
-                    PacketType::MsgFragment(fragment) => fragment.fragment_index,
-                    _ => 0,
-                }));
+                let (session_id, fragment_index) = match &packet.pack_type {
+                    PacketType::MsgFragment(fragment) => (packet.session_id, fragment.fragment_index),
+                    _ => (packet.session_id, 0),
+                };
+                self.storage.output_buffer
+                    .entry(session_id)
+                    .and_modify(|frags| { frags.remove(&fragment_index); });
             }
         }
     }
 
-    fn update_packet_status(
-        &mut self,
-        session_id: SessionId,
-        fragment_index: FragmentIndex,
-        status: PacketStatus,
-    ) {
+    fn update_packet_status(&mut self, session_id: SessionId, fragment_index: FragmentIndex, status: PacketStatus) {
         self.storage.packets_status
-            .entry((session_id, fragment_index))
-            .and_modify(|current_status| *current_status = status.clone())
-            .or_insert(status);
+            .entry(session_id)
+            .or_default()
+            .insert(fragment_index, status);
     }
 }

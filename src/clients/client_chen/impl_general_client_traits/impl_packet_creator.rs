@@ -73,11 +73,6 @@ impl PacketCreator for ClientChen{
         ack_packet
     }
 
-    fn get_packet_destination(&mut self, packet: &Packet) -> NodeId {
-        let destination = packet.routing_header.destination().unwrap();
-        destination
-    }
-
     fn get_hops_from_path_trace(&mut self, path_trace: Vec<(NodeId, NodeType)>) -> Vec<NodeId> {
         // Transform the best path into a vector of NodeId and initialize hop_index to 1
         let hops = path_trace.iter().map(|&(node_id, _)| node_id).collect();

@@ -1,66 +1,67 @@
-//Mod components
 mod network_initializer;
 mod servers;
-
 mod simulation_controller;
 mod general_use;
 mod ui;
-
 mod clients;
 pub mod ui_traits;
 mod connecting_websocket;
 
-use crossbeam_channel;
-use crossbeam_channel::unbounded;
-use futures_util::{SinkExt, StreamExt};
-use serde::{Deserialize, Serialize};
-use tokio::sync::mpsc;
-use tokio_tungstenite::{connect_async, tungstenite::Message};
-use crate::simulation_controller::SimulationController;
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::thread;
+use crossbeam_channel::{unbounded, Sender, Receiver, TryRecvError};
+use tungstenite::{connect, Message, Utf8Bytes};
+//use crate::simulation_controller::SimulationController;
 use crate::ui::start_ui;
 
-#[tokio::main]  //HERE YOU ARE EXPLICITLY USING MULTITHREADED RUNTIME WITH TOKIO SO SURE THAT YOU ARE
-                //NOT RUNNING EVERYTHING IN ONE THREAD.
-async fn main() {
+fn main() {
     let url = "ws://localhost:8000";
 
-    println!("Connecting to {}", url);
-    let (ws_stream, _) = connect_async(url).await.expect("Failed to connect");
-    println!("Connected to WebSocket");
-    let (mut write, _) = ws_stream.split();
+    // Create communication channels
+    let (tx, rx) = unbounded();
 
-  
-    // Create an asynchronous channel for communication between clients and WebSocket writer task
-    let (tx, mut rx) = mpsc::channel::<String>(1000);
-
-    // Network initializer instance
+    // Initialize network
     let mut my_net = network_initializer::NetworkInitializer::new(tx.clone());
     my_net.initialize_from_file("input.toml");
 
-    // Spawn a task for writing messages to the WebSocket
-    let ws_handle = tokio::spawn(async move {
-        loop {
-            while let Some(msg) = rx.recv().await {
-                if let Err(err) = write.send(Message::Text(msg)).await {
-                    eprintln!("Error writing to WebSocket: {:?}", err);
-                    break;
+    // Shared flag for graceful shutdown
+    let running = Arc::new(Mutex::new(true));
+    let r = running.clone();
+
+    // WebSocket writer thread
+    let ws_thread = thread::spawn(move || {
+        let mut socket = connect(url)
+            .expect("Failed to connect")
+            .0;
+
+        while *running.lock().unwrap() {
+            match rx.try_recv() {
+                Ok(msg) => {
+                    socket.send(Message::Text(Utf8Bytes::from(msg)))
+                        .expect("Failed to write message");
                 }
+                Err(TryRecvError::Empty) => {
+                    thread::sleep(std::time::Duration::from_millis(100));
+                }
+                Err(_) => break,
             }
         }
     });
 
-    // Spawn a task for the UI interaction
-    let ui_handle = tokio::spawn(async move {
-        start_ui(my_net.simulation_controller).await; // Access the controller field directly
+    // UI thread
+    let ui_thread = thread::spawn(move || {
+        start_ui(my_net.simulation_controller);
     });
 
-    // Wait for either task to complete or for a shutdown signal
-    tokio::select! {
-        _ = ws_handle => eprintln!("WebSocket task terminated"),
-        _ = ui_handle => eprintln!("UI task terminated"),
-        _ = tokio::signal::ctrl_c() => {
-            println!("Received shutdown signal. Terminating...");
-        }
-    }
-}
+    // Handle Ctrl+C
+    ctrlc::set_handler(move || {
+        *r.lock().unwrap() = false;
+    }).expect("Error setting Ctrl+C handler");
 
+    // Wait for threads
+    ws_thread.join().expect("WebSocket thread panicked");
+    ui_thread.join().expect("UI thread panicked");
+
+    println!("Shutting down gracefully");
+}
