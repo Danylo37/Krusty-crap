@@ -98,7 +98,8 @@
     let isSelectionMode = false; // Flag to track selection mode
 
     // Create a WebSocket connection to the Rust server
-    const ws = new WebSocket('ws://127.0.0.1:8000');
+    const wsHost = window.location.hostname;
+    const ws = new WebSocket(`ws://${wsHost}:8080`);
 
     // Function to order panels by node_id
     function orderPanelsByNodeId() {
