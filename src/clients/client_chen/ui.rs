@@ -4,7 +4,8 @@ use crate::clients::client_chen::{ClientChen, CommandHandler, FragmentsHandler, 
 use rmp_serde::encode::to_vec;
 use serde::Serialize;
 use std::collections::{HashMap, HashSet};
-use crossbeam_channel::{ Sender, Receiver, select_biased};
+use std::time::Duration;
+use crossbeam_channel::{Sender, Receiver, select_biased};
 
 #[derive(Debug, Serialize)]
 pub struct DisplayData {
