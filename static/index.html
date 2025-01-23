@@ -3,6 +3,15 @@
     <head>
         <title>Network Manager & Real-Time Monitor</title>
         <style>
+            /*
+            "", this is the code of a webpage that for now only keep tracks of the clients in a network made of routers (called in this network), clients and servers.
+            There are also two buttons for Ordering the clients and a button for selecting the client.
+            I want to add at the start though a big pop-up (like 90% width and height) that makes you decide if you want to be a controller or a client (if you are a controller then you see the same as what it is now the site) otherwise you see only one client).
+            For simplification you only have to create this pop-up at the start of the page, then putting the main body so far (header, dropdown button and clients_display_div) inside another div that will be shown only if in the first pop-up it is made the choice: controller
+            */
+
+
+            /* Basic CSS */
             body {
                 font-family: Arial, sans-serif;
                 margin: 0;
@@ -18,6 +27,8 @@
                 font-weight: bold;
                 border-bottom: 5px solid #0056b3; /* Bottom border for emphasis */
             }
+
+            /* DROPDOWN CSS */
             @keyframes slide-in {
                 from {
                     transform: translateX(-200px);
@@ -90,6 +101,11 @@
             .dropdown-content button:hover {
                 background-color: #f1f1f1;
             }
+
+
+
+
+            /* CLIENTS DISPLAY DIVS CSS*/
             .panel {
                 margin: 20px auto;
                 padding: 15px;
@@ -114,26 +130,83 @@
                 background-color: #dc3545;
                 color: white;
             }
+
+
+            /* ROLE POP-UP CSS */
+
+            .popup {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            }
+            .popup-content {
+                background: white;
+                padding: 30px;
+                text-align: center;
+                border-radius: 10px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                max-width: 500px;
+                width: 90%;
+            }
+            .popup-button {
+                padding: 15px 30px;
+                margin: 10px;
+                font-size: 18px;
+                color: white;
+                background-color: #007bff;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+            .popup-button:hover {
+                background-color: #0056b3;
+            }
         </style>
     </head>
     <body>
-    <header>Network Manager & Real-Time Monitor</header>
 
-    <div class="dropdown">
-        <button onclick="toggleDropdown()">Menu</button>
-        <div class="dropdown-content" id="dropdown-menu">
-            <button onclick="orderPanelsByNodeId()">Ordering</button>
-            <button onclick="toggleSelectionMode()">Select</button>
-            <button class="confirm-button" onclick="confirmSelection()" style="display: none;">Confirm</button>
-            <button class="back-button" onclick="goBackToAllNodes()" style="display: none;">Back</button>
+    <div id="role-popup" class="popup">
+        <div class="popup-content">
+            <h1>Select Your Role</h1>
+            <button onclick="selectRole('controller')" class="popup-button">Controller</button>
+            <button onclick="selectRole('client')" class="popup-button">Client</button>
         </div>
     </div>
 
-    <!-- Message Display -->
-    <div id="messages"></div>
+    <div id="controller-view" style="display: none;">
+        <header>Network Manager & Real-Time Monitor</header>
+        <div class="dropdown">
+            <button onclick="toggleDropdown()">Menu</button>
+            <div class="dropdown-content" id="dropdown-menu">
+                <button onclick="orderPanelsByNodeId()">Ordering</button>
+                <button onclick="toggleSelectionMode()">Select</button>
+                <button class="confirm-button" onclick="confirmSelection()" style="display: none;">Confirm</button>
+                <button class="back-button" onclick="goBackToAllNodes()" style="display: none;">Back</button>
+            </div>
+        </div>
+        <!-- Clients Display -->
+        <div id="clients_display_div"></div>
+    </div>
+
+    <div id="client-view" style="display: none;">
+        <header>Client View</header>
+        <div class="panel">
+            <h2>Welcome, Client!</h2>
+            <p>You have access to a single client's information.</p>
+        </div>
+    </div>
+
+
 
     <script>
-        const panelsContainer = document.getElementById("messages"); // Container for all panels
+        const panelsContainer = document.getElementById("clients_display_div"); // Container for all panels
         const panels = {}; // Object to track panels by node_id
         const selectedNodes = new Set(); // Set to track selected nodes
         let isSelectionMode = false; // Flag to track selection mode
@@ -283,7 +356,73 @@
         };
 
 
-        //NEW UI STUFF
+        ///NEW UI STUFF
+
+        // ROLE POP-UP JS
+
+        function selectRole(role) {
+            const popup = document.getElementById('role-popup');
+            const controllerView = document.getElementById('controller-view');
+            const clientView = document.getElementById('client-view');
+
+            // Hide the pop-up
+            popup.style.display = 'none';
+
+            // Show the corresponding view
+            if (role === 'controller') {
+                controllerView.style.display = 'block';
+            } else if (role === 'client') {
+                clientView.style.display = 'block';
+            }
+        }
+
+        function displayClientOnly() {
+            const clientsDiv = document.getElementById('clients_display_div');
+            clientsDiv.innerHTML = `
+            <div class="panel">
+                <h2>Client View</h2>
+                <p>Only one client is visible in this mode.</p>
+            </div>
+        `;
+        }
+
+
+   /*     function displayClientOnly() {
+            const clientsDiv = document.getElementById('clients_display_div');
+            console.log('Clients display content:', clientsDiv.innerHTML);
+            // Clear and populate the client view
+            clientsDiv.innerHTML = `
+        <div class="panel">
+            <h2>Client View</h2>
+            <p>Only one client is visible in this mode.</p>
+        </div>
+    `;
+            // Listen for WebSocket messages and display client data
+            ws.onmessage = async (event) => {
+                try {
+                    const data = JSON.parse(await event.data);
+                    //console.log('Decoded data:', data);
+
+                    // Update the client view with the received data
+                    clientsDiv.innerHTML = `
+                <div class="panel">
+                    <h2>Node ${data.node_id} (${data.node_type})</h2>
+                    <div class="session">Session ID: ${data.session_id}</div>
+                    <div class="connected-nodes">Connected Nodes: ${data.connected_node_ids.join(', ')}</div>
+                </div>
+            `;
+                } catch (e) {
+                    console.error('Error processing message:', e);
+                    clientsDiv.innerHTML = `
+                <div class="message error">
+                    Error decoding message: ${e.message}
+                </div>
+            `;
+                }
+            };
+        }
+*/
+
         // Function to toggle the dropdown menu visibility
         function toggleDropdown() {
             const dropdownMenu = document.getElementById('dropdown-menu');
