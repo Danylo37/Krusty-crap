@@ -46,12 +46,12 @@ impl Sending for ClientChen {
     }
 
     fn send_query(&mut self, server_id: ServerId, query: Query) {
-        if let Some(messages) = self.msg_to_fragments(query.clone(), server_id) {
-            for message in messages {
-                self.send(message);
+        if let Some(query_packets) = self.msg_to_fragments(query, server_id) {
+            for query_packet in query_packets {
+                self.send(query_packet);
             }
         } else {
-            warn!("Failed to fragment query: {:?}", query);
+            warn!("Failed to fragment query");
         }
     }
 

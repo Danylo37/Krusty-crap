@@ -41,6 +41,19 @@ impl CommandHandler for ClientChen{
                     .collect();
                 self.send_events(ClientEvent::KnownServers(servers));
             }
+
+            ClientCommand::AskTypeTo(server_id) => {
+                self.send_query(server_id, Query::AskType);
+            }
+            ClientCommand::RequestListFile(server_id) => {
+                self.send_query(server_id, Query::AskListFiles);
+            }
+            ClientCommand::RequestText(server_id, file) => {
+                self.send_query(server_id, Query::AskFile(file));
+            }
+            ClientCommand::RequestMedia(server_id, media_ref) => {
+                self.send_query(server_id, Query::AskMedia(media_ref));
+            }
             _=>{}
         }
     }
