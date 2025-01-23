@@ -5,21 +5,24 @@ use crate::general_use::NotSentType::ToBeSent;
 
 impl Sending for ClientChen {
     fn send_packets_in_buffer_with_checking_status(&mut self) {
+        //looping in the sessions, but now agreed to have only one session in the buffer.
+        //so the first for is pretty useless, but it doesn't hurt the program
         let sessions: Vec<SessionId> = self.storage.output_buffer.keys().cloned().collect();
-
         for session_id in sessions {
             if let Some(fragments) = self.storage.output_buffer.get(&session_id) {
                 let fragment_indices: Vec<_> = fragments.keys().cloned().collect();
 
+                //now we are looping in the fragment indexes to see which packets are not sent
                 for fragment_index in fragment_indices {
-                    if let Some(packet) = self.storage.output_packet_disk
+                    if let Some(packet) = self.storage.output_buffer
                         .get(&session_id)
-                        .and_then(|frags| frags.get(&fragment_index))
+                        .and_then(|fragments| fragments.get(&fragment_index))
                     {
                         if let Some(status) = self.storage.packets_status
                             .get(&session_id)
-                            .and_then(|frags| frags.get(&fragment_index))
+                            .and_then(|fragments| fragments.get(&fragment_index))
                         {
+                            //we will manage these packets based on their sending status
                             self.packets_status_sending_actions(packet.clone(), status.clone());
                         } else {
                             warn!("Missing status for session {} fragment {}", session_id, fragment_index);
@@ -86,26 +89,17 @@ impl Sending for ClientChen {
                 match sender.send(packet.clone()) {
                     Ok(_) => {
                         debug!("Successfully sent packet to {}", target_node_id);
-                        self.storage.packets_status
-                            .entry(session_id)
-                            .or_default()
-                            .insert(fragment_index, PacketStatus::InProgress);
+                        self.update_packet_status(session_id, fragment_index, PacketStatus::InProgress)
                     },
                     Err(e) => {
                         error!("Failed to send to {}: {}", target_node_id, e);
-                        self.storage.packets_status
-                            .entry(session_id)
-                            .or_default()
-                            .insert(fragment_index, PacketStatus::NotSent(ToBeSent));
+                        self.update_packet_status(session_id, fragment_index, PacketStatus::NotSent(ToBeSent));
                     }
                 }
             }
             _ => {
                 warn!("No valid connection to {}", target_node_id);
-                self.storage.packets_status
-                    .entry(session_id)
-                    .or_default()
-                    .insert(fragment_index, PacketStatus::NotSent(ToBeSent));
+                self.update_packet_status(session_id, fragment_index, PacketStatus::NotSent(ToBeSent));
             }
         }
     }
@@ -130,24 +124,31 @@ impl Sending for ClientChen {
             _ => (packet.session_id, 0),
         };
 
-        self.storage.output_buffer
-            .entry(session_id)
-            .and_modify(|frags| { frags.remove(&fragment_index); });
+        // This is already done in the ack handling, but it's ok to retain it,
+        if let Some(fragments) = self.storage.output_buffer.get_mut(&session_id) {
+            fragments.remove(&fragment_index);
+            if fragments.is_empty() {
+                self.storage.output_buffer.remove(&session_id);
+            }
+        }
     }
 
-    fn handle_not_sent_packet(&mut self, packet: Packet, not_sent_type: NotSentType, destination: NodeId) {
+    fn handle_not_sent_packet(&mut self, mut packet: Packet, not_sent_type: NotSentType, destination: NodeId) {
         let routes = self.communication.routing_table.get(&destination);
-
         match not_sent_type {
-            NotSentType::RoutingError | NotSentType::ToBeSent | NotSentType::Dropped => {
+            //through
+            NotSentType::RoutingError | NotSentType::ToBeSent | NotSentType::BeenInWrongRecipient => {
                 if routes.map_or(false, |r| !r.is_empty()) {
+                    let srh = self.get_source_routing_header(destination);
+                    packet.routing_header = srh.unwrap();
                     self.send(packet);
                 } else {
                     warn!("No valid routes to {}", destination);
                 }
             }
-            NotSentType::BeenInWrongRecipient => {
-                // Implement logic for wrong recipient scenario
+            NotSentType::Dropped =>{
+                //resend the packet
+                self.send(packet);
             }
             NotSentType::DroneDestination => {
                 let (session_id, fragment_index) = match &packet.pack_type {
@@ -156,7 +157,7 @@ impl Sending for ClientChen {
                 };
                 self.storage.output_buffer
                     .entry(session_id)
-                    .and_modify(|frags| { frags.remove(&fragment_index); });
+                    .and_modify(|fragments| { fragments.remove(&fragment_index); });
             }
         }
     }

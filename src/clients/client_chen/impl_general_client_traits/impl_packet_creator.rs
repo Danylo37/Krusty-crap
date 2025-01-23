@@ -59,12 +59,13 @@ impl PacketCreator for ClientChen{
     }
 
     fn create_ack_packet_from_receiving_packet(&mut self, packet: Packet) -> Packet{
+        self.status.session_id +=1 ;
         let routing_header = SourceRoutingHeader{
             hop_index : 1,
             hops: packet.routing_header.hops.iter().rev().copied().collect(),   //when you can, use Copy trait instead of Clone trait, it's more efficient.
         };   //nope we need to use the same of which is arrived.
         let ack_packet = Packet::new_ack(routing_header,
-                                         packet.session_id + 1,
+                                         self.status.session_id,
                                          match packet.clone().pack_type{
                                              PacketType::MsgFragment(fragment)=> fragment.fragment_index,
                                              _=> 0,

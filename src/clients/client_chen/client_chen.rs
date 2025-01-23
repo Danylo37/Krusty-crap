@@ -151,7 +151,7 @@ pub struct NodeStorage {
     pub(crate) output_packet_disk: HashMap<SessionId, HashMap<FragmentIndex, Packet>>,         // Storage for sent packets
     pub(crate) packets_status: HashMap<SessionId, HashMap<FragmentIndex, PacketStatus>>,       // Map every packet with the status of sending
     pub(crate) message_chat: HashMap<ClientId, Vec<(Speaker, Message)>>,               // Chat messages with other clients
-    pub(crate) file_storage: HashMap<ServerId, File>,                                  // Files received from media servers
+    pub(crate) file_storage: HashMap<ServerId, FileId>,                                  // Files received from media servers
 }
 
 #[derive(Clone,Serialize, Deserialize)]
