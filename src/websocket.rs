@@ -30,7 +30,7 @@ pub fn start_websocket_server(rx: Receiver<String>) {
                         let mut websocket = accept(stream).unwrap();
 
                         while let Ok(msg) = rx.recv() {
-                            if let Err(e) = websocket.write_message(Message::Text(Utf8Bytes::from(msg))) {
+                            if let Err(e) = websocket.send(Message::Text(Utf8Bytes::from(msg))) {
                                 eprintln!("Write error: {}", e);
                                 break;
                             }
