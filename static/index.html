@@ -233,9 +233,22 @@
             }
 
 
+
+            /* GENERAL FOR CLIENTS APPLICATIONS */
+
+            .log_out_button {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                width: 40px;
+                cursor: pointer;
+                z-index: 100; /* Ensure it appears above other elements */
+            }
+
+
             /* WHATSAPP PALETTE
 
-/* Header */
+            /* Header */
             #chat-header {
                 padding: 10px;
                 background-color: #075e54; /* WhatsApp header green */
@@ -254,8 +267,7 @@
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                background-color: #075e54;
-                color: white;
+                color: black;
                 font-weight: bold;
                 padding: 10px;
                 border-bottom: 1px solid #004d40;
@@ -399,7 +411,10 @@
         <header style="background-color: #075e54;">WhatsApp</header>
 
         <!-- COMMUNICATION APPLICATION -->
-        <div id="communication-ui" style="display: none; height: 100vh; display: flex; flex-direction: row; border: 1px solid #ccc; border-top: 0px; border-left:0px;">
+        <div id="communication-ui" style="display: none; height: 100vh; display: flex; flex-direction: row; border: 1px solid #ccc; border-top: 0px; border-left: 0px;">
+            <!-- Logout Button -->
+            <img src="log_out_button.png" alt="Log Out" class="log_out_button" onclick="logOut()">
+
             <!-- Sidebar for Chats -->
             <div id="chat-sidebar" style="width: 30%; display: flex; flex-direction: column;">
                 <div id="sidebar-header">
@@ -432,8 +447,12 @@
         </div>
 
 
+
         <!-- CONTENT APPLICATION -->
-        <div id="content-ui" style="display: none;">
+        <div id="content-ui" style="display: none; position: relative;">
+            <!-- Logout Button -->
+            <img src="log_out_button.png" alt="Log Out" class="log_out_button" onclick="logOut()">
+
             <h2>Content Storing Application</h2>
             <p>Welcome to the content storing app! Here you can manage your files and data.</p>
             <!-- Additional UI for content storing can go here -->
@@ -684,12 +703,31 @@
             if (typeClient === 'WhatsApp') {
                 communicationUI.style.display = 'flex';
                 contentUI.style.display = 'none';
+
+                // Add placeholder image and text in chat messages
+                const chatMessages = document.getElementById('chat-messages');
+                chatMessages.innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <img src="whatsapp_light_icon.png" alt="WhatsApp Icon" style="max-width: 150px; opacity: 0.7;">
+                        <p style="color: #555; margin-top: 10px; font-size: 16px;">Here there will be shown your personal chats!</p>
+                    </div>
+                `;
+                chatMessages.style.background = 'none'; // Clear background for placeholder
             } else {
                 communicationUI.style.display = 'none';
                 contentUI.style.display = 'flex';
             }
         }
 
+
+        function logOut() {
+            // Redirect to the login or home screen
+            console.log('Logging out...');
+            alert('You have been logged out.');
+
+            // Optional: Redirect to the login page
+            window.location.reload(); // Reload the page to reset state
+        }
 
         /* COMMUNICATION JAVASCRIPT */
 
@@ -724,12 +762,15 @@
             // Update the chat header with the selected chat name
             document.getElementById('chat-header').textContent = chatName;
 
-            // Clear the chat messages (optional: populate with actual messages for the chat)
-            document.getElementById('chat-messages').innerHTML = `
-        <div class="message received" style="margin-bottom: 10px; background-color: #fff; padding: 10px; border-radius: 10px; max-width: 60%;">
-            Welcome to ${chatName}!
-        </div>
-    `;
+            // Update the chat messages area with a new background and placeholder messages
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.innerHTML = `
+                <div class="message received">Welcome to ${chatName}!</div>
+                <div class="message sent">Hi there!</div>
+            `;
+            chatMessages.style.background = 'url("whatsapp_bg.jpg")';
+            chatMessages.style.backgroundSize = 'cover';
+            chatMessages.style.backgroundPosition = 'center';
         }
 
         function sendMessage() {
