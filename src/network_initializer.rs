@@ -294,7 +294,7 @@ impl NetworkInitializer {
 
                 ClientType::Chat=> {
                     client_type = ClientType::Chat;
-                    self.create_and_spawn_client_with_monitoring::<ClientChen>(tx_clone,client_params);
+                    self.create_and_spawn_client_with_monitoring::<ChatClientDanylo>(tx_clone,client_params);
                     self.client_channels.insert(client.id, (packet_sender , ClientType::Chat));
                 }
             };
@@ -396,7 +396,7 @@ impl NetworkInitializer {
 
             // Clone sender for server events
             let server_events_sender_clone = self.simulation_controller.server_event_sender.clone();
-
+            let sender_to_gui_clone = self.sender_to_gui.clone();
             //Choosing type
             let server_type;
             //Fast fix on many servers
@@ -451,17 +451,17 @@ impl NetworkInitializer {
                 match server_type {
                     ServerType::Communication => {
                         if let Some(mut server_instance) = server_instance_comm {
-                            server_instance.run();
+                            server_instance.run_with_monitoring(sender_to_gui_clone);
                         }
                     },
                     ServerType::Media => {
                         if let Some(mut server_instance) = server_instance_media {
-                            server_instance.run();
+                            server_instance.run_with_monitoring(sender_to_gui_clone);
                         }
                     },
                     ServerType::Text => {
                         if let Some(mut server_instance) = server_instance_text {
-                            server_instance.run();
+                            server_instance.run_with_monitoring(sender_to_gui_clone);
                         }
                     }
                     ServerType::Undefined => panic!("what?")
