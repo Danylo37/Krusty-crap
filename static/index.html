@@ -18,14 +18,14 @@
                 padding: 0;
                 background-color: #f5f7fa; /* Pleasant light background color */
             }
+
             header {
-                background-color: #007bff; /* Header background */
                 color: white;
                 padding: 20px;
                 text-align: center;
                 font-size: 24px;
                 font-weight: bold;
-                border-bottom: 5px solid #0056b3; /* Bottom border for emphasis */
+                border-bottom: 2px solid #000000; /* Bottom border for emphasis */
             }
 
             /* DROPDOWN CSS */
@@ -233,6 +233,104 @@
             }
 
 
+            /* WHATSAPP PALETTE
+
+/* Header */
+            #chat-header {
+                padding: 10px;
+                background-color: #075e54; /* WhatsApp header green */
+                color: white;
+                font-weight: bold;
+                border-bottom: 1px solid #004d40;
+            }
+
+            /* Sidebar */
+            #chat-sidebar {
+                background-color: #ededed; /* WhatsApp sidebar background */
+                border-right: 1px solid #d1d1d1;
+            }
+
+            #sidebar-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background-color: #075e54;
+                color: white;
+                font-weight: bold;
+                padding: 10px;
+                border-bottom: 1px solid #004d40;
+            }
+
+            .chat-item {
+                padding: 10px;
+                border-bottom: 1px solid #d1d1d1;
+                cursor: pointer;
+                transition: background-color 0.2s ease;
+            }
+
+            .chat-item:hover {
+                background-color: #d9fdd3; /* Light green for hover */
+            }
+
+            /* Chat Window */
+            #chat-messages {
+                flex-grow: 1;
+                overflow-y: auto;
+                padding: 10px;
+                background: url("whatsapp_bg.jpg"); /* Use your specific WhatsApp background */
+                background-size: cover;
+                background-position: center;
+            }
+
+            /* Messages */
+            .message {
+                margin-bottom: 10px;
+                padding: 10px;
+                border-radius: 10px;
+                max-width: 60%;
+                box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1); /* Shadow for detachment */
+            }
+
+            .message.sent {
+                background-color: #dcf8c6; /* WhatsApp sent message green */
+                align-self: flex-end;
+            }
+
+            .message.received {
+                background-color: #ffffff; /* WhatsApp received message white */
+                align-self: flex-start;
+            }
+
+            /* Input Area */
+            #chat-input {
+                padding: 10px;
+                border-top: 1px solid #d1d1d1;
+                display: flex;
+                gap: 10px;
+                align-items: center;
+                background-color: #f1f1f1;
+            }
+
+            #message-input {
+                flex-grow: 1;
+                padding: 10px;
+                border: 1px solid #d1d1d1;
+                border-radius: 20px;
+            }
+
+            #chat-input button {
+                padding: 10px 20px;
+                background-color: #25d366; /* WhatsApp button green */
+                color: white;
+                border: none;
+                border-radius: 20px;
+                cursor: pointer;
+                transition: background-color 0.2s ease;
+            }
+
+            #chat-input button:hover {
+                background-color: #1ebe5a;
+            }
 
             /* General CSS */
 
@@ -251,6 +349,10 @@
             .jump {
                 transform-origin: 50% 50%;
                 animation: jump .6s linear alternate infinite;
+            }
+
+            .receiver-item:hover {
+                background-color: #f1f1f1;
             }
 
         </style>
@@ -294,12 +396,43 @@
     </div>
 
     <div id="client-view" style="display: none;">
-        <header>Client View</header>
-        <div id="communication-ui" style="display: none;">
-            <h2>Communication Application</h2>
-            <p>Welcome to the communication app! Here you can chat and communicate with others.</p>
-            <!-- Additional UI for communication can go here -->
+        <header style="background-color: #075e54;">WhatsApp</header>
+
+        <!-- COMMUNICATION APPLICATION -->
+        <div id="communication-ui" style="display: none; height: 100vh; display: flex; flex-direction: row; border: 1px solid #ccc; border-top: 0px; border-left:0px;">
+            <!-- Sidebar for Chats -->
+            <div id="chat-sidebar" style="width: 30%; display: flex; flex-direction: column;">
+                <div id="sidebar-header">
+                    <span>Chats</span>
+                    <img src="new_chat_icon.png" alt="create_chat" onclick="createNewChat()" style="width:100%; max-width:30px; padding: 5px 10px; cursor: pointer;">
+                </div>
+                <div id="chat-list" style="flex-grow: 1; overflow-y: auto;">
+                    <!-- Example Chat Items -->
+                    <div class="chat-item" onclick="openChat('Chat 1')">Chat 1</div>
+                    <div class="chat-item" onclick="openChat('Chat 2')">Chat 2</div>
+                    <div class="chat-item" onclick="openChat('Chat 3')">Chat 3</div>
+                </div>
+            </div>
+
+            <!-- Chat Window -->
+            <div id="chat-window" style="flex-grow: 1; display: flex; flex-direction: column;">
+                <div id="chat-header">
+                    Current chat
+                </div>
+                <div id="chat-messages">
+                    <!-- Example Messages -->
+                    <div class="message received">Hello!</div>
+                    <div class="message sent">Hi there!</div>
+                </div>
+                <div id="chat-input">
+                    <input type="text" id="message-input" placeholder="Type a message...">
+                    <button onclick="sendMessage()">Send</button>
+                </div>
+            </div>
         </div>
+
+
+        <!-- CONTENT APPLICATION -->
         <div id="content-ui" style="display: none;">
             <h2>Content Storing Application</h2>
             <p>Welcome to the content storing app! Here you can manage your files and data.</p>
@@ -308,6 +441,28 @@
     </div>
 
 
+    <!-- Pop Ups -->
+
+    <div id="chat-popup" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 2000; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 20px; border-radius: 10px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+            <h2>Select a Receiver</h2>
+            <div id="receiver-list" style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+                <!-- Default receiver boxes -->
+                <div class="receiver-item" onclick="selectReceiver('Receiver 1')" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; text-align: left;">
+                    Receiver 1
+                </div>
+                <div class="receiver-item" onclick="selectReceiver('Receiver 2')" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; text-align: left;">
+                    Receiver 2
+                </div>
+                <div class="receiver-item" onclick="selectReceiver('Receiver 3')" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; text-align: left;">
+                    Receiver 3
+                </div>
+            </div>
+            <button onclick="closeChatPopup()" style="margin-top: 20px; padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                Close
+            </button>
+        </div>
+    </div>
 
     <script>
         const panelsContainer = document.getElementById("clients_display_div"); // Container for all panels
@@ -411,7 +566,7 @@
                 `;
                     panelsContainer.appendChild(panel);
                     panels[data.node_id] = panel;
-                    console.log('Created new panel for node:', data.node_id);
+                    //console.log('Created new panel for node:', data.node_id);
                 } else {
                     // Update the existing panel with new data
                     document.getElementById(`session-${data.node_id}`).textContent = data.session_id;
@@ -497,7 +652,7 @@
                         const nodeId = panel.dataset.nodeId; // Retrieve node_id from panel's dataset
                         const typeClient = "WhatsApp";
                         const clientButton = document.createElement('button');
-                        clientButton.textContent = `Client (${nodeId}) using: ${typeClient}`;
+                        clientButton.textContent = `Client (nodeId: ${nodeId}) using: ${typeClient}`;
                         clientButton.className = 'client-option';
                         clientButton.onclick = () => chooseClient(nodeId); // Associate button with node_id
                         clientSelection.appendChild(clientButton);
@@ -527,60 +682,82 @@
             const communicationUI = document.getElementById('communication-ui');
             const contentUI = document.getElementById('content-ui');
             if (typeClient === 'WhatsApp') {
-                communicationUI.style.display = 'block';
+                communicationUI.style.display = 'flex';
                 contentUI.style.display = 'none';
             } else {
                 communicationUI.style.display = 'none';
-                contentUI.style.display = 'block';
+                contentUI.style.display = 'flex';
             }
         }
 
-        function displayClientOnly() {
-            const clientsDiv = document.getElementById('clients_display_div');
-            clientsDiv.innerHTML = `
-            <div class="panel">
-                <h2>Client View</h2>
-                <p>Only one client is visible in this mode.</p>
-            </div>
-        `;
+
+        /* COMMUNICATION JAVASCRIPT */
+
+        function createNewChat() {
+            const chatPopup = document.getElementById('chat-popup');
+            chatPopup.style.display = 'flex'; // Show the pop-up
         }
 
+        function closeChatPopup() {
+            const chatPopup = document.getElementById('chat-popup');
+            chatPopup.style.display = 'none'; // Hide the pop-up
+        }
 
-   /*     function displayClientOnly() {
-            const clientsDiv = document.getElementById('clients_display_div');
-            console.log('Clients display content:', clientsDiv.innerHTML);
-            // Clear and populate the client view
-            clientsDiv.innerHTML = `
-        <div class="panel">
-            <h2>Client View</h2>
-            <p>Only one client is visible in this mode.</p>
+        function selectReceiver(receiverName) {
+            // Handle receiver selection
+            console.log(`Receiver selected: ${receiverName}`);
+
+            // Optionally, add the chat to the chat list
+            const chatList = document.getElementById('chat-list');
+            const chatItem = document.createElement('div');
+            chatItem.className = 'chat-item';
+            chatItem.textContent = receiverName;
+            chatItem.style = 'padding: 10px; border-bottom: 1px solid #ddd; cursor: pointer;';
+            chatItem.onclick = () => openChat(receiverName);
+            chatList.appendChild(chatItem);
+
+            // Close the pop-up after selection
+            closeChatPopup();
+        }
+
+        function openChat(chatName) {
+            // Update the chat header with the selected chat name
+            document.getElementById('chat-header').textContent = chatName;
+
+            // Clear the chat messages (optional: populate with actual messages for the chat)
+            document.getElementById('chat-messages').innerHTML = `
+        <div class="message received" style="margin-bottom: 10px; background-color: #fff; padding: 10px; border-radius: 10px; max-width: 60%;">
+            Welcome to ${chatName}!
         </div>
     `;
-            // Listen for WebSocket messages and display client data
-            ws.onmessage = async (event) => {
-                try {
-                    const data = JSON.parse(await event.data);
-                    //console.log('Decoded data:', data);
-
-                    // Update the client view with the received data
-                    clientsDiv.innerHTML = `
-                <div class="panel">
-                    <h2>Node ${data.node_id} (${data.node_type})</h2>
-                    <div class="session">Session ID: ${data.session_id}</div>
-                    <div class="connected-nodes">Connected Nodes: ${data.connected_node_ids.join(', ')}</div>
-                </div>
-            `;
-                } catch (e) {
-                    console.error('Error processing message:', e);
-                    clientsDiv.innerHTML = `
-                <div class="message error">
-                    Error decoding message: ${e.message}
-                </div>
-            `;
-                }
-            };
         }
-*/
+
+        function sendMessage() {
+            const messageInput = document.getElementById('message-input');
+            const chatMessages = document.getElementById('chat-messages');
+            const messageText = messageInput.value.trim();
+
+            if (messageText) {
+                // Add the sent message to the chat window
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message sent';
+                messageDiv.style = 'margin-bottom: 10px; background-color: #007bff; padding: 10px; border-radius: 10px; max-width: 60%; color: white; align-self: flex-end;';
+                messageDiv.textContent = messageText;
+
+                chatMessages.appendChild(messageDiv);
+
+                // Scroll to the bottom of the chat window
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                // Clear the input field
+                messageInput.value = '';
+            }
+        }
+
+
+
+
+        /* DROPDOWN JS */
 
         // Function to toggle the dropdown menu visibility
         function toggleDropdown() {
