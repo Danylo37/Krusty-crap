@@ -60,6 +60,7 @@ pub enum ClientCommand {
     //Controller functions
     RemoveSender(NodeId),
     AddSender(NodeId, Sender<Packet>),
+    SendMessageTo(ClientId, Message),  //if you order a client to send messages to another client you can do it
     RunUI,
     StartFlooding,
     AskTypeTo(ServerId),
