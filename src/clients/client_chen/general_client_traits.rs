@@ -47,6 +47,7 @@ pub trait PacketCreator{
     fn msg_to_fragments<T: Serialize>(&mut self, msg: T, destination_id: NodeId) -> Option<Vec<Packet>>;
     ///creating ack packet
     fn create_ack_packet_from_receiving_packet(&mut self, packet: Packet) -> Packet;
+    fn create_nack_packet_from_receiving_packet(&mut self, packet: Packet, nack_type: NackType) -> Packet;
 
     ///auxiliary methods
     fn get_hops_from_path_trace(&mut self, path_trace: Vec<(NodeId, NodeType)>) -> Vec<NodeId>;

@@ -16,8 +16,18 @@ impl FragmentsHandler for ClientChen {
             .or_insert_with(HashMap::new)
             .insert(fragment.fragment_index, msg_packet.clone());
         // Send an ACK instantly
-        let ack_packet = self.create_ack_packet_from_receiving_packet(msg_packet.clone());
-        self.send(ack_packet);
+        if let Some(destination) = msg_packet.routing_header.destination() {
+            if destination != self.metadata.node_id{
+                let nack = self.create_nack_packet_from_receiving_packet(msg_packet.clone(), NackType::UnexpectedRecipient(self.metadata.node_id));
+                self.send(nack);
+                return;
+            } else{
+                let ack_packet = self.create_ack_packet_from_receiving_packet(msg_packet.clone());
+                self.send(ack_packet);
+            }
+        } else{
+            panic!("The fragment has no destination, so the fragment is sent casually");
+        }
     }
 
     fn get_total_n_fragments(&self, session_id: SessionId) -> Option<u64> {
@@ -118,9 +128,6 @@ impl FragmentsHandler for ClientChen {
             }
             Response::Err(error) => {
                 eprintln!("Error received: {:?}", error);
-            }
-            _ => {
-                eprintln!("Unhandled message type: {:?}", message);
             }
         }
     }

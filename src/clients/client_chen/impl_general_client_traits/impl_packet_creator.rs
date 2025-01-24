@@ -73,6 +73,26 @@ impl PacketCreator for ClientChen{
 
         ack_packet
     }
+    fn create_nack_packet_from_receiving_packet(&mut self, packet: Packet, nack_type: NackType) -> Packet{
+        self.status.session_id +=1 ;
+        let routing_header = SourceRoutingHeader{
+            hop_index : 1,
+            hops: packet.routing_header.hops.iter().rev().copied().collect(),   //when you can, use Copy trait instead of Clone trait, it's more efficient.
+        }; //nope we need to use the same of which is arrived.
+
+        let nack = Nack{
+            fragment_index:
+            match packet.clone().pack_type{
+            PacketType::MsgFragment(fragment)=> fragment.fragment_index,
+            _=> 0,
+        },
+            nack_type,
+        };
+        let nack_packet = Packet::new_nack(routing_header,
+                                         self.status.session_id, nack
+                                    );
+        nack_packet
+    }
 
     fn get_hops_from_path_trace(&mut self, path_trace: Vec<(NodeId, NodeType)>) -> Vec<NodeId> {
         // Transform the best path into a vector of NodeId and initialize hop_index to 1

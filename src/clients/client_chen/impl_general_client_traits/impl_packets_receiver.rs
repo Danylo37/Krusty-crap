@@ -1,3 +1,4 @@
+use wg_2024::packet::NackType::UnexpectedRecipient;
 use crate::clients::client_chen::{ClientChen, PacketsReceiver, PacketResponseHandler, FragmentsHandler, FloodingPacketsHandler};
 use crate::clients::client_chen::prelude::*;
 use crate::clients::client_chen::general_client_traits::*;
@@ -6,29 +7,29 @@ impl PacketsReceiver for ClientChen {
         // Process packet reception metrics
         self.decreasing_using_times_when_receiving_packet(&packet);
 
+
         // Store in input_packet_disk
-        let session_id = self.status.session_id;
+        let mut fragment_index:FragmentIndex = 0;
+        let session_id = packet.session_id;
+
+        let packet_clone = packet.clone();
+        // Handle packet type without unnecessary cloning
+        match packet.pack_type.clone() {
+            PacketType::Nack(nack) => self.handle_nack(packet_clone, &nack),
+            PacketType::Ack(ack) => self.handle_ack(packet_clone, &ack),
+            PacketType::MsgFragment(fragment) => {
+                self.handle_fragment(packet_clone, &fragment);
+                fragment_index = fragment.fragment_index;
+            },
+            PacketType::FloodRequest(flood_request) => self.handle_flood_request(packet_clone, &flood_request),
+            PacketType::FloodResponse(flood_response) => self.handle_flood_response(packet_clone, &flood_response),
+        }
+
         self.storage.input_packet_disk
             .entry(session_id)
             .or_insert_with(HashMap::new)
-            .insert(0, packet.clone());
+            .insert(fragment_index, packet);
 
-        // Handle fragment-specific logic
-        if let PacketType::MsgFragment(ref fragment) = packet.pack_type {
-            self.storage.fragment_assembling_buffer
-                .entry(session_id)
-                .or_insert_with(HashMap::new)
-                .insert(fragment.fragment_index, packet.clone());
-        }
-
-        // Handle packet type without unnecessary cloning
-        match packet.pack_type.clone() {
-            PacketType::Nack(nack) => self.handle_nack(packet, &nack),
-            PacketType::Ack(ack) => self.handle_ack(packet, &ack),
-            PacketType::MsgFragment(fragment) => self.handle_fragment(packet, &fragment),
-            PacketType::FloodRequest(flood_request) => self.handle_flood_request(packet, &flood_request),
-            PacketType::FloodResponse(flood_response) => self.handle_flood_response(packet, &flood_response),
-        }
     }
     fn decreasing_using_times_when_receiving_packet(&mut self, packet: &Packet) {
         // Reverse the hops to get the correct order for path trace
