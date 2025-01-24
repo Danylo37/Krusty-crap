@@ -199,6 +199,12 @@ pub trait Server{
             };
             self.send_nack(nack, routing_header.get_reversed(), session_id);
             return;
+        }else{
+            // Send Ack
+            let ack = Ack {
+                fragment_index: fragment.fragment_index,
+            };
+            self.send_ack(ack, routing_header.get_reversed(), session_id);
         }
 
         info!("Handling Fragment {:?}", fragment);
@@ -215,7 +221,7 @@ pub trait Server{
             let offset = reassembling_message.len();
             if offset + fragment.length as usize > reassembling_message.capacity()
             {
-                println!("Nack");
+                info!("Nack");
                 //Maybe cancelling also message in reassembling_message
                 // ... error handling logic ...
                 return;
@@ -226,7 +232,7 @@ pub trait Server{
 
                 // Check if all fragments have been received
                 let reassembling_message_clone = reassembling_message.clone();
-                println!("N fragments + current fragment length{}", fragment.total_n_fragments*128 + fragment.length as u64);
+                info!("N fragments + current fragment length{}", fragment.total_n_fragments*128 + fragment.length as u64);
                 self.if_all_fragments_received_process(&reassembling_message_clone, &fragment, session_id, routing_header);
             }
 
@@ -256,12 +262,6 @@ pub trait Server{
             let reassembled_data = message.clone(); // Take ownership of the data
             self.get_reassembling_messages().remove(&session_id); // Remove from map
             self.process_reassembled_message(reassembled_data, routing_header.hops[0]);
-
-            // Send Ack
-            let ack = Ack {
-                fragment_index: current_fragment.fragment_index,
-            };
-            self.send_ack(ack, routing_header.get_reversed(), session_id);
             return true;
         }
         false
