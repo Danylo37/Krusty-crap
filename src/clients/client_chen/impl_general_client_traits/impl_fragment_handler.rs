@@ -2,6 +2,8 @@ use serde::de::DeserializeOwned;
 use crate::clients::client_chen::{ClientChen, FragmentsHandler, PacketCreator, PacketsReceiver, Sending, SpecificInfo};
 use crate::clients::client_chen::prelude::*;
 use crate::clients::client_chen::general_client_traits::*;
+use crate::clients::client_chen::web_browser_client_traits::WebBrowserClientTrait;
+
 impl FragmentsHandler for ClientChen {
     fn handle_fragment(&mut self, msg_packet: Packet, fragment: &Fragment) {
         self.decreasing_using_times_when_receiving_packet(&msg_packet);
@@ -103,8 +105,16 @@ impl FragmentsHandler for ClientChen {
                     .registered_communication_servers
                     .insert(initiator_id, list_users);
             }
-            Response::ListFiles(_) | Response::File(_) | Response::Media(_) => {
+            Response::ListFiles(list_file)  => {
                 // Placeholder for file/media handling
+                self.handle_list_file(list_file);
+            }
+
+            Response::File(text) => {
+                self.handle_text_file(text);
+            }
+            Response::Media(media) =>{
+                self.handle_media(media);
             }
             Response::Err(error) => {
                 eprintln!("Error received: {:?}", error);

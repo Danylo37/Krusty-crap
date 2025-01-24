@@ -54,6 +54,8 @@ impl Monitoring for ClientChen{
         sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
     }
 
+
+    //test
     fn run_with_monitoring(
         &mut self,
         sender_to_gui:Sender<String>,
@@ -61,30 +63,43 @@ impl Monitoring for ClientChen{
         //first monitor
         self.send_display_data(sender_to_gui.clone());
         loop {
-            /*select_biased! {
+                    self.status.session_id += 1;
+                    self.send_display_data(sender_to_gui.clone());
+            }
+        }
+/*
+    fn run_with_monitoring(&mut self, sender_to_gui: Sender<String>) {
+        loop {
+            select_biased! {
                 recv(self.communication_tools.controller_recv) -> command_res => {
                     if let Ok(command) = command_res {
+                        // Handle the command
                         self.handle_controller_command(command);
+
+                        // Things to do after handling the command
+                        self.handle_fragments_in_buffer_with_checking_status();
+                        self.send_packets_in_buffer_with_checking_status();
+                        self.update_routing_checking_status();
+
+                        // Update the network
+                        self.send_display_data(sender_to_gui.clone());
                     }
                 },
                 recv(self.communication_tools.packet_recv) -> packet_res => {
                     if let Ok(packet) = packet_res {
+                        // Handle the packet
                         self.handle_received_packet(packet);
+
+                        // Things to do after handling the packets
+                        self.handle_fragments_in_buffer_with_checking_status();
+                        self.send_packets_in_buffer_with_checking_status();
+                        self.update_routing_checking_status();
+
+                        // Update the network
+                        self.send_display_data(sender_to_gui.clone());
                     }
-                },*/
-                /*
-                default(std::time::Duration::from_millis(10)) => {
-                    self.handle_fragments_in_buffer_with_checking_status();
-                    self.send_packets_in_buffer_with_checking_status();
-                    self.update_routing_checking_status();
-                 },*/
-                //todo()! make it event driven
-                //for now just increment some session_ids every second
-                //default(std::time::Duration::from_secs(2)) => {
-                    self.status.session_id += 1;
-                    self.send_display_data(sender_to_gui.clone());
-                //}
+                },
             }
         }
-    }
-//}
+    }*/
+}
