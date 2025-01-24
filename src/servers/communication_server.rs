@@ -4,6 +4,7 @@ use std::{
     fmt::Debug,
     future::Future,
 };
+use std::collections::HashSet;
 use tokio::{
     sync::mpsc,
     select,
@@ -16,7 +17,8 @@ use wg_2024::{
         PacketType,
     },
 };
-use crate::general_use::{Message, Query, Response, ServerCommand, ServerEvent, ServerType};
+use crate::clients::client_chen::Serialize;
+use crate::general_use::{ClientId, Message, Query, Response, ServerCommand, ServerEvent, ServerId, ServerType, Speaker};
 use crate::servers::text_server::TextServer;
 //UI
 use crate::ui_traits::{
@@ -87,14 +89,36 @@ impl CommunicationServer{
     }
 }
 
+#[derive(Debug, Serialize)]
+struct DisplayDataCommunicationServer{
+    node_id: NodeId,
+    node_type: String,
+    flood_id: crate::general_use::FloodId,
+    connected_node_ids: HashSet<NodeId>,
+    routing_table: HashMap<NodeId, Vec<NodeId>>,
+    registered_clients: Vec<NodeId>,
+}
+
 impl Monitoring for CommunicationServer {
     fn send_display_data(&mut self, sender_to_gui: Sender<String>) {
-        todo!()
+        let neighbors =  self.packet_send.keys().cloned().collect();
+        let display_data = DisplayDataCommunicationServer{
+            node_id: self.id,
+            node_type: "Communication Server".to_string(),
+            flood_id: self.flood_ids.last().cloned().unwrap_or(0),
+            connected_node_ids: neighbors,
+            routing_table: self.routes.clone(),
+            registered_clients: self.list_users.clone(),
+        };
+
+        let json_string = serde_json::to_string(&display_data).unwrap();
+        sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
     }
     fn run_with_monitoring(
         &mut self,
         sender_to_gui: Sender<String>,
     ) {
+        self.send_display_data(sender_to_gui.clone());
         loop {
             select_biased! {
                 recv(self.get_from_controller_command()) -> command_res => {
@@ -117,6 +141,7 @@ impl Monitoring for CommunicationServer {
                                 }
                             }
                         }
+                        self.send_display_data(sender_to_gui.clone());
                     }
                 },
                 recv(self.get_packet_recv()) -> packet_res => {
@@ -128,13 +153,13 @@ impl Monitoring for CommunicationServer {
                             PacketType::FloodRequest(flood_request) => self.handle_flood_request(flood_request, packet.session_id),
                             PacketType::FloodResponse(flood_response) => self.handle_flood_response(flood_response),
                         }
+                        self.send_display_data(sender_to_gui.clone());
                     }
                 },
             }
         }
     }
 }
-
 impl MainTrait for CommunicationServer{
     fn get_id(&self) -> NodeId{ self.id }
     fn get_server_type(&self) -> ServerType{ ServerType::Communication }

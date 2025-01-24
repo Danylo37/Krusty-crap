@@ -1,5 +1,5 @@
 use crossbeam_channel::{select_biased, Receiver, Sender};
-use std::collections::{HashMap};
+use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use std::future::Future;
 use tokio::select;
@@ -11,6 +11,7 @@ use wg_2024::{
     },
 };
 use tokio::sync::mpsc;
+use crate::clients::client_chen::Serialize;
 use crate::general_use::{Query, Response, ServerCommand, ServerEvent, ServerType};
 use crate::servers::text_server::TextServer;
 use crate::ui_traits::{crossbeam_to_tokio_bridge, Monitoring};
@@ -76,15 +77,37 @@ impl MediaServer {
         }
     }
 }
+#[derive(Debug, Serialize)]
+struct DisplayDataMediaServer{
+    node_id: NodeId,
+    node_type: String,
+    flood_id: crate::general_use::FloodId,
+    //session_id: crate::general_use::SessionId,
+    connected_node_ids: HashSet<NodeId>,
+    routing_table: HashMap<NodeId, Vec<NodeId>>,
+    media: HashMap<String, String>,
+}
 
 impl Monitoring for MediaServer {
     fn send_display_data(&mut self, sender_to_gui: Sender<String>) {
-        todo!()
+        let neighbors =  self.packet_send.keys().cloned().collect();
+        let display_data = DisplayDataMediaServer {
+            node_id: self.id,
+            node_type: "Media Server".to_string(),
+            flood_id: self.flood_ids.last().cloned().unwrap_or(0)   ,
+            connected_node_ids: neighbors,
+            routing_table: self.routes.clone(),
+            media: self.media.clone(),
+        };
+
+        let json_string = serde_json::to_string(&display_data).unwrap();
+        sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
     }
     fn run_with_monitoring(
         &mut self,
         sender_to_gui: Sender<String>,
     ) {
+        self.send_display_data(sender_to_gui.clone());
         loop {
             select_biased! {
                 recv(self.get_from_controller_command()) -> command_res => {
@@ -107,6 +130,7 @@ impl Monitoring for MediaServer {
                                 }
                             }
                         }
+                        self.send_display_data(sender_to_gui.clone());
                     }
                 },
                 recv(self.get_packet_recv()) -> packet_res => {
@@ -118,6 +142,7 @@ impl Monitoring for MediaServer {
                             PacketType::FloodRequest(flood_request) => self.handle_flood_request(flood_request, packet.session_id),
                             PacketType::FloodResponse(flood_response) => self.handle_flood_response(flood_response),
                         }
+                        self.send_display_data(sender_to_gui.clone());
                     }
                 },
             }

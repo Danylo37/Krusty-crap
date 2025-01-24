@@ -8,7 +8,7 @@ use std::time::Duration;
 use crossbeam_channel::{Sender, Receiver, select_biased};
 
 #[derive(Debug, Serialize)]
-pub struct DisplayData {
+struct DisplayDataWebBrowser {
     node_id: NodeId,
     node_type: String,
     flood_id: FloodId,
@@ -37,9 +37,9 @@ impl Monitoring for ClientChen{
             .collect();
 
         // Create the DisplayData struct
-        let display_data = DisplayData {
+        let display_data = DisplayDataWebBrowser {
             node_id: self.metadata.node_id,
-            node_type: "ClientChen".to_string(),
+            node_type: "Web Browser".to_string(),
             flood_id: self.status.flood_id,
             session_id: self.status.session_id,
             connected_node_ids: self.communication.connected_nodes_ids.clone(),
@@ -55,7 +55,7 @@ impl Monitoring for ClientChen{
     }
 
 
-    //test
+    /*//test
     fn run_with_monitoring(
         &mut self,
         sender_to_gui:Sender<String>,
@@ -63,9 +63,10 @@ impl Monitoring for ClientChen{
         //first monitor
         self.send_display_data(sender_to_gui.clone());
     }
+*/
 
-/*
     fn run_with_monitoring(&mut self, sender_to_gui: Sender<String>) {
+        self.send_display_data(sender_to_gui.clone());
         loop {
             select_biased! {
                 recv(self.communication_tools.controller_recv) -> command_res => {
@@ -98,5 +99,5 @@ impl Monitoring for ClientChen{
                 },
             }
         }
-    }*/
+    }
 }
