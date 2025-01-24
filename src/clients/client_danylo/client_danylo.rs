@@ -140,37 +140,34 @@ impl ChatClientDanylo {
                 self.handle_packet(packet);
             }
             ClientCommand::GetKnownServers => {
-                debug!("Handling GetKnownServers command");
-                let servers: Vec<(ServerId, ServerType, bool)> = self
-                    .servers
-                    .iter()
-                    .map(|(&id, &server_type)| (
-                        id,
-                        server_type,
-                        *self.is_registered.get(&id).unwrap_or(&false)))
-                    .collect();
-                self.send_event(ClientEvent::KnownServers(servers));
+                self.handle_get_known_servers()
             }
             ClientCommand::StartFlooding => {
-                match self.discovery() {
-                    Ok(_) => info!("Discovery process started successfully"),
-                    Err(err) => error!("Failed to start discovery process: {}", err),
-                };
+                self.discovery()
             }
             ClientCommand::AskTypeTo(server_id) => {
-                match self.request_server_type(server_id) {
-                    Ok(_) => info!("Server type request sent successfully"),
-                    Err(err) => error!("Failed to request server type: {}", err),
-                };
+                self.request_server_type(server_id)
             }
             ClientCommand::SendMessageTo(to, message) => {
-                match self.send_message_to(to, message) {
-                    Ok(_) => info!("Message sent successfully"),
-                    Err(err) => error!("Failed to send message: {}", err),
-                };
+                self.send_message_to(to, message)
             }
             _ => {}
         }
+    }
+
+    /// ###### Handles the 'GetKnownServers' command.
+    /// Sends the list of known servers to the simulation controller.
+    fn handle_get_known_servers(&mut self) {
+        let servers: Vec<(ServerId, ServerType, bool)> = self
+            .servers
+            .iter()
+            .map(|(&id, &server_type)| (
+                id,
+                server_type,
+                *self.is_registered.get(&id).unwrap_or(&false)))
+            .collect();
+
+        self.send_event(ClientEvent::KnownServers(servers));
     }
 
     /// ###### Handles the acknowledgment (ACK) for a given session and fragment.
@@ -224,10 +221,7 @@ impl ChatClientDanylo {
     fn handle_error_in_routing(&mut self,fragment_index: FragmentIndex, error_node: NodeId, session_id: SessionId) {
         self.update_topology_and_routes(error_node, &session_id);
         if self.messages_to_send.get(&session_id).unwrap().get_route().is_empty() {
-            if self.discovery().is_err() {
-                error!("Failed to find a new route after error in routing");
-                return;
-            };
+            self.discovery();
         }
         self.resend_fragment(fragment_index, session_id);
     }
@@ -552,7 +546,7 @@ impl ChatClientDanylo {
 
     /// ###### Initiates the discovery process to find available servers and clients.
     /// Clears current data structures and sends a flood request to all neighbors.
-    pub fn discovery(&mut self) -> Result<(), String> {
+    pub fn discovery(&mut self) {
         info!("Starting discovery process");
 
         // Clear all current data structures related to topology.
@@ -581,15 +575,10 @@ impl ChatClientDanylo {
             flood_request,
         );
 
-        let mut error_drones = Vec::new();
-
         // Attempt to send the flood request to all neighbors.
         for sender in &self.packet_send {
             if let Err(_) = sender.1.send(packet.clone()) {
                 error!("Failed to send FloodRequest to the drone {}.", sender.0);
-
-                // Add the drone ID to the list of failed drones.
-                error_drones.push(sender.0);
             } else {
                 info!("FloodRequest sent to the drone with id {}.", sender.0);
 
@@ -597,85 +586,62 @@ impl ChatClientDanylo {
                 self.send_event(ClientEvent::PacketSent(packet.clone()));
             }
         }
-
-        let mut error_string = String::new();
-
-        // Check number of errors and create an error message if necessary.
-        if error_drones.len() == 1 {
-            error_string = format!("Failed to send FloodRequest to drone {}", error_drones[0]);
-        }
-        if error_drones.len() > 1 {
-            let formatted_drone_ids = error_drones.iter()
-                .map(|x| x.to_string())
-                .collect::<Vec<String>>()
-                .join(", ");
-            error_string = format!("Failed to send FloodRequests to drones: {}", formatted_drone_ids);
-        }
-
-        if error_string.is_empty() {
-            Ok(())
-        } else {
-            Err(error_string)
-        }
     }
 
     /// ###### Requests the type of specified server.
     /// Sends a query to the server and waits for a response.
-    pub fn request_server_type(&mut self, server_id: ServerId) -> Result<(), String> {
+    pub fn request_server_type(&mut self, server_id: ServerId) {
         info!("Requesting server type for server {}", server_id);
 
         let result = self.create_and_send_message(Query::AskType, server_id);
 
         match result {
             Ok(_) => {
-                Ok(())
+                info!("Request for server type sent successfully.");
             }
             Err(err) => {
                 error!("Failed to receive server type: {}", err);
-                Err(err)
             },
         }
     }
 
     /// ###### Requests to register the client on a specified server.
     /// Sends a registration query to the server and waits for a response.
-    pub fn request_to_register(&mut self, server_id: ServerId) -> Result<(), String> {
+    pub fn request_to_register(&mut self, server_id: ServerId) {
         info!("Requesting to register on server {}", server_id);
 
         let result = self.create_and_send_message(Query::RegisterClient(self.id), server_id);
 
         match result {
             Ok(_) => {
-                Ok(())
+                info!("Request to register sent successfully.");
             }
             Err(err) => {
                 error!("Failed to register client: {}", err);
-                Err(err)
             },
         }
     }
 
     /// ###### Requests the list of clients from a specified server.
     /// Sends a query to the server and waits for a response.
-    pub fn request_clients_list(&mut self, server_id: ServerId) -> Result<(), String> {
+    pub fn request_clients_list(&mut self, server_id: ServerId) {
         info!("Requesting clients list from server {}", server_id);
 
         let result = self.create_and_send_message(Query::AskListClients, server_id);
 
         match result {
             Ok(_) => {
-                Ok(())
+                info!("Request for clients list sent successfully.");
             }
             Err(err) => {
                 error!("Failed to get list of clients: {}", err);
-                Err(err)
             },
         }
     }
 
     /// ###### Sends a message to a specified client via a specified server.
     /// Sends the message and waits for a response.
-    pub fn send_message_to(&mut self, to: ClientId, message: Message) -> Result<(), String> {
+    pub fn send_message_to(&mut self, to: ClientId, message: Message) {
         let option_server_id = self.clients.iter()
             .find(|(_, clients)| clients.contains(&to))
             .map(|(server_id, _)| *server_id);
@@ -684,7 +650,7 @@ impl ChatClientDanylo {
             Some(id) => id,
             None => {
                 error!("Failed to send message: Client {} is not found", to);
-                return Err(format!("Failed to send message: Client {} is not found", to));
+                return;
             }
         };
 
@@ -695,11 +661,9 @@ impl ChatClientDanylo {
         match result {
             Ok(_) => {
                 info!("Message sent successfully.");
-                Ok(())
             }
             Err(err) => {
                 error!("Failed to send message: {}", err);
-                Err(err)
             },
         }
     }
