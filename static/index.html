@@ -587,148 +587,138 @@
                 }
             });
         }
+        // Handle WebSocket messages
         ws.onmessage = async (event) => {
             try {
                 const text = await event.data;
                 const data = JSON.parse(text);
 
+                // Update the DOM based on node_type
                 let panel = panels[data.node_id];
-                const nodeTypeKey = getNodeTypeKey(data.node_type);
-
                 if (!panel) {
                     panel = document.createElement("div");
                     panel.className = "panel";
                     panel.dataset.nodeId = data.node_id;
-                    panel.innerHTML = getPanelTemplate(data, nodeTypeKey);
+
+                    // Populate the panel content based on the node_type
+                    switch (data.node_type) {
+                        case "Web Browser":
+                            panel.innerHTML = `
+                        <div class="selection-square" onclick="toggleNodeSelection('${data.node_id}')"></div>
+                        <h2>Node ${data.node_id} (${data.node_type})</h2>
+                        <div class="session">Session ID: <span id="session-${data.node_id}">${data.session_id}</span></div>
+                        <div class="connected-nodes">Connected Nodes: <span id="connected-nodes-${data.node_id}">${Array.from(data.connected_node_ids).join(', ')}</span></div>
+                        <div class="registered-communication-servers">Registered Communication Servers: <pre id="registered-communication-servers-${data.node_id}">${JSON.stringify(data.registered_communication_servers, null, 2)}</pre></div>
+                        <div class="registered-content-servers">Registered Content Servers: <pre id="registered-content-servers-${data.node_id}">${JSON.stringify(data.registered_content_servers, null, 2)}</pre></div>
+                        <div class="routing-table">Routing Table: <pre id="routing-table-${data.node_id}">${JSON.stringify(data.routing_table, null, 2)}</pre></div>
+                        <div class="message-chat">Message Chat: <pre id="message-chat-${data.node_id}">${JSON.stringify(data.message_chat, null, 2)}</pre></div>
+                    `;
+                            break;
+
+                        case "Chat Client":
+                            panel.innerHTML = `
+                        <div class="selection-square" onclick="toggleNodeSelection('${data.node_id}')"></div>
+                        <h2>Node ${data.node_id} (${data.node_type})</h2>
+                        <div class="flood-ids">Flood IDs: <span id="flood-ids-${data.node_id}">${data.flood_ids.join(', ')}</span></div>
+                        <div class="session-ids">Session IDs: <span id="session-ids-${data.node_id}">${data.session_ids.join(', ')}</span></div>
+                        <div class="neighbours">Neighbours: <span id="neighbours-${data.node_id}">${Array.from(data.neighbours).join(', ')}</span></div>
+                        <div class="discovered-servers">Discovered Servers: <pre id="discovered-servers-${data.node_id}">${JSON.stringify(data.discovered_servers, null, 2)}</pre></div>
+                        <div class="available-clients">Available Clients: <pre id="available-clients-${data.node_id}">${JSON.stringify(data.available_clients, null, 2)}</pre></div>
+                        <div class="received-messages">Received Messages: <pre id="received-messages-${data.node_id}">${JSON.stringify(data.received_messages, null, 2)}</pre></div>
+                    `;
+                            break;
+
+                        case "Communication Server":
+                            panel.innerHTML = `
+                        <div class="selection-square" onclick="toggleNodeSelection('${data.node_id}')"></div>
+                        <h2>Node ${data.node_id} (${data.node_type})</h2>
+                        <div class="flood-id">Flood ID: <span id="flood-id-${data.node_id}">${data.flood_id}</span></div>
+                        <div class="connected-nodes">Connected Nodes: <span id="connected-nodes-${data.node_id}">${Array.from(data.connected_node_ids).join(', ')}</span></div>
+                        <div class="routing-table">Routing Table: <pre id="routing-table-${data.node_id}">${JSON.stringify(data.routing_table, null, 2)}</pre></div>
+                        <div class="registered-clients">Registered Clients: <span id="registered-clients-${data.node_id}">${data.registered_clients.join(', ')}</span></div>
+                    `;
+                            break;
+
+                        case "Media Server":
+                            panel.innerHTML = `
+                        <div class="selection-square" onclick="toggleNodeSelection('${data.node_id}')"></div>
+                        <h2>Node ${data.node_id} (${data.node_type})</h2>
+                        <div class="flood-id">Flood ID: <span id="flood-id-${data.node_id}">${data.flood_id}</span></div>
+                        <div class="connected-nodes">Connected Nodes: <span id="connected-nodes-${data.node_id}">${Array.from(data.connected_node_ids).join(', ')}</span></div>
+                        <div class="routing-table">Routing Table: <pre id="routing-table-${data.node_id}">${JSON.stringify(data.routing_table, null, 2)}</pre></div>
+                        <div class="media">Media: <pre id="media-${data.node_id}">${JSON.stringify(data.media, null, 2)}</pre></div>
+                    `;
+                            break;
+
+                        case "Text Server":
+                            panel.innerHTML = `
+                        <div class="selection-square" onclick="toggleNodeSelection('${data.node_id}')"></div>
+                        <h2>Node ${data.node_id} (${data.node_type})</h2>
+                        <div class="flood-id">Flood ID: <span id="flood-id-${data.node_id}">${data.flood_id}</span></div>
+                        <div class="connected-nodes">Connected Nodes: <span id="connected-nodes-${data.node_id}">${Array.from(data.connected_node_ids).join(', ')}</span></div>
+                        <div class="routing-table">Routing Table: <pre id="routing-table-${data.node_id}">${JSON.stringify(data.routing_table, null, 2)}</pre></div>
+                        <div class="text-files">Text Files: <pre id="text-files-${data.node_id}">${JSON.stringify(data.text_files, null, 2)}</pre></div>
+                    `;
+                            break;
+
+                        default:
+                            panel.innerHTML = `<h2>Node ${data.node_id} (${data.node_type})</h2><div>Unsupported node type</div>`;
+                            break;
+                    }
+
                     panelsContainer.appendChild(panel);
                     panels[data.node_id] = panel;
                 } else {
-                    updateExistingPanel(data, nodeTypeKey);
+                    // Update logic for existing panels (similar to above switch-case logic)
+                    switch (data.node_type) {
+                        case "Web Browser":
+                            document.getElementById(`session-${data.node_id}`).textContent = data.session_id;
+                            document.getElementById(`connected-nodes-${data.node_id}`).textContent = Array.from(data.connected_node_ids).join(', ');
+                            document.getElementById(`registered-communication-servers-${data.node_id}`).textContent = JSON.stringify(data.registered_communication_servers, null, 2);
+                            document.getElementById(`registered-content-servers-${data.node_id}`).textContent = JSON.stringify(data.registered_content_servers, null, 2);
+                            document.getElementById(`routing-table-${data.node_id}`).textContent = JSON.stringify(data.routing_table, null, 2);
+                            document.getElementById(`message-chat-${data.node_id}`).textContent = JSON.stringify(data.message_chat, null, 2);
+                            break;
+
+                        case "Chat Client":
+                            document.getElementById(`flood-ids-${data.node_id}`).textContent = data.flood_ids.join(', ');
+                            document.getElementById(`session-ids-${data.node_id}`).textContent = data.session_ids.join(', ');
+                            document.getElementById(`neighbours-${data.node_id}`).textContent = Array.from(data.neighbours).join(', ');
+                            document.getElementById(`discovered-servers-${data.node_id}`).textContent = JSON.stringify(data.discovered_servers, null, 2);
+                            document.getElementById(`available-clients-${data.node_id}`).textContent = JSON.stringify(data.available_clients, null, 2);
+                            document.getElementById(`received-messages-${data.node_id}`).textContent = JSON.stringify(data.received_messages, null, 2);
+                            break;
+
+                        case "Communication Server":
+                            document.getElementById(`flood-id-${data.node_id}`).textContent = data.flood_id;
+                            document.getElementById(`connected-nodes-${data.node_id}`).textContent = Array.from(data.connected_node_ids).join(', ');
+                            document.getElementById(`routing-table-${data.node_id}`).textContent = JSON.stringify(data.routing_table, null, 2);
+                            document.getElementById(`registered-clients-${data.node_id}`).textContent = data.registered_clients.join(', ');
+                            break;
+
+                        case "Media Server":
+                            document.getElementById(`flood-id-${data.node_id}`).textContent = data.flood_id;
+                            document.getElementById(`connected-nodes-${data.node_id}`).textContent = Array.from(data.connected_node_ids).join(', ');
+                            document.getElementById(`routing-table-${data.node_id}`).textContent = JSON.stringify(data.routing_table, null, 2);
+                            document.getElementById(`media-${data.node_id}`).textContent = JSON.stringify(data.media, null, 2);
+                            break;
+
+                        case "Text Server":
+                            document.getElementById(`flood-id-${data.node_id}`).textContent = data.flood_id;
+                            document.getElementById(`connected-nodes-${data.node_id}`).textContent = Array.from(data.connected_node_ids).join(', ');
+                            document.getElementById(`routing-table-${data.node_id}`).textContent = JSON.stringify(data.routing_table, null, 2);
+                            document.getElementById(`text-files-${data.node_id}`).textContent = JSON.stringify(data.text_files, null, 2);
+                            break;
+
+                        default:
+                            console.warn(`Unknown node type: ${data.node_type}`);
+                            break;
+                    }
                 }
             } catch (e) {
                 console.error('Error processing message:', e);
-                const msgDiv = document.createElement("div");
-                msgDiv.className = "message error";
-                msgDiv.textContent = `Error decoding message: ${e.message}`;
-                panelsContainer.appendChild(msgDiv);
             }
         };
-
-        function getNodeTypeKey(nodeType) {
-            switch(nodeType) {
-                case 'Web Browser': return 'web';
-                case 'Chat Client': return 'chatclient';
-                case 'Communication Server': return 'communication';
-                case 'Media Server': return 'media';
-                case 'Text Server': return 'text';
-                default: return 'unknown';
-            }
-        }
-        function getPanelTemplate(data, nodeTypeKey) {
-            const baseHTML = `
-        <div class="selection-square" onclick="toggleNodeSelection('${data.node_id}')"></div>
-        <h2>Node ${data.node_id} (${data.node_type})</h2>
-    `;
-
-            // Safe data access with fallbacks
-            const safeArray = (field) => Array.from(data[field] || []).join(', ');
-            const safeJSON = (field) => JSON.stringify(data[field] || {}, null, 2);
-
-            const typeSpecificHTML = {
-                chatclient: `
-            <div class="flood-ids">Flood IDs: <pre id="flood-ids-${data.node_id}">${safeJSON('flood_ids')}</pre></div>
-            <div class="session-ids">Session IDs: <pre id="session-ids-${data.node_id}">${safeJSON('session_ids')}</pre></div>
-            <div class="neighbours">Neighbours: <span id="neighbours-${data.node_id}">${safeArray('neighbours')}</span></div>
-            <div class="discovered-servers">Discovered Servers: <pre id="discovered-servers-${data.node_id}">${safeJSON('discovered_servers')}</pre></div>
-            <div class="available-clients">Available Clients: <pre id="available-clients-${data.node_id}">${safeJSON('available_clients')}</pre></div>
-            <div class="received-messages">Received Messages: <pre id="received-messages-${data.node_id}">${safeJSON('received_messages')}</pre></div>
-        `,
-                web: `
-            <div class="flood-id">Flood ID: <span id="flood-id-${data.node_id}">${data.flood_id || 'N/A'}</span></div>
-            <div class="session-id">Session ID: <span id="session-id-${data.node_id}">${data.session_id || 'N/A'}</span></div>
-            <div class="connected-nodes">Connected Nodes: <span id="connected-nodes-${data.node_id}">${safeArray('connected_node_ids')}</span></div>
-            <div class="registered-comms">Registered Communication Servers: <pre id="registered-comms-${data.node_id}">${safeJSON('registered_communication_servers')}</pre></div>
-            <div class="registered-content">Content Servers: <pre id="registered-content-${data.node_id}">${safeJSON('registered_content_servers')}</pre></div>
-            <div class="routing-table">Routing Table: <pre id="routing-table-${data.node_id}">${safeJSON('routing_table')}</pre></div>
-            <div class="message-chat">Message Chat: <pre id="message-chat-${data.node_id}">${safeJSON('message_chat')}</pre></div>
-        `,
-                communication: `
-            <div class="flood-id">Flood ID: <span id="flood-id-${data.node_id}">${data.flood_id}</span></div>
-            <div class="connected-nodes">Connected Nodes: <span id="connected-nodes-${data.node_id}">${Array.from(data.connected_node_ids).join(', ')}</span></div>
-            <div class="routing-table">Routing Table: <pre id="routing-table-${data.node_id}">${JSON.stringify(data.routing_table, null, 2)}</pre></div>
-            <div class="registered-clients">Registered Clients: <pre id="registered-clients-${data.node_id}">${JSON.stringify(data.registered_clients, null, 2)}</pre></div>
-        `,
-                media: `
-            <div class="flood-id">Flood ID: <span id="flood-id-${data.node_id}">${data.flood_id}</span></div>
-            <div class="connected-nodes">Connected Nodes: <span id="connected-nodes-${data.node_id}">${Array.from(data.connected_node_ids).join(', ')}</span></div>
-            <div class="routing-table">Routing Table: <pre id="routing-table-${data.node_id}">${JSON.stringify(data.routing_table, null, 2)}</pre></div>
-            <div class="media-content">Media Content: <pre id="media-content-${data.node_id}">${JSON.stringify(data.media, null, 2)}</pre></div>
-        `,
-                text: `
-            <div class="flood-id">Flood ID: <span id="flood-id-${data.node_id}">${data.flood_id}</span></div>
-            <div class="connected-nodes">Connected Nodes: <span id="connected-nodes-${data.node_id}">${Array.from(data.connected_node_ids).join(', ')}</span></div>
-            <div class="routing-table">Routing Table: <pre id="routing-table-${data.node_id}">${JSON.stringify(data.routing_table, null, 2)}</pre></div>
-            <div class="text-files">Text Files: <pre id="text-files-${data.node_id}">${JSON.stringify(data.text_files, null, 2)}</pre></div>
-        `
-            };
-
-            return baseHTML + (typeSpecificHTML[nodeTypeKey] || '<div>Unknown node type</div>');
-        }
-
-        function updateExistingPanel(data, nodeTypeKey) {
-            switch(nodeTypeKey) {
-                case 'chatclient':
-                    updateElementContent(`flood-ids-${data.node_id}`, data.flood_ids);
-                    updateElementContent(`session-ids-${data.node_id}`, data.session_ids);
-                    updateElementContent(`neighbours-${data.node_id}`, Array.from(data.neighbours).join(', '));
-                    updateElementContent(`discovered-servers-${data.node_id}`, data.discovered_servers);
-                    updateElementContent(`available-clients-${data.node_id}`, data.available_clients);
-                    updateElementContent(`received-messages-${data.node_id}`, data.received_messages);
-                    break;
-
-                case 'web':
-                    updateElementContent(`flood-id-${data.node_id}`, data.flood_id);
-                    updateElementContent(`session-id-${data.node_id}`, data.session_id);
-                    updateElementContent(`connected-nodes-${data.node_id}`, Array.from(data.connected_node_ids).join(', '));
-                    updateElementContent(`registered-comms-${data.node_id}`, data.registered_communication_servers);
-                    updateElementContent(`registered-content-${data.node_id}`, data.registered_content_servers);
-                    updateElementContent(`routing-table-${data.node_id}`, data.routing_table);
-                    updateElementContent(`message-chat-${data.node_id}`, data.message_chat);
-                    break;
-
-                case 'communication':
-                    updateElementContent(`flood-id-${data.node_id}`, data.flood_id);
-                    updateElementContent(`connected-nodes-${data.node_id}`, Array.from(data.connected_node_ids).join(', '));
-                    updateElementContent(`routing-table-${data.node_id}`, data.routing_table);
-                    updateElementContent(`registered-clients-${data.node_id}`, data.registered_clients);
-                    break;
-
-                case 'media':
-                    updateElementContent(`flood-id-${data.node_id}`, data.flood_id);
-                    updateElementContent(`connected-nodes-${data.node_id}`, Array.from(data.connected_node_ids).join(', '));
-                    updateElementContent(`routing-table-${data.node_id}`, data.routing_table);
-                    updateElementContent(`media-content-${data.node_id}`, data.media);
-                    break;
-
-                case 'text':
-                    updateElementContent(`flood-id-${data.node_id}`, data.flood_id);
-                    updateElementContent(`connected-nodes-${data.node_id}`, Array.from(data.connected_node_ids).join(', '));
-                    updateElementContent(`routing-table-${data.node_id}`, data.routing_table);
-                    updateElementContent(`text-files-${data.node_id}`, data.text_files);
-                    break;
-            }
-        }
-
-        function updateElementContent(elementId, content) {
-            const element = document.getElementById(elementId);
-            if (element) {
-                // Handle undefined/null values
-                const safeContent = content || (Array.isArray(content) ? [] : {});
-                element.textContent = typeof safeContent === 'object'
-                    ? JSON.stringify(safeContent, null, 2)
-                    : safeContent;
-            }
-        }
 
         // Function to toggle node selection
         function toggleNodeSelection(nodeId) {
