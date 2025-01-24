@@ -16,7 +16,7 @@ use crate::{
     general_use::{ClientCommand, ClientEvent, Message, Query, Response, ServerType},
     clients::Client
 };
-use super::{MessageFragments, ChatGUI};
+use super::MessageFragments;
 
 pub type Node = (NodeId, NodeType);
 
