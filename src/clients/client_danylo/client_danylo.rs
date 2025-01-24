@@ -163,6 +163,12 @@ impl ChatClientDanylo {
                     Err(err) => error!("Failed to request server type: {}", err),
                 };
             }
+            ClientCommand::SendMessageTo(to, message) => {
+                match self.send_message_to(to, message) {
+                    Ok(_) => info!("Message sent successfully"),
+                    Err(err) => error!("Failed to send message: {}", err),
+                };
+            }
             _ => {}
         }
     }
@@ -669,7 +675,19 @@ impl ChatClientDanylo {
 
     /// ###### Sends a message to a specified client via a specified server.
     /// Sends the message and waits for a response.
-    pub fn send_message_to(&mut self, to: NodeId, message: Message, server_id: ServerId) -> Result<(), String> {
+    pub fn send_message_to(&mut self, to: ClientId, message: Message) -> Result<(), String> {
+        let option_server_id = self.clients.iter()
+            .find(|(_, clients)| clients.contains(&to))
+            .map(|(server_id, _)| *server_id);
+
+        let server_id = match option_server_id {
+            Some(id) => id,
+            None => {
+                error!("Failed to send message: Client {} is not found", to);
+                return Err(format!("Failed to send message: Client {} is not found", to));
+            }
+        };
+
         info!("Sending message to client {} via server {}", to, server_id);
 
         let result = self.create_and_send_message(Query::SendMessageTo(to, message), server_id);
