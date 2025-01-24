@@ -62,11 +62,8 @@ impl Monitoring for ClientChen{
     ) {
         //first monitor
         self.send_display_data(sender_to_gui.clone());
-        loop {
-                    self.status.session_id += 1;
-                    self.send_display_data(sender_to_gui.clone());
-            }
-        }
+    }
+
 /*
     fn run_with_monitoring(&mut self, sender_to_gui: Sender<String>) {
         loop {
