@@ -275,26 +275,6 @@
                 border-bottom: 1px solid #004d40;
             }
 
-            /* Groups Section */
-            .group-item {
-                padding: 10px;
-                border-bottom: 1px solid #d1d1d1;
-                cursor: pointer;
-                transition: background-color 0.2s ease;
-            }
-
-            .group-item:hover {
-                background-color: #d9fdd3; /* Light green for hover */
-            }
-
-            /* Highlight the active (selected) group */
-            .group-item.active {
-                background-color: #c8e6c9; /* Slightly darker green than hover */
-                font-weight: bold;
-                color: #2e7d32;
-            }
-
-
             .chat-item {
                 padding: 10px;
                 border-bottom: 1px solid #d1d1d1;
@@ -305,6 +285,13 @@
             .chat-item:hover {
                 background-color: #d9fdd3; /* Light green for hover */
             }
+
+            .chat-item.active {
+                background-color: #c8e6c9; /* Slightly darker green than hover */
+                font-weight: bold;
+                color: #2e7d32;
+            }
+
 
             /* Chat Window */
             #chat-messages {
@@ -366,6 +353,19 @@
                 background-color: #1ebe5a;
             }
 
+            .receiver-item {
+                padding: 10px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                cursor: pointer;
+                text-align: left;
+                margin-bottom: 5px;
+            }
+
+            .receiver-item:hover {
+                background-color: #f1f1f1;
+            }
+
             /* General CSS */
 
             .flex-center-all{
@@ -383,10 +383,6 @@
             .jump {
                 transform-origin: 50% 50%;
                 animation: jump .6s linear alternate infinite;
-            }
-
-            .receiver-item:hover {
-                background-color: #f1f1f1;
             }
 
         </style>
@@ -439,30 +435,15 @@
 
             <!-- Sidebar for Chats -->
             <div id="chat-sidebar" style="width: 30%; display: flex; flex-direction: column;">
-                <!-- Groups Section -->
-                <div id="group-sidebar" style="display: flex; flex-direction: column; border-bottom: 1px solid #d1d1d1; padding:15px">
-                    <div id="group-header" style="padding: 10px; font-weight: bold; border-bottom: 1px solid #d1d1d1; background-color: #ededed;">
-                        Groups
-                    </div>
-                    <div id="group-list" style="flex-grow: 1; overflow-y: auto;">
-                        <!-- Example Group Items -->
-                        <div class="group-item" onclick="selectGroup('Group 1')">Group 1</div>
-                        <div class="group-item" onclick="selectGroup('Group 2')">Group 2</div>
-                        <div class="group-item" onclick="selectGroup('Group 3')">Group 3</div>
-                    </div>
+                <div id="sidebar-header">
+                    <span>Chats</span>
+                    <img src="new_chat_icon.png" alt="create_chat" onclick="createNewChat()" style="width:100%; max-width:30px; padding: 5px 10px; cursor: pointer;">
                 </div>
-
-                <!-- Chats Section -->
-                <div id="chat-section" style="flex-grow: 1; display: flex; flex-direction: column;">
-                    <div id="sidebar-header" style="padding: 10px; font-weight: bold; border-bottom: 1px solid #d1d1d1; background-color: #ededed;">
-                        <span>Chats</span>
-                        <img src="new_chat_icon.png" alt="create_chat" onclick="createNewChat()" style="width:100%; max-width:30px; padding: 5px 10px; cursor: pointer;">
-                    </div>
-                    <div id="chat-list" style="flex-grow: 1; overflow-y: auto;">
-                        <div class="chat-item" onclick="openChat('Chat 1')">Chat 1</div>
-                        <div class="chat-item" onclick="openChat('Chat 2')">Chat 2</div>
-                        <div class="chat-item" onclick="openChat('Chat 3')">Chat 3</div>
-                    </div>
+                <div id="chat-list" style="flex-grow: 1; overflow-y: auto;">
+                    <!-- Example Chat Items -->
+                    <div class="chat-item" onclick="openChat('Chat 1')">Chat 1</div>
+                    <div class="chat-item" onclick="openChat('Chat 2')">Chat 2</div>
+                    <div class="chat-item" onclick="openChat('Chat 3')">Chat 3</div>
                 </div>
             </div>
 
@@ -501,7 +482,7 @@
 
     <div id="chat-popup" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 2000; justify-content: center; align-items: center;">
         <div style="background: white; padding: 20px; border-radius: 10px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-            <h2>Select a Receiver</h2>
+            <h2>Select a Server</h2>
             <div id="receiver-list" style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
                 <!-- Default receiver boxes -->
                 <div class="receiver-item" onclick="selectReceiver('Receiver 1')" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; text-align: left;">
@@ -530,14 +511,14 @@
         const wsHost = window.location.hostname || 'localhost';
         const ws = new WebSocket(`ws://${wsHost}:8080`);
 
+        // Phonebooks STORED
 
-        //DATA STORED IN THE PAGE
-
-        const groups = {
-            "Group 1": ["Chat 1", "Chat 2", "Chat 3"],
-            "Group 2": ["Chat A", "Chat B", "Chat C"],
-            "Group 3": ["Chat X", "Chat Y", "Chat Z"],
+        const phonebooks = {
+            "Server1": ["Mom", "Dad", "Sibling"],
+            "Server2": ["Alice", "Bob", "Charlie"],
+            "Server3": ["Manager", "Colleague A", "Colleague B"],
         };
+
 
 
         // Function to order panels by node_id
@@ -801,21 +782,42 @@
             window.location.reload(); // Reload the page to reset state
         }
 
-
-
-
-
-
         /* COMMUNICATION JAVASCRIPT */
 
         function createNewChat() {
             const chatPopup = document.getElementById('chat-popup');
-            chatPopup.style.display = 'flex'; // Show the pop-up
+            const receiverList = document.getElementById('receiver-list');
+            receiverList.innerHTML = ''; // Clear existing list
+
+            // Add phonebooks to the popup
+            Object.keys(phonebooks).forEach((phonebook) => {
+                const phonebookItem = document.createElement('div');
+                phonebookItem.className = 'receiver-item';
+                phonebookItem.textContent = phonebook;
+                phonebookItem.onclick = () => showReceivers(phonebook); // Show receivers for the selected phonebook
+                receiverList.appendChild(phonebookItem);
+            });
+
+            chatPopup.style.display = 'flex'; // Show the popup
         }
 
         function closeChatPopup() {
             const chatPopup = document.getElementById('chat-popup');
             chatPopup.style.display = 'none'; // Hide the pop-up
+        }
+
+        function showReceivers(phonebook) {
+            const receiverList = document.getElementById('receiver-list');
+            receiverList.innerHTML = ''; // Clear existing list
+
+            // Add receivers for the selected phonebook
+            phonebooks[phonebook].forEach((receiver) => {
+                const receiverItem = document.createElement('div');
+                receiverItem.className = 'receiver-item';
+                receiverItem.textContent = receiver;
+                receiverItem.onclick = () => selectReceiver(receiver); // Handle receiver selection
+                receiverList.appendChild(receiverItem);
+            });
         }
 
         function selectReceiver(receiverName) {
@@ -835,42 +837,6 @@
             closeChatPopup();
         }
 
-        // Function to update the chat list when a group is selected
-        function selectGroup(groupName) {
-            const groupItems = document.querySelectorAll(".group-item");
-            const chatList = document.getElementById("chat-list");
-
-            // Remove 'active' class from all groups and add it to the selected group
-            groupItems.forEach((item) => item.classList.remove("active"));
-            const selectedGroup = [...groupItems].find((item) => item.textContent === groupName);
-            if (selectedGroup) selectedGroup.classList.add("active");
-
-            chatList.innerHTML = ""; // Clear existing chat list
-
-            if (groups[groupName]) {
-                groups[groupName].forEach((chat) => {
-                    const chatItem = document.createElement("div");
-                    chatItem.className = "chat-item";
-                    chatItem.textContent = chat;
-                    chatItem.onclick = () => openChat(chat); // Open chat on click
-                    chatList.appendChild(chatItem);
-                });
-            } else {
-                // Show message if no chats are found
-                chatList.innerHTML = `<p style="padding: 10px; text-align: center; color: #555;">No chats available in ${groupName}.</p>`;
-            }
-
-            console.log(`Selected group: ${groupName}`);
-        }
-
-        // Reload groups (placeholder function)
-        function reloadGroups() {
-            console.log("Reloading groups...");
-            alert("Groups have been reloaded!"); // Placeholder
-            // Optionally, fetch updated groups from the server here
-        }
-
-
         function openChat(chatName) {
             // Update the chat header with the selected chat name
             document.getElementById('chat-header').textContent = chatName;
@@ -881,9 +847,16 @@
                 <div class="message received">Welcome to ${chatName}!</div>
                 <div class="message sent">Hi there!</div>
             `;
+
             chatMessages.style.background = 'url("whatsapp_bg.jpg")';
             chatMessages.style.backgroundSize = 'cover';
             chatMessages.style.backgroundPosition = 'center';
+
+            // Highlight the active chat in the sidebar
+            const chatItems = document.querySelectorAll('.chat-item');
+            chatItems.forEach((item) => item.classList.remove('active')); // Remove active class from all
+            const selectedChat = [...chatItems].find((item) => item.textContent === chatName);
+            if (selectedChat) selectedChat.classList.add('active');
         }
 
         function sendMessage() {
@@ -907,10 +880,6 @@
                 messageInput.value = '';
             }
         }
-
-
-
-
 
 
 
