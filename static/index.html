@@ -132,6 +132,9 @@
             }
 
 
+
+
+
             /* ROLE POP-UP CSS */
 
             .popup {
@@ -145,6 +148,8 @@
                 justify-content: center;
                 align-items: center;
                 z-index: 1000;
+                padding-left: 20px;
+                padding-right: 20px;
             }
             .popup-content {
                 background: white;
@@ -155,28 +160,121 @@
                 max-width: 500px;
                 width: 90%;
             }
-            .popup-button {
-                padding: 15px 30px;
-                margin: 10px;
-                font-size: 18px;
+
+            .container-roles {
+                display: flex;
+                justify-content: space-around;
+                align-items: center;
+            }
+
+            .role {
+                position: relative;
+                cursor: pointer;
+                text-align: center;
+            }
+
+            .role-image {
+                max-width: 150px;
+                transition: opacity 0.3s ease;
+            }
+
+            .role:hover .role-image {
+                opacity: 0.4; /* Decrease image opacity on hover */
+            }
+
+            .role-text {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
                 color: white;
+                font-size: 18px;
+                font-weight: bold;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+
+                padding: 5px 10px;
+                margin: 10px;
                 background-color: #007bff;
                 border: none;
                 border-radius: 5px;
+            }
+
+            .role:hover .role-text {
+                opacity: 1; /* Show the text on hover */
+            }
+
+
+
+
+            /* LIST CLIENTS CSS */
+
+            .container-clients {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                margin-top: 20px;
+            }
+
+            .client-option {
+                background: #007bff;
+                color: white;
+                padding: 15px;
+                margin: 10px 0;
+                border-radius: 5px;
                 cursor: pointer;
+                width: 80%;
+                text-align: center;
+                transition: background 0.3s ease;
             }
-            .popup-button:hover {
-                background-color: #0056b3;
+
+            .client-option:hover {
+                background: #0056b3;
             }
+
+
+
+            /* General CSS */
+
+            .flex-center-all{
+                display:flex;
+                align-items: center;
+                align-content: center;
+            }
+
+            @keyframes jump {
+                0%   {transform: translate3d(0,-5%,0) scale3d(1,1,1);}
+                40%  {transform: translate3d(0,30%,0) scale3d(1,1,1);}
+                100% {transform: translate3d(0,40%,0) scale3d(1.5,.7,1);}
+            }
+
+            .jump {
+                transform-origin: 50% 50%;
+                animation: jump .6s linear alternate infinite;
+            }
+
         </style>
     </head>
     <body>
 
     <div id="role-popup" class="popup">
         <div class="popup-content">
-            <h1>Select Your Role</h1>
-            <button onclick="selectRole('controller')" class="popup-button">Controller</button>
-            <button onclick="selectRole('client')" class="popup-button">Client</button>
+            <h1 id="popup-title">Select Your Role</h1>
+            <div class="container-roles" id="role-selection">
+                <div class="role" onclick="selectRole('controller')">
+                    <img src="controller.png" class="role-image jump">
+                    <span class="role-text">Controller</span>
+                </div>
+                <div class="role" onclick="selectRole('client')">
+                    <img src="client.png" class="role-image jump">
+                    <span class="role-text">Client</span>
+                </div>
+            </div>
+            <div class="container-clients" id="client-selection" style="display: none;">
+                <div class="client-option" onclick="chooseClient('Client 1')">Client 1</div>
+                <div class="client-option" onclick="chooseClient('Client 2')">Client 2</div>
+                <div class="client-option" onclick="chooseClient('Client 3')">Client 3</div>
+            </div>
         </div>
     </div>
 
@@ -197,9 +295,15 @@
 
     <div id="client-view" style="display: none;">
         <header>Client View</header>
-        <div class="panel">
-            <h2>Welcome, Client!</h2>
-            <p>You have access to a single client's information.</p>
+        <div id="communication-ui" style="display: none;">
+            <h2>Communication Application</h2>
+            <p>Welcome to the communication app! Here you can chat and communicate with others.</p>
+            <!-- Additional UI for communication can go here -->
+        </div>
+        <div id="content-ui" style="display: none;">
+            <h2>Content Storing Application</h2>
+            <p>Welcome to the content storing app! Here you can manage your files and data.</p>
+            <!-- Additional UI for content storing can go here -->
         </div>
     </div>
 
@@ -361,18 +465,73 @@
         // ROLE POP-UP JS
 
         function selectRole(role) {
-            const popup = document.getElementById('role-popup');
-            const controllerView = document.getElementById('controller-view');
-            const clientView = document.getElementById('client-view');
+            const popupTitle = document.getElementById('popup-title');
+            const roleSelection = document.getElementById('role-selection');
+            const clientSelection = document.getElementById('client-selection');
+            const clientsDisplayDiv = document.getElementById('clients_display_div');
 
-            // Hide the pop-up
-            popup.style.display = 'none';
-
-            // Show the corresponding view
             if (role === 'controller') {
-                controllerView.style.display = 'block';
+                // Hide the pop-up and show the controller view
+                document.getElementById('role-popup').style.display = 'none';
+                document.getElementById('controller-view').style.display = 'block';
             } else if (role === 'client') {
-                clientView.style.display = 'block';
+                // Update the pop-up for client selection
+                popupTitle.textContent = 'Select a Client';
+                roleSelection.style.display = 'none';
+                clientSelection.style.display = 'flex';
+
+                // Dynamically create client options
+                const panels = clientsDisplayDiv.querySelectorAll('.panel');
+                clientSelection.innerHTML = ''; // Clear existing options
+
+                if (panels.length === 0) {
+                    // No nodes found, show error message
+                    const errorMessage = document.createElement('div');
+                    errorMessage.textContent = 'Probable error in connection with server, please reload the page and try again';
+                    errorMessage.style.color = 'red';
+                    errorMessage.style.textAlign = 'center';
+                    clientSelection.appendChild(errorMessage);
+                } else {
+                    // Create buttons for each panel (node)
+                    panels.forEach((panel) => {
+                        const nodeId = panel.dataset.nodeId; // Retrieve node_id from panel's dataset
+                        const typeClient = "WhatsApp";
+                        const clientButton = document.createElement('button');
+                        clientButton.textContent = `Client (${nodeId}) using: ${typeClient}`;
+                        clientButton.className = 'client-option';
+                        clientButton.onclick = () => chooseClient(nodeId); // Associate button with node_id
+                        clientSelection.appendChild(clientButton);
+                    });
+                }
+            }
+        }
+
+        function chooseClient(nodeId) {
+            console.log(`Client chosen: Node ${nodeId}`);
+
+            // Find the panel corresponding to the selected nodeId
+            const panel = document.querySelector(`.panel[data-node-id="${nodeId}"]`);
+            if (!panel) {
+                console.error(`No panel found for Node ${nodeId}`);
+                return;
+            }
+
+            // Simulate retrieving the typeClient from the panel (replace with actual data if needed)
+            const typeClient = panel.dataset.typeClient || 'WhatsApp'; // Default to WhatsApp if not set
+
+            // Transition to the client view
+            document.getElementById('role-popup').style.display = 'none';
+            document.getElementById('client-view').style.display = 'block';
+
+            // Show the appropriate UI based on the typeClient
+            const communicationUI = document.getElementById('communication-ui');
+            const contentUI = document.getElementById('content-ui');
+            if (typeClient === 'WhatsApp') {
+                communicationUI.style.display = 'block';
+                contentUI.style.display = 'none';
+            } else {
+                communicationUI.style.display = 'none';
+                contentUI.style.display = 'block';
             }
         }
 
