@@ -15,6 +15,9 @@ use crossbeam_channel::{unbounded, Sender};
 
 // Modified main function
 fn main() {
+    // Initialize the logger
+    env_logger::init();
+
     let (tx, rx) = unbounded();
     let mut my_net = network_initializer::NetworkInitializer::new(tx.clone());
     my_net.initialize_from_file("input.toml");
