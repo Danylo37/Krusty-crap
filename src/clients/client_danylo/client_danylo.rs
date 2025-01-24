@@ -49,11 +49,6 @@ pub struct ChatClientDanylo {
 
     // Inbox
     pub inbox: Vec<(NodeId, Message)>,                          // Messages with their senders
-
-    // For GUI
-    pub response_received: bool,                                // Flag to indicate if a response was received for the last request
-    pub external_error: Option<String>,                         // Error message from server/drone
-    pub flood_responses: Vec<(Node, Vec<Node>)>,                // Received flood responses (from_node, path_trace)
 }
 
 impl Client for ChatClientDanylo {
@@ -81,9 +76,6 @@ impl Client for ChatClientDanylo {
             messages_to_send: HashMap::new(),
             fragments_to_reassemble: HashMap::new(),
             inbox: Vec::new(),
-            response_received: false,
-            external_error: None,
-            flood_responses: Vec::new(),
         }
     }
 
@@ -140,9 +132,6 @@ impl ChatClientDanylo {
                 self.packet_send.remove(&id);
                 info!("Removed sender for node {}", id);
             }
-            ClientCommand::RunUI => {
-                self.run_gui();
-            }
             ClientCommand::ShortcutPacket(packet) => {
                 info!("Shortcut packet received from SC: {:?}", packet);
                 self.handle_packet(packet);
@@ -159,7 +148,6 @@ impl ChatClientDanylo {
                     .collect();
                 self.send_event(ClientEvent::KnownServers(servers));
             }
-            // -------------- for tests -------------- \\
             ClientCommand::StartFlooding => {
                 match self.discovery() {
                     Ok(_) => info!("Discovery process started successfully"),
@@ -172,16 +160,8 @@ impl ChatClientDanylo {
                     Err(err) => error!("Failed to request server type: {}", err),
                 };
             }
-            // -------------- for tests -------------- \\
             _ => {}
         }
-    }
-
-    /// ###### Runs the GUI for the chat client.
-    /// Creates a new instance of the ChatGUI and runs it.
-    pub fn run_gui(&mut self) {
-        info!("Running GUI");
-        ChatGUI::new(self).run();
     }
 
     /// ###### Handles the acknowledgment (ACK) for a given session and fragment.
@@ -205,7 +185,6 @@ impl ChatClientDanylo {
         } else {
             // All fragments are acknowledged; remove the message from queue.
             self.messages_to_send.remove(&session_id);
-            self.response_received = true;
             info!("All fragments acknowledged for session {}", session_id);
         }
     }
@@ -220,10 +199,10 @@ impl ChatClientDanylo {
                 self.handle_error_in_routing(nack.fragment_index, id, session_id);
             }
             NackType::DestinationIsDrone => {
-                self.external_error = Some("DestinationIsDrone".to_string());
+                // todo
             }
             NackType::UnexpectedRecipient(recipient_id) => {
-                self.external_error = Some(format!("UnexpectedRecipient (node with id {})", recipient_id));
+                // todo
             }
             NackType::Dropped => self.resend_fragment(nack.fragment_index, session_id),
         }
@@ -233,12 +212,10 @@ impl ChatClientDanylo {
     /// Updates the network topology and routes based on the error node.
     /// If a new route is found, it resends the fragment for the specified session.
     /// Else, it starts the discovery process to find a new route.
-    /// If the discovery fails, it logs an error and sets the external error.
     fn handle_error_in_routing(&mut self,fragment_index: u64, error_node: NodeId, session_id: u64) {
         self.update_topology_and_routes(error_node, &session_id);
         if self.messages_to_send.get(&session_id).unwrap().get_route().is_empty() {
             if self.discovery().is_err() {
-                self.external_error = Some("Failed to find a new route after error in routing".to_string());
                 error!("Failed to find a new route after error in routing");
                 return;
             };
@@ -346,13 +323,10 @@ impl ChatClientDanylo {
         let message = self.messages_to_send.get(&session_id).unwrap();
         let packet = message.get_fragment_packet(fragment_index as usize).unwrap();
         match self.send_to_next_hop(packet) {
-            Ok(_) => info!("Resent fragment {} for session {}", fragment_index, session_id),
-            Err(err) => {
-                error!("Failed to resend fragment {} for session {}: {}", fragment_index, session_id, err);
-                self.external_error = Some(
-                    format!("Failed to resend fragment {} for session {}: {}", fragment_index, session_id, err)
-                );
-            },
+            Ok(_) =>
+                info!("Resent fragment {} for session {}", fragment_index, session_id),
+            Err(err) =>
+                error!("Failed to resend fragment {} for session {}: {}", fragment_index, session_id, err),
         }
     }
 
@@ -397,9 +371,8 @@ impl ChatClientDanylo {
 
                     self.inbox.insert(0, (from, message));
                 }
-                Response::Err(error) => {
-                    self.handle_response_error(server_id, error);
-                }
+                Response::Err(error) =>
+                    error!("Error received from server {}: {:?}", server_id, error),
                 _ => {}
             }
         }
@@ -418,9 +391,6 @@ impl ChatClientDanylo {
         if server_type == ServerType::Communication {
             self.is_registered.insert(server_id, false);
         }
-
-        // Mark the response as received.
-        self.response_received = true;
     }
 
     /// ###### Handles the client registration response.
@@ -429,7 +399,6 @@ impl ChatClientDanylo {
         info!("Client registered successfully.");
 
         self.is_registered.insert(server_id, true);
-        self.response_received = true;
     }
 
     /// ###### Handles the list of clients received from the server.
@@ -438,15 +407,6 @@ impl ChatClientDanylo {
         info!("List of clients received successfully.");
 
         self.clients.insert(server_id, clients);
-        self.response_received = true;
-    }
-
-    /// ###### Handles the response error.
-    /// Logs the error and takes appropriate action based on the error type.
-    fn handle_response_error(&mut self, server_id: NodeId, error: String) {
-        error!("Error received from server {}: {:?}", server_id, error);
-
-        self.external_error = Some(error);
     }
 
     /// ###### Sends an acknowledgment (ACK) for a received fragment.
@@ -531,7 +491,6 @@ impl ChatClientDanylo {
 
         let path = &flood_response.path_trace;
 
-        self.flood_responses.push((path.last().unwrap().clone(), path.clone()));
         self.update_routes_and_servers(path);
         self.update_topology(path);
 
