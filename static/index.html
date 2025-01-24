@@ -219,7 +219,9 @@
             .client-option {
                 background: #007bff;
                 color: white;
-                padding: 15px;
+
+                padding: 5px 15px;
+
                 margin: 10px 0;
                 border-radius: 5px;
                 cursor: pointer;
@@ -272,6 +274,26 @@
                 padding: 10px;
                 border-bottom: 1px solid #004d40;
             }
+
+            /* Groups Section */
+            .group-item {
+                padding: 10px;
+                border-bottom: 1px solid #d1d1d1;
+                cursor: pointer;
+                transition: background-color 0.2s ease;
+            }
+
+            .group-item:hover {
+                background-color: #d9fdd3; /* Light green for hover */
+            }
+
+            /* Highlight the active (selected) group */
+            .group-item.active {
+                background-color: #c8e6c9; /* Slightly darker green than hover */
+                font-weight: bold;
+                color: #2e7d32;
+            }
+
 
             .chat-item {
                 padding: 10px;
@@ -417,15 +439,30 @@
 
             <!-- Sidebar for Chats -->
             <div id="chat-sidebar" style="width: 30%; display: flex; flex-direction: column;">
-                <div id="sidebar-header">
-                    <span>Chats</span>
-                    <img src="new_chat_icon.png" alt="create_chat" onclick="createNewChat()" style="width:100%; max-width:30px; padding: 5px 10px; cursor: pointer;">
+                <!-- Groups Section -->
+                <div id="group-sidebar" style="display: flex; flex-direction: column; border-bottom: 1px solid #d1d1d1; padding:15px">
+                    <div id="group-header" style="padding: 10px; font-weight: bold; border-bottom: 1px solid #d1d1d1; background-color: #ededed;">
+                        Groups
+                    </div>
+                    <div id="group-list" style="flex-grow: 1; overflow-y: auto;">
+                        <!-- Example Group Items -->
+                        <div class="group-item" onclick="selectGroup('Group 1')">Group 1</div>
+                        <div class="group-item" onclick="selectGroup('Group 2')">Group 2</div>
+                        <div class="group-item" onclick="selectGroup('Group 3')">Group 3</div>
+                    </div>
                 </div>
-                <div id="chat-list" style="flex-grow: 1; overflow-y: auto;">
-                    <!-- Example Chat Items -->
-                    <div class="chat-item" onclick="openChat('Chat 1')">Chat 1</div>
-                    <div class="chat-item" onclick="openChat('Chat 2')">Chat 2</div>
-                    <div class="chat-item" onclick="openChat('Chat 3')">Chat 3</div>
+
+                <!-- Chats Section -->
+                <div id="chat-section" style="flex-grow: 1; display: flex; flex-direction: column;">
+                    <div id="sidebar-header" style="padding: 10px; font-weight: bold; border-bottom: 1px solid #d1d1d1; background-color: #ededed;">
+                        <span>Chats</span>
+                        <img src="new_chat_icon.png" alt="create_chat" onclick="createNewChat()" style="width:100%; max-width:30px; padding: 5px 10px; cursor: pointer;">
+                    </div>
+                    <div id="chat-list" style="flex-grow: 1; overflow-y: auto;">
+                        <div class="chat-item" onclick="openChat('Chat 1')">Chat 1</div>
+                        <div class="chat-item" onclick="openChat('Chat 2')">Chat 2</div>
+                        <div class="chat-item" onclick="openChat('Chat 3')">Chat 3</div>
+                    </div>
                 </div>
             </div>
 
@@ -492,6 +529,16 @@
         // Create a WebSocket connection to the Rust server
         const wsHost = window.location.hostname || 'localhost';
         const ws = new WebSocket(`ws://${wsHost}:8080`);
+
+
+        //DATA STORED IN THE PAGE
+
+        const groups = {
+            "Group 1": ["Chat 1", "Chat 2", "Chat 3"],
+            "Group 2": ["Chat A", "Chat B", "Chat C"],
+            "Group 3": ["Chat X", "Chat Y", "Chat Z"],
+        };
+
 
         // Function to order panels by node_id
         function orderPanelsByNodeId() {
@@ -565,7 +612,7 @@
             try {
                 const text = await event.data;
                 const data = JSON.parse(text);
-                console.log('Decoded data:', data);
+                //console.log('Decoded data:', data);
 
                 // Update the DOM with the decoded data
                 let panel = panels[data.node_id];
@@ -574,15 +621,15 @@
                     panel.className = "panel";
                     panel.dataset.nodeId = data.node_id;
                     panel.innerHTML = `
-                    <div class="selection-square" onclick="toggleNodeSelection('${data.node_id}')"></div>
-                    <h2>Node ${data.node_id} (${data.node_type})</h2>
-                    <div class="session">Session ID: <span id="session-${data.node_id}">${data.session_id}</span></div>
-                    <div class="connected-nodes">Connected Nodes: <span id="connected-nodes-${data.node_id}">${Array.from(data.connected_node_ids).join(', ')}</span></div>
-                    <div class="registered-communication-servers">Registered Communication Servers: <pre id="registered-communication-servers-${data.node_id}">${JSON.stringify(data.registered_communication_servers, null, 2)}</pre></div>
-                    <div class="registered-content-servers">Registered Content Servers: <pre id="registered-content-servers-${data.node_id}">${JSON.stringify(data.registered_content_servers, null, 2)}</pre></div>
-                    <div class="routing-table">Routing Table: <pre id="routing-table-${data.node_id}">${JSON.stringify(data.routing_table, null, 2)}</pre></div>
-                    <div class="message-chat">Message Chat: <pre id="message-chat-${data.node_id}">${JSON.stringify(data.message_chat, null, 2)}</pre></div>
-                `;
+                        <div class="selection-square" onclick="toggleNodeSelection('${data.node_id}')"></div>
+                        <h2>Node ${data.node_id} (${data.node_type})</h2>
+                        <div class="session">Session ID: <span id="session-${data.node_id}">${data.session_id}</span></div>
+                        <div class="connected-nodes">Connected Nodes: <span id="connected-nodes-${data.node_id}">${Array.from(data.connected_node_ids).join(', ')}</span></div>
+                        <div class="registered-communication-servers">Registered Communication Servers: <pre id="registered-communication-servers-${data.node_id}">${JSON.stringify(data.registered_communication_servers, null, 2)}</pre></div>
+                        <div class="registered-content-servers">Registered Content Servers: <pre id="registered-content-servers-${data.node_id}">${JSON.stringify(data.registered_content_servers, null, 2)}</pre></div>
+                        <div class="routing-table">Routing Table: <pre id="routing-table-${data.node_id}">${JSON.stringify(data.routing_table, null, 2)}</pre></div>
+                        <div class="message-chat">Message Chat: <pre id="message-chat-${data.node_id}">${JSON.stringify(data.message_chat, null, 2)}</pre></div>
+                    `;
                     panelsContainer.appendChild(panel);
                     panels[data.node_id] = panel;
                     //console.log('Created new panel for node:', data.node_id);
@@ -670,10 +717,35 @@
                     panels.forEach((panel) => {
                         const nodeId = panel.dataset.nodeId; // Retrieve node_id from panel's dataset
                         const typeClient = "WhatsApp";
-                        const clientButton = document.createElement('button');
-                        clientButton.textContent = `Client (nodeId: ${nodeId}) using: ${typeClient}`;
-                        clientButton.className = 'client-option';
-                        clientButton.onclick = () => chooseClient(nodeId); // Associate button with node_id
+
+                        //Creating the button-option
+                        var clientButton = document.createElement('div');
+                        clientButton.style = "display:flex; align-items: center; justify-content: start";
+                        clientButton.className = "client-option";
+                        clientButton.onclick = () => chooseClient(nodeId);
+
+                        //Creating the image associated with client Type
+                        const img = document.createElement('img');
+                        img.alt = "typeOfClient";
+                        img.style.width = "100%";
+                        img.style.maxWidth = "30px";
+                        img.style.borderRadius = "7px";
+
+                        if (typeClient === "WhatsApp"){
+                            img.src = "whatsapp.jpg";
+                        }else{
+                            typeClientImage = "google_drive.png";
+                        }
+
+                        //Creating text next to image
+                        const text = document.createElement('p');
+                        text.textContent = `Client nodeId: ${nodeId}`;
+                        text.style = "margin-left: 10px";
+
+                        clientButton.appendChild(img);
+                        clientButton.appendChild(text);
+
+
                         clientSelection.appendChild(clientButton);
                     });
                 }
@@ -709,7 +781,7 @@
                 chatMessages.innerHTML = `
                     <div style="text-align: center; padding: 20px;">
                         <img src="whatsapp_light_icon.png" alt="WhatsApp Icon" style="max-width: 150px; opacity: 0.7;">
-                        <p style="color: #555; margin-top: 10px; font-size: 16px;">Here there will be shown your personal chats!</p>
+                        <p style="color: #555; margin-top: 10px; font-size: 16px; color: #54656f">Here there will be shown your personal chats!</p>
                     </div>
                 `;
                 chatMessages.style.background = 'none'; // Clear background for placeholder
@@ -728,6 +800,11 @@
             // Optional: Redirect to the login page
             window.location.reload(); // Reload the page to reset state
         }
+
+
+
+
+
 
         /* COMMUNICATION JAVASCRIPT */
 
@@ -757,6 +834,42 @@
             // Close the pop-up after selection
             closeChatPopup();
         }
+
+        // Function to update the chat list when a group is selected
+        function selectGroup(groupName) {
+            const groupItems = document.querySelectorAll(".group-item");
+            const chatList = document.getElementById("chat-list");
+
+            // Remove 'active' class from all groups and add it to the selected group
+            groupItems.forEach((item) => item.classList.remove("active"));
+            const selectedGroup = [...groupItems].find((item) => item.textContent === groupName);
+            if (selectedGroup) selectedGroup.classList.add("active");
+
+            chatList.innerHTML = ""; // Clear existing chat list
+
+            if (groups[groupName]) {
+                groups[groupName].forEach((chat) => {
+                    const chatItem = document.createElement("div");
+                    chatItem.className = "chat-item";
+                    chatItem.textContent = chat;
+                    chatItem.onclick = () => openChat(chat); // Open chat on click
+                    chatList.appendChild(chatItem);
+                });
+            } else {
+                // Show message if no chats are found
+                chatList.innerHTML = `<p style="padding: 10px; text-align: center; color: #555;">No chats available in ${groupName}.</p>`;
+            }
+
+            console.log(`Selected group: ${groupName}`);
+        }
+
+        // Reload groups (placeholder function)
+        function reloadGroups() {
+            console.log("Reloading groups...");
+            alert("Groups have been reloaded!"); // Placeholder
+            // Optionally, fetch updated groups from the server here
+        }
+
 
         function openChat(chatName) {
             // Update the chat header with the selected chat name
@@ -794,6 +907,10 @@
                 messageInput.value = '';
             }
         }
+
+
+
+
 
 
 
