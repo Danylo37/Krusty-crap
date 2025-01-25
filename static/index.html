@@ -6,7 +6,7 @@
 
             /* Basic CSS */
 
-            html, body {
+            html, body, #controller-view, #monitoring-container {
                 margin: 0;
                 padding: 0;
                 height: 100%; /* Ensure the body fits within the viewport */
@@ -27,7 +27,7 @@
                 border-bottom: 2px solid #000000; /* Bottom border for emphasis */
             }
 
-            /* MONITORING CSS */
+            /* HEADER OF CONTROLLER */
 
             .previewContainer{
                 height:100%;
@@ -74,7 +74,94 @@
                 width:100%;
             }
 
+            /* MONITORING CSS */
 
+            /* Tabs at the top of monitoring-container */
+            #monitoring-tabs {
+                position: absolute;
+                left: 10px;
+                right: 10px;
+                padding-left:30px;
+                padding-right:30px;
+                display: flex;
+                justify-content: space-around;
+                border-bottom-left-radius: 15px;
+                border-bottom-right-radius: 15px;
+                z-index: 1;
+            }
+
+            .tab-button {
+                flex: 1;
+                padding: 10px;
+                font-size: 16px;
+                background-color: #dfccff;
+                color: white;
+                border: none;
+                cursor: pointer;
+                border-radius: 0 0 10px 10px;
+                margin: 0 5px;
+                transition: background-color 0.3s ease;
+            }
+
+            .tab-button:hover {
+                background-color: #003d80;
+            }
+
+            /* Section containers */
+            .section {
+                height:100%;
+                padding: 20px;
+                display: none;
+                animation: slide-in 0.5s ease-out;
+            }
+
+            /* Filters on the right */
+            #filters {
+                position: absolute;
+                top: 50%; /* Centered vertically */
+                right: 7px;
+                transform: translateY(-50%);
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .filter-button {
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                background-color: #f1f1f1;
+                border: 2px solid #007bff;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+            }
+
+            .filter-button:hover {
+                background-color: #007bff;
+                color: white;
+            }
+
+            /* Animations */
+            @keyframes slide-in {
+                from {
+                    opacity: 0;
+                    transform: translateX(-50%);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+            @keyframes slide-out {
+                from {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateX(50%);
+                }
+            }
 
             /* DROPDOWN CSS */
             @keyframes slide-in {
@@ -150,8 +237,6 @@
             .dropdown-content button:hover {
                 background-color: #f1f1f1;
             }
-
-
 
 
             /* CLIENTS DISPLAY DIVS CSS*/
@@ -578,8 +663,25 @@
                 </div>
             </div>
         </div>
-        <div id="monitoring-container" style="opacity:0">
+        <div id="monitoring-container" style="position: relative;">
+            <!-- Top Buttons (inside monitoring-container, below header) -->
+            <div id="monitoring-tabs">
+                <button onclick="showSection('clients-container')" class="tab-button">Clients</button>
+                <button onclick="showSection('servers-container')" class="tab-button">Servers</button>
+                <button onclick="showSection('drones-container')" class="tab-button">Drones</button>
+            </div>
 
+            <!-- Sections -->
+            <div id="clients-container" class="section" style="display: block;"></div>
+            <div id="servers-container" class="section" style="display: none;"></div>
+            <div id="drones-container" class="section" style="display: none;"></div>
+
+            <!-- Filters on the right -->
+            <div id="filters">
+                <button class="filter-button"></button>
+                <button class="filter-button"></button>
+                <button class="filter-button"></button>
+            </div>
         </div>
     </div>
 
@@ -705,7 +807,24 @@
             }
         });
 
+        // Function to toggle between sections
+        function showSection(sectionId) {
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => {
+                if (section.id === sectionId) {
+                    section.style.display = 'block';
+                    section.style.animation = 'slide-in 0.5s ease-out';
+                } else {
+                    section.style.animation = 'slide-out 0.5s ease-out';
+                    setTimeout(() => {
+                        section.style.display = 'none';
+                    }, 500); // Match the duration of the animation
+                }
+            });
+        }
 
+        // Initialize the default view
+        showSection('clients-container');
 
         // GRAPH STUFF
 
@@ -898,7 +1017,7 @@
             const popupTitle = document.getElementById('popup-title');
             const roleSelection = document.getElementById('role-selection');
             const clientSelection = document.getElementById('client-selection');
-            const clientsDisplayDiv = document.getElementById('clients_display_div');
+            const clientsDisplayDiv = document.getElementById('monitoring-container'); // Ensure correct reference
 
             if (role === 'controller') {
                 // Hide the pop-up and show the controller view
@@ -911,49 +1030,48 @@
                 clientSelection.style.display = 'flex';
 
                 // Dynamically create client options
-                const panels = clientsDisplayDiv.querySelectorAll('.panel');
+                const panelsArray = Array.from(clientsDisplayDiv.querySelectorAll('.panel'));
                 clientSelection.innerHTML = ''; // Clear existing options
 
-                if (panels.length === 0) {
+                if (panelsArray.length === 0) {
                     // No nodes found, show error message
                     const errorMessage = document.createElement('div');
-                    errorMessage.textContent = 'Probable error in connection with server, please reload the page and try again';
+                    errorMessage.textContent = 'No clients available.';
                     errorMessage.style.color = 'red';
                     errorMessage.style.textAlign = 'center';
                     clientSelection.appendChild(errorMessage);
                 } else {
                     // Create buttons for each panel (node)
-                    panels.forEach((panel) => {
-                        const nodeId = panel.dataset.nodeId; // Retrieve node_id from panel's dataset
+                    panelsArray.forEach((panel) => {
+                        const nodeId = panel.dataset.nodeId || 'Unknown'; // Retrieve node_id from panel's dataset
                         const typeClient = "WhatsApp";
 
-                        //Creating the button-option
-                        var clientButton = document.createElement('div');
+                        // Create the button-option
+                        const clientButton = document.createElement('div');
                         clientButton.style = "display:flex; align-items: center; justify-content: start";
                         clientButton.className = "client-option";
                         clientButton.onclick = () => chooseClient(nodeId);
 
-                        //Creating the image associated with client Type
+                        // Create the image associated with client Type
                         const img = document.createElement('img');
                         img.alt = "typeOfClient";
                         img.style.width = "100%";
                         img.style.maxWidth = "30px";
                         img.style.borderRadius = "7px";
 
-                        if (typeClient === "WhatsApp"){
+                        if (typeClient === "WhatsApp") {
                             img.src = "whatsapp.jpg";
-                        }else{
-                            typeClientImage = "google_drive.png";
+                        } else {
+                            img.src = "google_drive.png";
                         }
 
-                        //Creating text next to image
+                        // Create text next to the image
                         const text = document.createElement('p');
                         text.textContent = `Client nodeId: ${nodeId}`;
                         text.style = "margin-left: 10px";
 
                         clientButton.appendChild(img);
                         clientButton.appendChild(text);
-
 
                         clientSelection.appendChild(clientButton);
                     });
@@ -966,6 +1084,7 @@
 
             // Find the panel corresponding to the selected nodeId
             const panel = document.querySelector(`.panel[data-node-id="${nodeId}"]`);
+
             if (!panel) {
                 console.error(`No panel found for Node ${nodeId}`);
                 return;
@@ -1236,7 +1355,7 @@
             try {
                 const text = await event.data;
                 const data = JSON.parse(text);
-
+                console.log('WebSocket data received:', data); // Add this line
                 // Update the DOM based on node_type
                 let panel = panels[data.node_id];
                 if (!panel) {
@@ -1367,12 +1486,33 @@
         // Handle WebSocket connection open
         ws.onopen = () => {
             console.log('WebSocket connection established');
+            sendUpdateCommand(); // Request initial data on connection
         };
+        // Handle page refresh/visibility changes
+        window.addEventListener('beforeunload', () => {
+            sendUpdateCommand(); // Optional: Send cleanup command if needed
+        });
+
+        // Request update when the page becomes visible again
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                sendUpdateCommand();
+            }
+        });
 
         // Handle WebSocket errors
         ws.onerror = (error) => {
             console.error('WebSocket error:', error);
         };
+
+        // Function to request data update from the server
+        function sendUpdateCommand() {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ command: "update" }));
+            } else {
+                console.error('WebSocket is not open. Unable to send update command.');
+            }
+        }
 
 
     </script>
