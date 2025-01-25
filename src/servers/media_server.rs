@@ -62,7 +62,7 @@ impl MediaServer {
             reassembling_messages: Default::default(),
             sending_messages: Default::default(),
 
-            clients: Default::default(),                                   // Available clients
+            clients: Default::default(),  // Available clients
             topology: Default::default(),
             routes: Default::default(),
             flood_ids: Default::default(),
