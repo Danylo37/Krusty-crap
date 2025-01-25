@@ -370,12 +370,12 @@ impl ChatClientDanylo {
                     self.handle_clients_list(server_id, clients);
                 }
                 Response::MessageFrom(from, message) => {
-                    info!("New message from {}: {:?}", from, &message);
+                    info!("Client {}: New message from {}: {:?}", self.id, from, &message);
 
                     self.inbox.insert(0, (from, message));
                 }
                 Response::Err(error) =>
-                    error!("Error received from server {}: {:?}", server_id, error),
+                    error!("Client {}: Error received from server {}: {:?}", self.id, server_id, error),
                 _ => {}
             }
         }
@@ -405,9 +405,12 @@ impl ChatClientDanylo {
     }
 
     /// ###### Handles the list of clients received from the server.
-    /// Updates the list of available clients and marks the response as received.
-    fn handle_clients_list(&mut self, server_id: ServerId, clients: Vec<ClientId>) {
+    /// Updates the list of available clients.
+    fn handle_clients_list(&mut self, server_id: ServerId, mut clients: Vec<ClientId>) {
         info!("Client {}: List of clients received successfully.", self.id);
+
+        // Remove self id from the clients list if it exists
+        clients.retain(|&client_id| client_id != self.id);
 
         self.clients.insert(server_id, clients);
     }
