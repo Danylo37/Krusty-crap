@@ -52,7 +52,7 @@ pub struct ChatClientDanylo {
     pub fragments_to_reassemble: HashMap<SessionId, Vec<Fragment>>,   // Queue of fragments to be reassembled for different sessions
 
     // Chats
-    pub chats: HashMap<ClientId, ChatHistory>,                        // Messages with their senders
+    pub chats: HashMap<ClientId, ChatHistory>,                        // Chat histories with other clients
 }
 
 impl Client for ChatClientDanylo {
@@ -563,8 +563,8 @@ impl ChatClientDanylo {
         self.routes.clear();
         self.topology.clear();
 
-        // Generate a new flood ID, incrementing the last one or starting at 1 if none exists.
-        let flood_id = self.flood_ids.last().map_or(1, |last| last + 1);
+        // Generate a new flood ID.
+        let flood_id = self.generate_flood_id();
         self.flood_ids.push(flood_id);
 
         // Create a new flood request initialized with the generated flood ID, the current node's ID, and its type.
@@ -574,8 +574,8 @@ impl ChatClientDanylo {
             NodeType::Client,
         );
 
-        // Generate a new session ID, incrementing the last one or starting at 1 if none exists.
-        let session_id = self.session_ids.last().map_or(1, |last| last + 1);
+        // Generate a new session ID.
+        let session_id = self.generate_session_id();
         self.session_ids.push(session_id);
 
         // Create a new packet with the flood request and session ID.
@@ -596,6 +596,30 @@ impl ChatClientDanylo {
                 self.send_event(ClientEvent::PacketSent(packet.clone()));
             }
         }
+    }
+
+    /// ###### Generates a new session ID.
+    fn generate_session_id(&self) -> SessionId {
+        let next_session_id: SessionId = self
+            .session_ids
+            .last()
+            .map_or(1, |last| last + 1);
+
+        format!("{}{}", self.id, next_session_id)
+            .parse()
+            .unwrap()
+    }
+
+    /// ###### Generates a new flood ID.
+    fn generate_flood_id(&self) -> FloodId {
+        let next_session_id: FloodId = self
+            .flood_ids
+            .last()
+            .map_or(1, |last| last + 1);
+
+        format!("{}{}", self.id, next_session_id)
+            .parse()
+            .unwrap()
     }
 
     /// ###### Requests the type of specified server.
@@ -691,7 +715,7 @@ impl ChatClientDanylo {
         };
 
         // Generate a new session ID.
-        let session_id = self.session_ids.last().map_or(1, |last| last + 1);
+        let session_id = self.generate_session_id();
         self.session_ids.push(session_id);
 
         // Create message (split the message into fragments) and send first fragment.
