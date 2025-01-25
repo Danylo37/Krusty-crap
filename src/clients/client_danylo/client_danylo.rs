@@ -373,7 +373,7 @@ impl ChatClientDanylo {
                 Response::MessageFrom(from, message) => {
                     info!("Client {}: New message from {}: {:?}", self.id, from, &message);
 
-                    let chat = self.chats.get_mut(&from).unwrap();
+                    let chat = self.chats.entry(from).or_insert_with(Vec::new);
                     chat.push((from, message));
                 }
                 Response::Err(error) =>
@@ -413,11 +413,6 @@ impl ChatClientDanylo {
 
         // Remove self id from the clients list if it exists
         clients.retain(|&client_id| client_id != self.id);
-
-        // Create a new empty chat for each client
-        for client_id in clients.iter() {
-            self.chats.insert(*client_id, Vec::new());
-        }
 
         self.clients.insert(server_id, clients);
     }
@@ -690,11 +685,13 @@ impl ChatClientDanylo {
 
         info!("Client {}: Sending message to client {} via server {}", self.id, to, server_id);
 
-        let result = self.create_and_send_message(Query::SendMessageTo(to, message), server_id);
+        let result = self.create_and_send_message(Query::SendMessageTo(to, message.clone()), server_id);
 
         match result {
             Ok(_) => {
                 info!("Client {}: Message sent successfully.", self.id);
+                let chat = self.chats.entry(to).or_insert_with(Vec::new);
+                chat.push((self.id, message));
             }
             Err(err) => {
                 error!("Client {}: Failed to send message: {}", self.id, err);
