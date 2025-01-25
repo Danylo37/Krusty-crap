@@ -22,6 +22,7 @@ use crate::{
 use super::MessageFragments;
 
 pub type Node = (NodeId, NodeType);
+pub type ChatHistory = Vec<(ClientId, Message)>;
 
 pub struct ChatClientDanylo {
     // ID
@@ -50,8 +51,8 @@ pub struct ChatClientDanylo {
     pub messages_to_send: HashMap<SessionId, MessageFragments>,       // Queue of messages to be sent for different sessions
     pub fragments_to_reassemble: HashMap<SessionId, Vec<Fragment>>,   // Queue of fragments to be reassembled for different sessions
 
-    // Inbox
-    pub inbox: Vec<(ClientId, Message)>,                              // Messages with their senders
+    // Chats
+    pub chats: HashMap<ClientId, ChatHistory>,                        // Chat histories with other clients
 }
 
 impl Client for ChatClientDanylo {
@@ -78,7 +79,7 @@ impl Client for ChatClientDanylo {
             routes: HashMap::new(),
             messages_to_send: HashMap::new(),
             fragments_to_reassemble: HashMap::new(),
-            inbox: Vec::new(),
+            chats: HashMap::new(),
         }
     }
 
@@ -370,12 +371,13 @@ impl ChatClientDanylo {
                     self.handle_clients_list(server_id, clients);
                 }
                 Response::MessageFrom(from, message) => {
-                    info!("New message from {}: {:?}", from, &message);
+                    info!("Client {}: New message from {}: {:?}", self.id, from, &message);
 
-                    self.inbox.insert(0, (from, message));
+                    let chat = self.chats.get_mut(&from).unwrap();
+                    chat.push((from, message));
                 }
                 Response::Err(error) =>
-                    error!("Error received from server {}: {:?}", server_id, error),
+                    error!("Client {}: Error received from server {}: {:?}", self.id, server_id, error),
                 _ => {}
             }
         }
@@ -405,9 +407,17 @@ impl ChatClientDanylo {
     }
 
     /// ###### Handles the list of clients received from the server.
-    /// Updates the list of available clients and marks the response as received.
-    fn handle_clients_list(&mut self, server_id: ServerId, clients: Vec<ClientId>) {
+    /// Updates the list of available clients.
+    fn handle_clients_list(&mut self, server_id: ServerId, mut clients: Vec<ClientId>) {
         info!("Client {}: List of clients received successfully.", self.id);
+
+        // Remove self id from the clients list if it exists
+        clients.retain(|&client_id| client_id != self.id);
+
+        // Create a new empty chat for each client
+        for client_id in clients.iter() {
+            self.chats.insert(*client_id, Vec::new());
+        }
 
         self.clients.insert(server_id, clients);
     }
@@ -553,8 +563,8 @@ impl ChatClientDanylo {
         self.routes.clear();
         self.topology.clear();
 
-        // Generate a new flood ID, incrementing the last one or starting at 1 if none exists.
-        let flood_id = self.flood_ids.last().map_or(1, |last| last + 1);
+        // Generate a new flood ID.
+        let flood_id = self.generate_flood_id();
         self.flood_ids.push(flood_id);
 
         // Create a new flood request initialized with the generated flood ID, the current node's ID, and its type.
@@ -564,8 +574,8 @@ impl ChatClientDanylo {
             NodeType::Client,
         );
 
-        // Generate a new session ID, incrementing the last one or starting at 1 if none exists.
-        let session_id = self.session_ids.last().map_or(1, |last| last + 1);
+        // Generate a new session ID.
+        let session_id = self.generate_session_id();
         self.session_ids.push(session_id);
 
         // Create a new packet with the flood request and session ID.
@@ -586,6 +596,30 @@ impl ChatClientDanylo {
                 self.send_event(ClientEvent::PacketSent(packet.clone()));
             }
         }
+    }
+
+    /// ###### Generates a new session ID.
+    fn generate_session_id(&self) -> SessionId {
+        let next_session_id: SessionId = self
+            .session_ids
+            .last()
+            .map_or(1, |last| last + 1);
+
+        format!("{}{}", self.id, next_session_id)
+            .parse()
+            .unwrap()
+    }
+
+    /// ###### Generates a new flood ID.
+    fn generate_flood_id(&self) -> FloodId {
+        let next_session_id: FloodId = self
+            .flood_ids
+            .last()
+            .map_or(1, |last| last + 1);
+
+        format!("{}{}", self.id, next_session_id)
+            .parse()
+            .unwrap()
     }
 
     /// ###### Requests the type of specified server.
@@ -681,7 +715,7 @@ impl ChatClientDanylo {
         };
 
         // Generate a new session ID.
-        let session_id = self.session_ids.last().map_or(1, |last| last + 1);
+        let session_id = self.generate_session_id();
         self.session_ids.push(session_id);
 
         // Create message (split the message into fragments) and send first fragment.

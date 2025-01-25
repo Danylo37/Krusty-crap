@@ -23,7 +23,10 @@ fn main() {
     my_net.initialize_from_file("input.toml");
 
     // Start WebSocket server
-    websocket::start_websocket_server(rx);
+
+    let (sender_from_ws, receiver_from_ws) = unbounded();
+
+    websocket::start_websocket_server(rx, sender_from_ws);
 
     // Start HTTP server for web interface
     thread::spawn(|| {
