@@ -1171,10 +1171,6 @@
                 }
             } catch (e) {
                 console.error('Error processing message:', e);
-                const msgDiv = document.createElement("div");
-                msgDiv.className = "message error";
-                msgDiv.textContent = `Error decoding message: ${e.message}`;
-                panelsContainer.appendChild(msgDiv);
             }
         };
 
