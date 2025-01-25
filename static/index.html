@@ -53,6 +53,7 @@
                 position: fixed;
                 top: 10px;
                 left: 20px;
+                z-index: 500;
                 display: inline-block;
             }
             .dropdown button {
@@ -73,7 +74,7 @@
                 min-width: 150px;
                 box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
                 border-radius: 5px;
-                z-index: 1;
+                z-index: 1000;
                 transform: translateX(-200px); /* Start hidden on the left */
                 opacity: 0; /* Start fully transparent */
                 transition: none; /* No transition since animation will handle it */
@@ -204,8 +205,80 @@
                 opacity: 1; /* Show the text on hover */
             }
 
+            /* GRAPH CSS */
 
+            #network-container {
+                width: 100%;
+                height: 100vh;
+                overflow: hidden;
+                position: relative;
+                background-color: #f5f7fa;
+                z-index: 5;
+                border: 1px solid #ccc;
+            }
 
+            #network-canvas {
+                width: 2000px; /* Initial canvas size */
+                height: 2000px;
+                position: absolute;
+                z-index: 5;
+                transform-origin: top left;
+                transform: scale(1);
+            }
+
+            .node {
+                fill: #007bff;
+                stroke: #0056b3;
+                stroke-width: 2;
+                cursor: pointer;
+            }
+
+            .client {
+                fill: #28a745;
+            }
+            .server {
+                fill: #dc3545;
+            }
+
+            .connection {
+                stroke: #333;
+                stroke-width: 2;
+            }
+
+            #zoom-controls {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            #instructions-container {
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white background */
+                border: 1px solid #ccc;
+                border-radius: 8px;
+                padding: 10px;
+                z-index: 100; /* Ensure it's above other elements */
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Optional shadow */
+            }
+
+            .instruction {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .instruction-icon {
+                width: 24px; /* Adjust size of the icons */
+                height: 24px;
+            }
 
             /* LIST CLIENTS CSS */
 
@@ -366,6 +439,7 @@
                 background-color: #f1f1f1;
             }
 
+
             /* General CSS */
 
             .flex-center-all{
@@ -411,7 +485,7 @@
     </div>
 
     <div id="controller-view" style="display: none;">
-        <header>Network Manager & Real-Time Monitor</header>
+        <header style="background-color:#007bff">Network Manager & Real-Time Monitor</header>
         <div class="dropdown">
             <button onclick="toggleDropdown()">Menu</button>
             <div class="dropdown-content" id="dropdown-menu">
@@ -422,7 +496,23 @@
             </div>
         </div>
         <!-- Clients Display -->
-        <div id="clients_display_div"></div>
+        <div id="network-container">
+            <svg id="network-canvas"></svg>
+
+            <div id="instructions-container">
+                <div class="instruction">
+                    <img src="move-arrows.png" alt="Move the mouse" class="instruction-icon" />
+                    <span>Move the mouse</span>
+                </div>
+                <div class="instruction">
+                    <img src="increase_size_icon.png" alt="Use mouse wheel" class="instruction-icon" />
+                    <span>Use mouse wheel</span>
+                </div>
+            </div>
+        </div>
+        <div id="clients_display_div" style="opacity:0">
+
+        </div>
     </div>
 
     <div id="client-view" style="display: none;">
@@ -520,237 +610,190 @@
         };
 
 
+        // GRAPH STUFF
 
-        // Function to order panels by node_id
-        function orderPanelsByNodeId() {
-            const panelsArray = Object.values(panels);
-            panelsArray.sort((a, b) => {
-                const nodeIdA = parseInt(a.dataset.nodeId, 10);
-                const nodeIdB = parseInt(b.dataset.nodeId, 10);
-                return nodeIdA - nodeIdB;
-            });
+        const nodes = [
+            { id: "C1", type: "client", x: 100, y: 400 },
+            { id: "S1", type: "server", x: 900, y: 400 },
+            { id: "D1", type: "drone", x: 500, y: 300 },
+            { id: "D2", type: "drone", x: 400, y: 200 },
+            { id: "D3", type: "drone", x: 600, y: 200 },
+        ];
 
-            // Clear the container and re-append panels in sorted order
-            panelsContainer.innerHTML = '';
-            panelsArray.forEach(panel => panelsContainer.appendChild(panel));
-        }
+        const connections = [
+            { from: "C1", to: "D1" },
+            { from: "S1", to: "D1" },
+            { from: "D1", to: "D2" },
+            { from: "D1", to: "D3" },
+        ];
 
-        // Function to toggle selection mode
-        function toggleSelectionMode() {
-            isSelectionMode = !isSelectionMode;
-            document.querySelector('.confirm-button').style.display = isSelectionMode ? 'block' : 'none';
-            document.querySelector('.back-button').style.display = 'none'; // Hide back button in selection mode
-            updateSelectionSquaresVisibility();
-        }
+        // Declare these variables only once at the top of the script
+        let translateX = 0; // Horizontal panning offset
+        let translateY = 0; // Vertical panning offset
+        let scale = 1; // Initial zoom level
+        let isPanning = false;
+        let startX, startY;
+        let currentTranslateX = 0; // Smoothed horizontal panning offset
+        let currentTranslateY = 0; // Smoothed vertical panning offset
+        let panAnimationFrame; // For requestAnimationFrame
+        const dampingFactor = 0.15; // Damping factor for smoother movement
 
-        // Function to update the visibility of selection squares
-        function updateSelectionSquaresVisibility() {
-            Object.values(panels).forEach(panel => {
-                const square = panel.querySelector('.selection-square');
-                if (square) {
-                    square.style.display = isSelectionMode ? 'block' : 'none';
-                }
-            });
-        }
+        const container = document.getElementById("network-container");
+        const canvas = document.getElementById("network-canvas");
 
-        // Function to confirm the selection
-        function confirmSelection() {
-            isSelectionMode = false;
-            document.querySelector('.confirm-button').style.display = 'none';
-            document.querySelector('.back-button').style.display = 'block'; // Show back button after confirmation
-            updateSelectionSquaresVisibility();
-            filterPanelsBySelectedNodes();
-        }
 
-        // Function to filter panels based on selected nodes
-        function filterPanelsBySelectedNodes() {
-            Object.values(panels).forEach(panel => {
-                const nodeId = panel.dataset.nodeId;
-                if (selectedNodes.has(nodeId)) {
-                    panel.style.display = 'block';
-                } else {
-                    panel.style.display = 'none';
-                }
-            });
-        }
+        // Draw connections
+        connections.forEach(({ from, to }) => {
+            const fromNode = nodes.find((n) => n.id === from);
+            const toNode = nodes.find((n) => n.id === to);
 
-        // Function to go back to monitoring all nodes
-        function goBackToAllNodes() {
-            selectedNodes.clear(); // Clear selected nodes
-            document.querySelector('.back-button').style.display = 'none'; // Hide back button
-            document.querySelector('.confirm-button').style.display = 'none'; // Hide confirm button
-            Object.values(panels).forEach(panel => {
-                panel.style.display = 'block'; // Show all panels
-                const square = panel.querySelector('.selection-square');
-                if (square) {
-                    square.classList.remove('selected'); // Remove selection tick
-                }
-            });
-        }
-        // Handle WebSocket messages
-        ws.onmessage = async (event) => {
-            try {
-                const text = await event.data;
-                const data = JSON.parse(text);
-
-                // Update the DOM based on node_type
-                let panel = panels[data.node_id];
-                if (!panel) {
-                    panel = document.createElement("div");
-                    panel.className = "panel";
-                    panel.dataset.nodeId = data.node_id;
-
-                    // Populate the panel content based on the node_type
-                    switch (data.node_type) {
-                        case "Web Browser":
-                            panel.innerHTML = `
-                        <div class="selection-square" onclick="toggleNodeSelection('${data.node_id}')"></div>
-                        <h2>Node ${data.node_id} (${data.node_type})</h2>
-                        <div class="session">Session ID: <span id="session-${data.node_id}">${data.session_id}</span></div>
-                        <div class="connected-nodes">Connected Nodes: <span id="connected-nodes-${data.node_id}">${Array.from(data.connected_node_ids).join(', ')}</span></div>
-                        <div class="registered-communication-servers">Registered Communication Servers: <pre id="registered-communication-servers-${data.node_id}">${JSON.stringify(data.registered_communication_servers, null, 2)}</pre></div>
-                        <div class="registered-content-servers">Registered Content Servers: <pre id="registered-content-servers-${data.node_id}">${JSON.stringify(data.registered_content_servers, null, 2)}</pre></div>
-                        <div class="routing-table">Routing Table: <pre id="routing-table-${data.node_id}">${JSON.stringify(data.routing_table, null, 2)}</pre></div>
-                        <div class="message-chat">Message Chat: <pre id="message-chat-${data.node_id}">${JSON.stringify(data.message_chat, null, 2)}</pre></div>
-                    `;
-                            break;
-
-                        case "Chat Client":
-                            panel.innerHTML = `
-                        <div class="selection-square" onclick="toggleNodeSelection('${data.node_id}')"></div>
-                        <h2>Node ${data.node_id} (${data.node_type})</h2>
-                        <div class="flood-ids">Flood IDs: <span id="flood-ids-${data.node_id}">${data.flood_ids.join(', ')}</span></div>
-                        <div class="session-ids">Session IDs: <span id="session-ids-${data.node_id}">${data.session_ids.join(', ')}</span></div>
-                        <div class="neighbours">Neighbours: <span id="neighbours-${data.node_id}">${Array.from(data.neighbours).join(', ')}</span></div>
-                        <div class="discovered-servers">Discovered Servers: <pre id="discovered-servers-${data.node_id}">${JSON.stringify(data.discovered_servers, null, 2)}</pre></div>
-                        <div class="available-clients">Available Clients: <pre id="available-clients-${data.node_id}">${JSON.stringify(data.available_clients, null, 2)}</pre></div>
-                        <div class="received-messages">Received Messages: <pre id="received-messages-${data.node_id}">${JSON.stringify(data.received_messages, null, 2)}</pre></div>
-                    `;
-                            break;
-
-                        case "Communication Server":
-                            panel.innerHTML = `
-                        <div class="selection-square" onclick="toggleNodeSelection('${data.node_id}')"></div>
-                        <h2>Node ${data.node_id} (${data.node_type})</h2>
-                        <div class="flood-id">Flood ID: <span id="flood-id-${data.node_id}">${data.flood_id}</span></div>
-                        <div class="connected-nodes">Connected Nodes: <span id="connected-nodes-${data.node_id}">${Array.from(data.connected_node_ids).join(', ')}</span></div>
-                        <div class="routing-table">Routing Table: <pre id="routing-table-${data.node_id}">${JSON.stringify(data.routing_table, null, 2)}</pre></div>
-                        <div class="registered-clients">Registered Clients: <span id="registered-clients-${data.node_id}">${data.registered_clients.join(', ')}</span></div>
-                    `;
-                            break;
-
-                        case "Media Server":
-                            panel.innerHTML = `
-                        <div class="selection-square" onclick="toggleNodeSelection('${data.node_id}')"></div>
-                        <h2>Node ${data.node_id} (${data.node_type})</h2>
-                        <div class="flood-id">Flood ID: <span id="flood-id-${data.node_id}">${data.flood_id}</span></div>
-                        <div class="connected-nodes">Connected Nodes: <span id="connected-nodes-${data.node_id}">${Array.from(data.connected_node_ids).join(', ')}</span></div>
-                        <div class="routing-table">Routing Table: <pre id="routing-table-${data.node_id}">${JSON.stringify(data.routing_table, null, 2)}</pre></div>
-                        <div class="media">Media: <pre id="media-${data.node_id}">${JSON.stringify(data.media, null, 2)}</pre></div>
-                    `;
-                            break;
-
-                        case "Text Server":
-                            panel.innerHTML = `
-                        <div class="selection-square" onclick="toggleNodeSelection('${data.node_id}')"></div>
-                        <h2>Node ${data.node_id} (${data.node_type})</h2>
-                        <div class="flood-id">Flood ID: <span id="flood-id-${data.node_id}">${data.flood_id}</span></div>
-                        <div class="connected-nodes">Connected Nodes: <span id="connected-nodes-${data.node_id}">${Array.from(data.connected_node_ids).join(', ')}</span></div>
-                        <div class="routing-table">Routing Table: <pre id="routing-table-${data.node_id}">${JSON.stringify(data.routing_table, null, 2)}</pre></div>
-                        <div class="text-files">Text Files: <pre id="text-files-${data.node_id}">${JSON.stringify(data.text_files, null, 2)}</pre></div>
-                    `;
-                            break;
-
-                        default:
-                            panel.innerHTML = `<h2>Node ${data.node_id} (${data.node_type})</h2><div>Unsupported node type</div>`;
-                            break;
-                    }
-
-                    panelsContainer.appendChild(panel);
-                    panels[data.node_id] = panel;
-                } else {
-                    // Update logic for existing panels (similar to above switch-case logic)
-                    switch (data.node_type) {
-                        case "Web Browser":
-                            document.getElementById(`session-${data.node_id}`).textContent = data.session_id;
-                            document.getElementById(`connected-nodes-${data.node_id}`).textContent = Array.from(data.connected_node_ids).join(', ');
-                            document.getElementById(`registered-communication-servers-${data.node_id}`).textContent = JSON.stringify(data.registered_communication_servers, null, 2);
-                            document.getElementById(`registered-content-servers-${data.node_id}`).textContent = JSON.stringify(data.registered_content_servers, null, 2);
-                            document.getElementById(`routing-table-${data.node_id}`).textContent = JSON.stringify(data.routing_table, null, 2);
-                            document.getElementById(`message-chat-${data.node_id}`).textContent = JSON.stringify(data.message_chat, null, 2);
-                            break;
-
-                        case "Chat Client":
-                            document.getElementById(`flood-ids-${data.node_id}`).textContent = data.flood_ids.join(', ');
-                            document.getElementById(`session-ids-${data.node_id}`).textContent = data.session_ids.join(', ');
-                            document.getElementById(`neighbours-${data.node_id}`).textContent = Array.from(data.neighbours).join(', ');
-                            document.getElementById(`discovered-servers-${data.node_id}`).textContent = JSON.stringify(data.discovered_servers, null, 2);
-                            document.getElementById(`available-clients-${data.node_id}`).textContent = JSON.stringify(data.available_clients, null, 2);
-                            document.getElementById(`received-messages-${data.node_id}`).textContent = JSON.stringify(data.received_messages, null, 2);
-                            break;
-
-                        case "Communication Server":
-                            document.getElementById(`flood-id-${data.node_id}`).textContent = data.flood_id;
-                            document.getElementById(`connected-nodes-${data.node_id}`).textContent = Array.from(data.connected_node_ids).join(', ');
-                            document.getElementById(`routing-table-${data.node_id}`).textContent = JSON.stringify(data.routing_table, null, 2);
-                            document.getElementById(`registered-clients-${data.node_id}`).textContent = data.registered_clients.join(', ');
-                            break;
-
-                        case "Media Server":
-                            document.getElementById(`flood-id-${data.node_id}`).textContent = data.flood_id;
-                            document.getElementById(`connected-nodes-${data.node_id}`).textContent = Array.from(data.connected_node_ids).join(', ');
-                            document.getElementById(`routing-table-${data.node_id}`).textContent = JSON.stringify(data.routing_table, null, 2);
-                            document.getElementById(`media-${data.node_id}`).textContent = JSON.stringify(data.media, null, 2);
-                            break;
-
-                        case "Text Server":
-                            document.getElementById(`flood-id-${data.node_id}`).textContent = data.flood_id;
-                            document.getElementById(`connected-nodes-${data.node_id}`).textContent = Array.from(data.connected_node_ids).join(', ');
-                            document.getElementById(`routing-table-${data.node_id}`).textContent = JSON.stringify(data.routing_table, null, 2);
-                            document.getElementById(`text-files-${data.node_id}`).textContent = JSON.stringify(data.text_files, null, 2);
-                            break;
-
-                        default:
-                            console.warn(`Unknown node type: ${data.node_type}`);
-                            break;
-                    }
-                }
-            } catch (e) {
-                console.error('Error processing message:', e);
+            if (fromNode && toNode) {
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute("x1", fromNode.x);
+                line.setAttribute("y1", fromNode.y);
+                line.setAttribute("x2", toNode.x);
+                line.setAttribute("y2", toNode.y);
+                line.classList.add("connection");
+                canvas.appendChild(line);
             }
-        };
+        });
 
-        // Function to toggle node selection
-        function toggleNodeSelection(nodeId) {
-            if (selectedNodes.has(nodeId)) {
-                selectedNodes.delete(nodeId);
+        // Draw nodes
+        nodes.forEach(({ id, type, x, y }) => {
+            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circle.setAttribute("cx", x);
+            circle.setAttribute("cy", y);
+            circle.setAttribute("r", 15);
+            circle.classList.add("node", type);
+            circle.addEventListener("click", () => alert(`Node: ${id}`));
+            canvas.appendChild(circle);
+        });
+
+        // Zoom in/out
+        const zoomSpeed = 0.08; // Adjust for smoother zooming
+
+        document.getElementById("network-container").addEventListener("wheel", (e) => {
+            e.preventDefault(); // Prevent default scrolling behavior
+
+            // Get mouse position relative to the container
+            const containerRect = container.getBoundingClientRect();
+            const canvasRect = canvas.getBoundingClientRect();
+
+            const mouseX = e.clientX - containerRect.left;
+            const mouseY = e.clientY - containerRect.top;
+
+            console.log(`Mouse X: ${mouseX}, Mouse Y: ${mouseY}`);
+
+            // Determine zoom direction
+            const delta = e.deltaY < 0 ? zoomSpeed : -zoomSpeed;
+            const newScale = Math.min(Math.max(scale + delta, 0.5), 2); // Clamp scale between 0.5 and 2
+
+            // Calculate scale factor
+            const shiftX = mouseX * delta; // Adjust X based on mouse position and delta
+            const shiftY = mouseY * delta; // Adjust Y based on mouse position and delta
+            translateX -= shiftX;
+            translateY -= shiftY;
+            const mousePercentage = (mouseX / ((1/2)*containerRect.right));
+            const supposedShift = delta*canvasRect.width;
+
+            //translateX = translateX + (-1)*(mousePercentage * supposedShift);
+            console.log(`${scale-newScale}, \ncontainerRect.bottom: ${containerRect.bottom}, canvasRect.bottom: ${canvasRect.bottom}   \ncontainerRect.right: ${containerRect.right}, canvasRect.right: ${canvasRect.right} `);
+
+            console.log(`ratio mouse: ${mouseX / ((1/2)*containerRect.right)}`);
+            console.log(` supposed shift: ${canvasRect.width * delta}`);
+            let oldVal = canvasRect.width*scale;
+            console.log(`Shift done: ${(((mouseX / ((1/2)*containerRect.right)) * (canvasRect.width * -delta)))}`)
+
+            //translateX = translateX + () * ((canvasRect.width*scale) * -delta));
+            //const transformY = (1 - (mouseY / containerRect.bottom)) * (canvaYLength * -delta);
+
+
+            //translateX = translateX + (mouseX/((1/2)*containerRect.right))*((canvasRect.right*(-delta)))//(mouseX/containerRect.bottom)*(canvasRect.bottom*(-delta));
+
+
+            //translateY = 0//translateY + mouseY*((canvasRect.bottom*(-delta)/containerRect.bottom));
+            /*const scaleFactor = newScale / scale;
+            const mouseCanvasYBefore = (mouseY - translateY) / scale; // Mouse position in canvas space
+            translateY = mouseY - mouseCanvasYBefore * newScale;
+            // Adjust translateX and translateY to center zoom at the mouse pointer
+            translateX = mouseX - scaleFactor * (mouseX - translateX);
+            //translateY = mouseY - scaleFactor * (mouseY - translateY);
+            */
+
+            // Apply the new scale and translation
+            scale = newScale;
+
+            canvas.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+            console.log(`Difference after: ${(canvasRect.width*scale) -oldVal}`);
+            console.log({
+
+                mouseX,
+                mouseY,
+                translateX,
+                translateY,
+                scale
+            });
+        });
+
+
+        // Start panning
+        container.addEventListener("mousedown", (e) => {
+            isPanning = true;
+            startX = e.clientX;
+            startY = e.clientY;
+
+            // Cancel any existing animation frame
+            if (panAnimationFrame) cancelAnimationFrame(panAnimationFrame);
+        });
+
+        // Perform panning
+        document.addEventListener("mousemove", (e) => {
+                if (!isPanning) return;
+
+
+                // Calculate the difference between the current and starting mouse positions
+                const dx = (e.clientX - startX) / scale; // Adjust for current zoom level
+                const dy = (e.clientY - startY) / scale;
+
+                // Update target translation values
+                translateX += dx;
+                translateY += dy;
+
+                // Update the starting position for the next frame
+                startX = e.clientX;
+                startY = e.clientY;
+
+                // Start the smooth transition using requestAnimationFrame
+                smoothPan();
+
+        });
+
+        // Smooth panning using requestAnimationFrame
+        function smoothPan() {
+            // Update current translation values towards the target
+            currentTranslateX += (translateX - currentTranslateX) * dampingFactor;
+            currentTranslateY += (translateY - currentTranslateY) * dampingFactor;
+
+            // Apply the transformation
+            canvas.style.transform = `translate(${currentTranslateX}px, ${currentTranslateY}px) scale(${scale})`;
+
+            // Continue animation if there's a significant difference
+            if (Math.abs(translateX - currentTranslateX) > 0.1 || Math.abs(translateY - currentTranslateY) > 0.1) {
+                panAnimationFrame = requestAnimationFrame(smoothPan);
             } else {
-                selectedNodes.add(nodeId);
+                // Snap to the target values when close enough
+                currentTranslateX = translateX;
+                currentTranslateY = translateY;
             }
-            const square = document.querySelector(`.panel[data-node-id="${nodeId}"] .selection-square`);
-            square.classList.toggle('selected');
         }
 
-        // Handle WebSocket connection close
-        ws.onclose = () => {
-            const msgDiv = document.createElement("div");
-            msgDiv.className = "message error";
-            msgDiv.textContent = 'WebSocket connection closed.';
-            panelsContainer.appendChild(msgDiv);
-        };
-
-        // Handle WebSocket connection open
-        ws.onopen = () => {
-            console.log('WebSocket connection established');
-        };
-
-        // Handle WebSocket errors
-        ws.onerror = (error) => {
-            console.error('WebSocket error:', error);
-        };
+        // Stop panning
+        document.addEventListener("mouseup", () => {
+            isPanning = false;
+        });
 
 
-        ///NEW UI STUFF
+
 
         // ROLE POP-UP JS
 
@@ -860,7 +903,6 @@
             }
         }
 
-
         function logOut() {
             // Redirect to the login or home screen
             console.log('Logging out...');
@@ -869,6 +911,7 @@
             // Optional: Redirect to the login page
             window.location.reload(); // Reload the page to reset state
         }
+
 
         /* COMMUNICATION JAVASCRIPT */
 
@@ -970,6 +1013,86 @@
         }
 
 
+        // CONTROLLER STUFF
+
+        // Function to order panels by node_id
+        function orderPanelsByNodeId() {
+            const panelsArray = Object.values(panels);
+            panelsArray.sort((a, b) => {
+                const nodeIdA = parseInt(a.dataset.nodeId, 10);
+                const nodeIdB = parseInt(b.dataset.nodeId, 10);
+                return nodeIdA - nodeIdB;
+            });
+
+            // Clear the container and re-append panels in sorted order
+            panelsContainer.innerHTML = '';
+            panelsArray.forEach(panel => panelsContainer.appendChild(panel));
+        }
+
+        // Function to toggle selection mode
+        function toggleSelectionMode() {
+            isSelectionMode = !isSelectionMode;
+            document.querySelector('.confirm-button').style.display = isSelectionMode ? 'block' : 'none';
+            document.querySelector('.back-button').style.display = 'none'; // Hide back button in selection mode
+            updateSelectionSquaresVisibility();
+        }
+
+        // Function to update the visibility of selection squares
+        function updateSelectionSquaresVisibility() {
+            Object.values(panels).forEach(panel => {
+                const square = panel.querySelector('.selection-square');
+                if (square) {
+                    square.style.display = isSelectionMode ? 'block' : 'none';
+                }
+            });
+        }
+
+        // Function to confirm the selection
+        function confirmSelection() {
+            isSelectionMode = false;
+            document.querySelector('.confirm-button').style.display = 'none';
+            document.querySelector('.back-button').style.display = 'block'; // Show back button after confirmation
+            updateSelectionSquaresVisibility();
+            filterPanelsBySelectedNodes();
+        }
+
+        // Function to filter panels based on selected nodes
+        function filterPanelsBySelectedNodes() {
+            Object.values(panels).forEach(panel => {
+                const nodeId = panel.dataset.nodeId;
+                if (selectedNodes.has(nodeId)) {
+                    panel.style.display = 'block';
+                } else {
+                    panel.style.display = 'none';
+                }
+            });
+        }
+
+        // Function to go back to monitoring all nodes
+        function goBackToAllNodes() {
+            selectedNodes.clear(); // Clear selected nodes
+            document.querySelector('.back-button').style.display = 'none'; // Hide back button
+            document.querySelector('.confirm-button').style.display = 'none'; // Hide confirm button
+            Object.values(panels).forEach(panel => {
+                panel.style.display = 'block'; // Show all panels
+                const square = panel.querySelector('.selection-square');
+                if (square) {
+                    square.classList.remove('selected'); // Remove selection tick
+                }
+            });
+        }
+
+        // Function to toggle node selection
+        function toggleNodeSelection(nodeId) {
+            if (selectedNodes.has(nodeId)) {
+                selectedNodes.delete(nodeId);
+            } else {
+                selectedNodes.add(nodeId);
+            }
+            const square = document.querySelector(`.panel[data-node-id="${nodeId}"] .selection-square`);
+            square.classList.toggle('selected');
+        }
+
 
 
         /* DROPDOWN JS */
@@ -1007,6 +1130,72 @@
                 dropdownMenu.style.display = 'none';
             }
         });
+
+
+        //WEB SOCKET STUFF
+
+        // Handle WebSocket messages
+        ws.onmessage = async (event) => {
+            try {
+                const text = await event.data;
+                const data = JSON.parse(text);
+                //console.log('Decoded data:', data);
+
+                // Update the DOM with the decoded data
+                let panel = panels[data.node_id];
+                if (!panel) {
+                    panel = document.createElement("div");
+                    panel.className = "panel";
+                    panel.dataset.nodeId = data.node_id;
+                    panel.innerHTML = `
+                        <div class="selection-square" onclick="toggleNodeSelection('${data.node_id}')"></div>
+                        <h2>Node ${data.node_id} (${data.node_type})</h2>
+                        <div class="session">Session ID: <span id="session-${data.node_id}">${data.session_id}</span></div>
+                        <div class="connected-nodes">Connected Nodes: <span id="connected-nodes-${data.node_id}">${Array.from(data.connected_node_ids).join(', ')}</span></div>
+                        <div class="registered-communication-servers">Registered Communication Servers: <pre id="registered-communication-servers-${data.node_id}">${JSON.stringify(data.registered_communication_servers, null, 2)}</pre></div>
+                        <div class="registered-content-servers">Registered Content Servers: <pre id="registered-content-servers-${data.node_id}">${JSON.stringify(data.registered_content_servers, null, 2)}</pre></div>
+                        <div class="routing-table">Routing Table: <pre id="routing-table-${data.node_id}">${JSON.stringify(data.routing_table, null, 2)}</pre></div>
+                        <div class="message-chat">Message Chat: <pre id="message-chat-${data.node_id}">${JSON.stringify(data.message_chat, null, 2)}</pre></div>
+                    `;
+                    panelsContainer.appendChild(panel);
+                    panels[data.node_id] = panel;
+                    //console.log('Created new panel for node:', data.node_id);
+                } else {
+                    // Update the existing panel with new data
+                    document.getElementById(`session-${data.node_id}`).textContent = data.session_id;
+                    document.getElementById(`connected-nodes-${data.node_id}`).textContent = Array.from(data.connected_node_ids).join(', ');
+                    document.getElementById(`registered-communication-servers-${data.node_id}`).textContent = JSON.stringify(data.registered_communication_servers, null, 2);
+                    document.getElementById(`registered-content-servers-${data.node_id}`).textContent = JSON.stringify(data.registered_content_servers, null, 2);
+                    document.getElementById(`routing-table-${data.node_id}`).textContent = JSON.stringify(data.routing_table, null, 2);
+                    document.getElementById(`message-chat-${data.node_id}`).textContent = JSON.stringify(data.message_chat, null, 2);
+                }
+            } catch (e) {
+                console.error('Error processing message:', e);
+                const msgDiv = document.createElement("div");
+                msgDiv.className = "message error";
+                msgDiv.textContent = `Error decoding message: ${e.message}`;
+                panelsContainer.appendChild(msgDiv);
+            }
+        };
+
+        // Handle WebSocket connection close
+        ws.onclose = () => {
+            const msgDiv = document.createElement("div");
+            msgDiv.className = "message error";
+            msgDiv.textContent = 'WebSocket connection closed.';
+            panelsContainer.appendChild(msgDiv);
+        };
+
+        // Handle WebSocket connection open
+        ws.onopen = () => {
+            console.log('WebSocket connection established');
+        };
+
+        // Handle WebSocket errors
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
 
     </script>
     </body>
