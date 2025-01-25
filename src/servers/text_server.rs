@@ -90,6 +90,7 @@ struct DisplayDataTextServer{
 
 impl Monitoring for TextServer {
     fn send_display_data(&mut self, sender_to_gui: Sender<String>) {
+        let text_files_list = self.content.keys().cloned().collect();
         let neighbors =  self.packet_send.keys().cloned().collect();
         let display_data = DisplayDataTextServer {
             node_id: self.id,
@@ -97,7 +98,7 @@ impl Monitoring for TextServer {
             flood_id: self.flood_ids.last().cloned().unwrap_or(0),
             connected_node_ids: neighbors,
             routing_table: self.routes.clone(),
-            text_files: self.content.clone(),
+            text_files: text_files_list,
         };
 
         let json_string = serde_json::to_string(&display_data).unwrap();
