@@ -43,13 +43,13 @@ pub struct TextServer{
     pub packet_send: HashMap<NodeId, Sender<Packet>>,
 
     //Characteristic-Server fields
-    pub content: Vec<String>,
+    pub content: HashMap<String, String>,
 }
 
 impl TextServer{
     pub fn new(
         id: NodeId,
-        content: Vec<String>,
+        content: HashMap<String, String>,
         to_controller_event: Sender<ServerEvent>,
         from_controller_command: Receiver<ServerCommand>,
         packet_recv: Receiver<Packet>,
@@ -184,7 +184,7 @@ impl MainTrait for TextServer{
                 Ok(Query::AskType) => self.give_type_back(src_id),
 
                 Ok(Query::AskListFiles) => self.give_list_back(src_id),
-                Ok(Query::AskFile(file_id)) => self.give_file_back(src_id, file_id),
+                Ok(Query::AskFile(file_key)) => self.give_file_back(src_id, file_key),
 
                 Err(_) => {
                     panic!("Damn, not the right struct")
@@ -203,7 +203,7 @@ impl CharTrait for TextServer{
         let list_files = self.content.clone();
 
         //Creating data to send
-        let response = Response::ListFiles(list_files);
+        let response = Response::ListFiles(list_files.keys().collect::<Vec<String>>());
 
         //Serializing message to send
         let response_as_string = serde_json::to_string(&response).unwrap();
@@ -228,10 +228,10 @@ impl CharTrait for TextServer{
 
     }
 
-    fn give_file_back(&mut self, client_id: NodeId, file_id: u8) {
+    fn give_file_back(&mut self, client_id: NodeId, file_key: String) {
 
         //Get file
-        let file:&String = self.content.get(file_id as usize).unwrap();
+        let file:&String = self.content.get(&file_key).unwrap();
 
         //Creating data to send
         let response = Response::File(file.clone());
