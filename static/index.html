@@ -3,30 +3,78 @@
     <head>
         <title>Network Manager & Real-Time Monitor</title>
         <style>
-            /*
-            "", this is the code of a webpage that for now only keep tracks of the clients in a network made of routers (called in this network), clients and servers.
-            There are also two buttons for Ordering the clients and a button for selecting the client.
-            I want to add at the start though a big pop-up (like 90% width and height) that makes you decide if you want to be a controller or a client (if you are a controller then you see the same as what it is now the site) otherwise you see only one client).
-            For simplification you only have to create this pop-up at the start of the page, then putting the main body so far (header, dropdown button and clients_display_div) inside another div that will be shown only if in the first pop-up it is made the choice: controller
-            */
-
 
             /* Basic CSS */
-            body {
-                font-family: Arial, sans-serif;
+
+            html, body {
                 margin: 0;
                 padding: 0;
-                background-color: #f5f7fa; /* Pleasant light background color */
+                height: 100%; /* Ensure the body fits within the viewport */
             }
 
-            header {
-                color: white;
-                padding: 20px;
-                text-align: center;
-                font-size: 24px;
-                font-weight: bold;
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f5f7fa; /* Pleasant light background color */
+                overflow: hidden;
+            }
+
+            .header {
+                width:100%;
+                background-color:#007bff;
+                height:24px;
+                padding-top:20px;
+                padding-bottom:20px;
                 border-bottom: 2px solid #000000; /* Bottom border for emphasis */
             }
+
+            /* MONITORING CSS */
+
+            .previewContainer{
+                height:100%;
+                user-select: none;
+                margin-left: 20px;
+                margin-right: 20px;
+            }
+
+            .previewButton {
+                width: 100%;
+                height:100%;
+                position: relative;
+                transform-style: preserve-3d;
+                transition: transform 2s;
+            }
+            .box__face {
+                border:1px black solid;
+                border-radius:10px;
+                backface-visibility: hidden;
+                position: absolute;
+                font-size: 20px;
+                font-weight: bold;
+                color: white;
+                text-align: center;
+            }
+            .box__face--front,
+            .box__face--back {
+                width: 100%;
+                height:100%;
+            }
+
+            .box__face--front  { transform: rotateY(0deg)}
+            .box__face--back   { transform: rotateX(180deg) rotateZ(180deg)}
+
+
+            .previewButton.show-back   { transform: rotateY(0deg) rotateZ(0deg)}
+            .previewButton.show-front    { transform: rotateY( -1260deg) rotateZ(1.5deg)}
+
+
+            .inside_rotating_button{
+                display:flex;
+                align-items:center;
+                height:100%;
+                width:100%;
+            }
+
+
 
             /* DROPDOWN CSS */
             @keyframes slide-in {
@@ -50,7 +98,7 @@
                 }
             }
             .dropdown {
-                position: fixed;
+                position: relative;
                 top: 10px;
                 left: 20px;
                 z-index: 500;
@@ -152,6 +200,7 @@
                 padding-left: 20px;
                 padding-right: 20px;
             }
+
             .popup-content {
                 background: white;
                 padding: 30px;
@@ -205,6 +254,7 @@
                 opacity: 1; /* Show the text on hover */
             }
 
+
             /* GRAPH CSS */
 
             #network-container {
@@ -257,7 +307,7 @@
             #instructions-container {
                 position: absolute;
                 top: 10px;
-                left: 10px;
+                right: 10px;
                 background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white background */
                 border: 1px solid #ccc;
                 border-radius: 8px;
@@ -459,6 +509,10 @@
                 animation: jump .6s linear alternate infinite;
             }
 
+            .rounded{
+                border-radius: 0.25rem;
+            }
+
         </style>
     </head>
     <body>
@@ -484,19 +538,33 @@
         </div>
     </div>
 
+
     <div id="controller-view" style="display: none;">
-        <header style="background-color:#007bff">Network Manager & Real-Time Monitor</header>
-        <div class="dropdown">
-            <button onclick="toggleDropdown()">Menu</button>
-            <div class="dropdown-content" id="dropdown-menu">
-                <button onclick="orderPanelsByNodeId()">Ordering</button>
-                <button onclick="toggleSelectionMode()">Select</button>
-                <button class="confirm-button" onclick="confirmSelection()" style="display: none;">Confirm</button>
-                <button class="back-button" onclick="goBackToAllNodes()" style="display: none;">Back</button>
+        <div class="header">
+            <div class="previewContainer me-4 ms-4">
+                <div class="previewButton">
+                    <div class="box__face box__face--front rounded" style="background:#00000075"><div class="inside_rotating_button"><div style="text-align:center; width: 100%" class="text-center w-100">
+                        Network Manager
+                    </div></div></div>
+                    <div class="box__face box__face--back rounded"  style="color:black;background:hsl(186.01deg 100% 50%);"><div class="inside_rotating_button"><div style="text-align:center; width: 100%">
+                        Monitoring
+                    </div></div></div>
+                </div>
             </div>
         </div>
+
+
         <!-- Clients Display -->
         <div id="network-container">
+            <div class="dropdown">
+                <button onclick="toggleDropdown()">Menu</button>
+                <div class="dropdown-content" id="dropdown-menu">
+                    <button onclick="orderPanelsByNodeId()">Ordering</button>
+                    <button onclick="toggleSelectionMode()">Select</button>
+                    <button class="confirm-button" onclick="confirmSelection()" style="display: none;">Confirm</button>
+                    <button class="back-button" onclick="goBackToAllNodes()" style="display: none;">Back</button>
+                </div>
+            </div>
             <svg id="network-canvas"></svg>
 
             <div id="instructions-container">
@@ -510,7 +578,7 @@
                 </div>
             </div>
         </div>
-        <div id="clients_display_div" style="opacity:0">
+        <div id="monitoring-container" style="opacity:0">
 
         </div>
     </div>
@@ -592,7 +660,7 @@
     </div>
 
     <script>
-        const panelsContainer = document.getElementById("clients_display_div"); // Container for all panels
+        const panelsContainer = document.getElementById("monitoring-container"); // Container for all panels
         const panels = {}; // Object to track panels by node_id
         const selectedNodes = new Set(); // Set to track selected nodes
         let isSelectionMode = false; // Flag to track selection mode
@@ -608,6 +676,35 @@
             "Server2": ["Alice", "Bob", "Charlie"],
             "Server3": ["Manager", "Colleague A", "Colleague B"],
         };
+
+        // MONITORING STUFF
+
+        document.querySelector(".previewContainer").addEventListener("click", function() {
+            const network_container = document.querySelector('#network-container');
+            const monitoring_container = document.querySelector('#monitoring-container');
+            const previewButton = document.querySelector('.previewButton');
+            const fakeProposalTitle = document.querySelector('#fakeProposalTitle');
+            const fakeProposal = document.querySelector('#fakeProposal');
+
+            if (network_container.style.display === 'none') {
+                previewButton.classList.remove('show-front');
+                previewButton.classList.add('show-back');
+                monitoring_container.style.display = 'none';
+                network_container.style.display = 'block';
+            } else {
+                previewButton.classList.remove('show-back');
+                previewButton.classList.add('show-front');
+                network_container.style.display = 'none';
+                monitoring_container.style.display = 'block';
+
+                /*if (fakeProposal.scrollHeight > 100) {
+                    expandButton.style.display = "block";
+                } else {
+                    expandButton.style.display = "none";
+                }*/
+            }
+        });
+
 
 
         // GRAPH STUFF
