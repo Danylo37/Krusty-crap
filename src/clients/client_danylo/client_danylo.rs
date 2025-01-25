@@ -22,6 +22,7 @@ use crate::{
 use super::MessageFragments;
 
 pub type Node = (NodeId, NodeType);
+pub type ChatHistory = Vec<(ClientId, Message)>;
 
 pub struct ChatClientDanylo {
     // ID
@@ -50,8 +51,8 @@ pub struct ChatClientDanylo {
     pub messages_to_send: HashMap<SessionId, MessageFragments>,       // Queue of messages to be sent for different sessions
     pub fragments_to_reassemble: HashMap<SessionId, Vec<Fragment>>,   // Queue of fragments to be reassembled for different sessions
 
-    // Inbox
-    pub inbox: Vec<(ClientId, Message)>,                              // Messages with their senders
+    // Chats
+    pub chats: HashMap<ClientId, ChatHistory>,                        // Messages with their senders
 }
 
 impl Client for ChatClientDanylo {
@@ -78,7 +79,7 @@ impl Client for ChatClientDanylo {
             routes: HashMap::new(),
             messages_to_send: HashMap::new(),
             fragments_to_reassemble: HashMap::new(),
-            inbox: Vec::new(),
+            chats: HashMap::new(),
         }
     }
 
@@ -372,7 +373,8 @@ impl ChatClientDanylo {
                 Response::MessageFrom(from, message) => {
                     info!("Client {}: New message from {}: {:?}", self.id, from, &message);
 
-                    self.inbox.insert(0, (from, message));
+                    let chat = self.chats.get_mut(&from).unwrap();
+                    chat.push((from, message));
                 }
                 Response::Err(error) =>
                     error!("Client {}: Error received from server {}: {:?}", self.id, server_id, error),
@@ -411,6 +413,11 @@ impl ChatClientDanylo {
 
         // Remove self id from the clients list if it exists
         clients.retain(|&client_id| client_id != self.id);
+
+        // Create a new empty chat for each client
+        for client_id in clients.iter() {
+            self.chats.insert(*client_id, Vec::new());
+        }
 
         self.clients.insert(server_id, clients);
     }

@@ -8,7 +8,7 @@ use futures_util::select_biased;
 use log::info;
 use tokio::time::interval;
 use wg_2024::network::NodeId;
-use super::ChatClientDanylo;
+use super::{ChatClientDanylo, ChatHistory};
 
 #[derive(Debug, Serialize)]
 pub struct ChatClientDisplayData {
@@ -25,9 +25,6 @@ pub struct ChatClientDisplayData {
     discovered_servers: HashMap<ServerId, ServerType>,
     //registered_communication_servers: HashMap<ServerId, bool>,
     available_clients: HashMap<ServerId, Vec<ClientId>>,
-
-    // Inbox
-    received_messages: Vec<(ClientId, Message)>,
 }
 
 
@@ -43,7 +40,6 @@ impl Monitoring for ChatClientDanylo {
             discovered_servers: self.servers.clone(),
             //registered_communication_servers: self.is_registered.clone(),
             available_clients: self.clients.clone(),
-            received_messages: self.inbox.clone(),
         };
 
         // Serialize the DisplayData to MessagePack binary
