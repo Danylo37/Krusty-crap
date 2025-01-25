@@ -153,9 +153,10 @@ pub trait Server{
     fn handle_ack(&mut self, _ack: Ack){
         //UI stuff i guess?
     }
-    
+
     fn send_ack(&self, ack: Ack, routing_header: SourceRoutingHeader, session_id: u64) {
-        let packet= Self::create_packet(PacketType::Ack(ack), routing_header, session_id);
+        let mut packet= Self::create_packet(PacketType::Ack(ack), routing_header, session_id);
+        packet.routing_header.increase_hop_index();
         self.send_packet(packet);
     }
 
@@ -320,7 +321,7 @@ pub trait Server{
 
         let offset = fragment_index*128;
         let mut data:[u8;128] = [0;128];
-        if offset > length_response as u64 {
+        if (offset+128) > length_response as u64 {
             data[0..(message_and_destination.0.len() as u64 - offset) as usize].copy_from_slice(&message_and_destination.0[offset as usize..message_and_destination.0.len()]);
         }else{
             data.copy_from_slice(&message_and_destination.0[offset as usize..(offset+128) as usize]);
