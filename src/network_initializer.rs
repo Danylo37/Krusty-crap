@@ -434,7 +434,7 @@ impl NetworkInitializer {
 
                     server_instance_text = Some(TextServer::new(
                         server.id,
-                        vec_files.iter().map(|(_, file)| file.clone()).collect::<Vec<String>>(),
+                        vec_files.iter().clone().collect::<HashMap<String, String>>(),
                         server_events_sender_clone,
                         command_receiver,
                         packet_receiver,
