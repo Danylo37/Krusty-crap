@@ -1254,7 +1254,9 @@
                         <div class="registered-communication-servers">Registered Communication Servers: <pre id="registered-communication-servers-${data.node_id}">${JSON.stringify(data.registered_communication_servers, null, 2)}</pre></div>
                         <div class="registered-content-servers">Registered Content Servers: <pre id="registered-content-servers-${data.node_id}">${JSON.stringify(data.registered_content_servers, null, 2)}</pre></div>
                         <div class="routing-table">Routing Table: <pre id="routing-table-${data.node_id}">${JSON.stringify(data.routing_table, null, 2)}</pre></div>
-                        <div class="message-chat">Message Chat: <pre id="message-chat-${data.node_id}">${JSON.stringify(data.message_chat, null, 2)}</pre></div>
+                        <div class="current-files">Current Files: <pre id="curr-files-${data.node_id}">${JSON.stringify(data.curr_received_file_list, null, 2)}</pre></div>
+                        <div class="chosen-file">Chosen File: <span id="chosen-file-${data.node_id}">${data.chosen_file_text}</span></div>
+                        <div class="serialized-media">Serialized Media: <pre id="serialized-media-${data.node_id}">${JSON.stringify(data.serialized_media, null, 2)}</pre></div>
                     `;
                             break;
                         case "Chat Client":
@@ -1306,7 +1308,7 @@
                     panelsContainer.appendChild(panel);
                     panels[data.node_id] = panel;
                 } else {
-                    // Update logic for existing panels (similar to above switch-case logic)
+                    // Update logic for existing panels
                     switch (data.node_type) {
                         case "Web Browser":
                             document.getElementById(`session-${data.node_id}`).textContent = data.session_id;
@@ -1314,7 +1316,9 @@
                             document.getElementById(`registered-communication-servers-${data.node_id}`).textContent = JSON.stringify(data.registered_communication_servers, null, 2);
                             document.getElementById(`registered-content-servers-${data.node_id}`).textContent = JSON.stringify(data.registered_content_servers, null, 2);
                             document.getElementById(`routing-table-${data.node_id}`).textContent = JSON.stringify(data.routing_table, null, 2);
-                            document.getElementById(`message-chat-${data.node_id}`).textContent = JSON.stringify(data.message_chat, null, 2);
+                            document.getElementById(`curr-files-${data.node_id}`).textContent = JSON.stringify(data.curr_received_file_list, null, 2);
+                            document.getElementById(`chosen-file-${data.node_id}`).textContent = data.chosen_file_text;
+                            document.getElementById(`serialized-media-${data.node_id}`).textContent = JSON.stringify(data.serialized_media, null, 2);
                             break;
                         case "Chat Client":
                             document.getElementById(`flood-ids-${data.node_id}`).textContent = data.flood_ids.join(', ');

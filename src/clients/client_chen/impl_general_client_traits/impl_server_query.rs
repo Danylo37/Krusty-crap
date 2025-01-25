@@ -40,7 +40,7 @@ impl ServerQuery for ClientChen{
         }
     }
 
-    fn ask_file(&mut self, server_id: ServerId, file_ref: u8) {
+    fn ask_file(&mut self, server_id: ServerId, file_ref: String) {
         if self.get_discovered_servers_from_topology().contains(&server_id) {
             self.send_query(server_id, Query::AskFile(file_ref));
         }

@@ -407,7 +407,7 @@ pub trait CommunicationServer {
 ///Content Server functions
 pub trait TextServer {
     fn give_list_back(&mut self, client_id: NodeId);
-    fn give_file_back(&mut self, client_id: NodeId, file_id: u8);
+    fn give_file_back(&mut self, client_id: NodeId, file_id: String);
 }
 
 ///Media server functions

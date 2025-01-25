@@ -1,5 +1,5 @@
 use crate::clients::client_chen::ClientChen;
-use crate::general_use::{FileId, MediaRef};
+use crate::general_use::{FileRef, MediaRef};
 use crate::ui_traits::Monitoring;
 
 pub trait WebBrowserClientTrait {
@@ -10,12 +10,8 @@ pub trait WebBrowserClientTrait {
 
 impl WebBrowserClientTrait for ClientChen{
     fn handle_list_file(&mut self, list_file: Vec<String>) {
-        //just update the list of files
-        let mut file_id:FileId = 0;
-        for file in list_file{
-            file_id += 1;
-            self.storage.current_list_file.insert(file_id, file.clone());
-        }
+        //just update the list of file
+        self.storage.current_list_file = list_file;
     }
 
    fn handle_text_file(&mut self, text_file: String) {
@@ -26,11 +22,11 @@ impl WebBrowserClientTrait for ClientChen{
    }
 
     fn handle_media(&mut self, serialized_media: String) {
-        self.storage.current_chosen_media = serialized_media;
+        self.storage.current_received_serialized_media.insert(self.storage.current_chosen_media_ref.clone(), serialized_media);
     }
 }
 
-fn filter_media_refs_from_text(input: String) -> Vec<String> {
+fn filter_media_refs_from_text(input: String) -> Vec<MediaRef> {
     input
         .split_whitespace()
         .filter(|word| {

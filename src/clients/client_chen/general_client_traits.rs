@@ -114,7 +114,7 @@ pub trait ServerQuery{
     fn ask_list_clients(&mut self, server_id: ServerId);
     fn send_message_to_client(&mut self, server_id: ServerId, client_id: ClientId, message: Message);
     fn ask_list_files(&mut self, server_id: ServerId);  //all the files that a server has, so not a specific file_ref (or file_index)
-    fn ask_file(&mut self, server_id: ServerId, file_ref: u8);
+    fn ask_file(&mut self, server_id: ServerId, file_ref: String);
     fn ask_media(&mut self, server_id: ServerId, media_ref: String);  //string is the reference found in the files
 
 }

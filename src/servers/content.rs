@@ -3,25 +3,27 @@ use rand::random;
 
 const N_FILES: usize = 16;
 
-pub fn choose_random_texts() -> Vec<(u8, String)>{
-    let trying_closures = |x:u8| {
+pub fn choose_random_texts() -> Vec<(String, String)> {
+    let trying_closures = |x: u8| {
         if x < 4 {
-            return x+3
-        }else{
+            return x + 3;
+        } else {
             x
         }
     };
 
-    let n_files = trying_closures(random::<u8>()%(N_FILES as u8));
+    let n_files = trying_closures(random::<u8>() % (N_FILES as u8));
 
-    let mut vec_files:Vec<(u8, String)> = Vec::new();
-    if random::<u8>()%2 == 0{
-        for i in 0..n_files{
-            vec_files.push((i,TEXT[i as usize].to_string()));
+    let mut vec_files: Vec<(String, String)> = Vec::new();
+    if random::<u8>() % 2 == 0 {
+        for i in 0..n_files {
+            // Access the first element of the tuple (index 0)
+            vec_files.push((TEXT[i as usize].0.to_string(), TEXT[i as usize].1.to_string()));
         }
-    }else{
-        for i in (0..n_files).rev(){
-            vec_files.push((i,TEXT[i as usize].to_string()));
+    } else {
+        for i in (0..n_files).rev() {
+            // Access the first element of the tuple (index 0)
+            vec_files.push((TEXT[i as usize].0.to_string(), TEXT[i as usize].1.to_string()));
         }
     }
     vec_files

@@ -29,6 +29,6 @@ pub use crate::general_use::{ClientId,
                          Response,
                          ServerType,
                          Speaker,
-                         FileId,
+                         FileRef,
                          UsingTimes,
 };

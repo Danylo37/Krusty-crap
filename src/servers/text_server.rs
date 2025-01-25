@@ -90,6 +90,7 @@ struct DisplayDataTextServer{
 
 impl Monitoring for TextServer {
     fn send_display_data(&mut self, sender_to_gui: Sender<String>) {
+        let text_files_list = self.content.keys().cloned().collect();
         let neighbors =  self.packet_send.keys().cloned().collect();
         let display_data = DisplayDataTextServer {
             node_id: self.id,
@@ -97,7 +98,7 @@ impl Monitoring for TextServer {
             flood_id: self.flood_ids.last().cloned().unwrap_or(0),
             connected_node_ids: neighbors,
             routing_table: self.routes.clone(),
-            text_files: self.content.clone(),
+            text_files: text_files_list,
         };
 
         let json_string = serde_json::to_string(&display_data).unwrap();
@@ -203,7 +204,7 @@ impl CharTrait for TextServer{
         let list_files = self.content.clone();
 
         //Creating data to send
-        let response = Response::ListFiles(list_files.keys().collect::<Vec<String>>());
+        let response = Response::ListFiles(list_files.keys().cloned().collect::<Vec<String>>());
 
         //Serializing message to send
         let response_as_string = serde_json::to_string(&response).unwrap();
@@ -231,7 +232,7 @@ impl CharTrait for TextServer{
     fn give_file_back(&mut self, client_id: NodeId, file_key: String) {
 
         //Get file
-        let file:&String = self.content.get(&file_key).unwrap();
+        if let Some(file) = self.content.get(&file_key){
 
         //Creating data to send
         let response = Response::File(file.clone());
@@ -257,5 +258,6 @@ impl CharTrait for TextServer{
         //Send fragments
         self.send_fragments(session_id, n_fragments,response_in_vec_bytes, header);
 
+    }
     }
 }

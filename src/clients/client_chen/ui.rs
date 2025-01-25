@@ -7,6 +7,7 @@ use std::collections::{HashMap, HashSet};
 use std::time::Duration;
 use crossbeam_channel::{Sender, Receiver, select_biased};
 use crate::clients::Client;
+use crate::general_use::MediaRef;
 
 #[derive(Debug, Serialize)]
 struct DisplayDataWebBrowser {
@@ -18,7 +19,9 @@ struct DisplayDataWebBrowser {
     registered_communication_servers: HashMap<ServerId, Vec<ClientId>>,
     registered_content_servers: HashSet<ServerId>,
     routing_table: HashMap<NodeId, Vec<Vec<NodeId>>>,
-    message_chat: HashMap<ClientId, Vec<(Speaker, Message)>>,
+    curr_received_file_list: Vec<String>,
+    chosen_file_text: String,
+    serialized_media: HashMap<MediaRef, String>,
 }
 
 
@@ -48,24 +51,15 @@ impl Monitoring for ClientChen{
             registered_communication_servers: self.communication.registered_communication_servers.clone(),
             registered_content_servers: self.communication.registered_content_servers.clone(),
             routing_table: transformed_routing_table,
-            message_chat: self.storage.message_chat.clone(),
+            curr_received_file_list: self.storage.current_list_file.clone(),
+            chosen_file_text: self.storage.current_requested_text_file.clone(),
+            serialized_media: self.storage.current_received_serialized_media.clone(),
         };
 
         // Serialize the DisplayData to MessagePack binary
         let json_string = serde_json::to_string(&display_data).unwrap();
         sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
     }
-
-
-    /*//test
-    fn run_with_monitoring(
-        &mut self,
-        sender_to_gui:Sender<String>,
-    ) {
-        //first monitor
-        self.send_display_data(sender_to_gui.clone());
-    }
-*/
 
     fn run_with_monitoring(&mut self, sender_to_gui: Sender<String>) {
         self.send_display_data(sender_to_gui.clone());

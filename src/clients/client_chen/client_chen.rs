@@ -79,9 +79,11 @@ impl TraitClient for ClientChen {
                 output_packet_disk: HashMap::new(),  //if at the end of the implementation still doesn't need then delete
                 packets_status: HashMap::new(),
                 message_chat: HashMap::new(),
-                current_list_file: HashMap::new(),
+                current_list_file: Vec::new(),
                 current_requested_text_file: String::new(),
                 current_text_media_list: Vec::new(),
+                current_chosen_media_ref: "".to_string(),
+                current_received_serialized_media: Default::default(),
                 current_chosen_media: String::new(),
             },
 
@@ -164,10 +166,12 @@ pub struct NodeStorage {
     pub(crate) output_packet_disk: HashMap<SessionId, HashMap<FragmentIndex, Packet>>,         // Storage for sent packets
     pub(crate) packets_status: HashMap<SessionId, HashMap<FragmentIndex, PacketStatus>>,       // Map every packet with the status of sending
     pub(crate) message_chat: HashMap<ClientId, Vec<(Speaker, Message)>>,               // Chat messages with other clients
-    pub(crate) current_list_file: HashMap<FileId, String>,                                  // Files received from media servers
+    pub(crate) current_list_file: Vec<String>,                                  // Files received from media servers
     pub(crate) current_requested_text_file: String,
     pub(crate) current_text_media_list: Vec<MediaRef>,
-    pub(crate) current_chosen_media: String,
+    pub(crate) current_chosen_media_ref: MediaRef,
+    pub(crate) current_received_serialized_media: HashMap<MediaRef, String>,
+    pub current_chosen_media: String,
 }
 
 
