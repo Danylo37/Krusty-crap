@@ -93,7 +93,7 @@ pub enum Query {
     //To Content Server
     //(Text)
     AskListFiles,
-    AskFile(FileId),   //changed to File (String)
+    AskFile(String),   //changed to File (String)
     //(Media)
     AskMedia(String), // String is the reference found in the files
 }
