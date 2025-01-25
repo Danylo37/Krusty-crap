@@ -6,6 +6,7 @@ use serde::Serialize;
 use std::collections::{HashMap, HashSet};
 use std::time::Duration;
 use crossbeam_channel::{Sender, Receiver, select_biased};
+use crate::clients::Client;
 
 #[derive(Debug, Serialize)]
 struct DisplayDataWebBrowser {
@@ -23,6 +24,7 @@ struct DisplayDataWebBrowser {
 
 impl Monitoring for ClientChen{
     fn send_display_data(&mut self, sender_to_gui:Sender<String>){
+        self.update_connected_nodes();
         let transformed_routing_table: HashMap<NodeId, Vec<Vec<NodeId>>> = self
             .communication
             .routing_table

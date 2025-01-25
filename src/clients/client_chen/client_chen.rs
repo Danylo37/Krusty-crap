@@ -38,6 +38,9 @@ impl TraitClient for ClientChen {
         controller_send: Sender<ClientEvent>,
         controller_recv: Receiver<ClientCommand>,
     ) -> Self {
+
+        let connected_nodes = packet_send.keys().cloned().collect();
+
         Self {
             // Client's metadata
             metadata: NodeMetadata {
@@ -53,7 +56,7 @@ impl TraitClient for ClientChen {
 
             // Communication-related data
             communication: CommunicationInfo {
-                connected_nodes_ids: packet_send.keys().cloned().collect(),
+                connected_nodes_ids: connected_nodes,
                 registered_communication_servers: HashMap::new(),
                 registered_content_servers: HashSet::new(),
                 routing_table: HashMap::new(),
@@ -110,6 +113,12 @@ impl TraitClient for ClientChen {
                  },
             }
         }
+    }
+}
+
+impl ClientChen{
+    pub(crate) fn update_connected_nodes(&mut self) {
+        self.communication.connected_nodes_ids = self.communication_tools.packet_send.keys().cloned().collect();
     }
 }
 
