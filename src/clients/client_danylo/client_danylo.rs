@@ -17,9 +17,9 @@ use crate::{
         ClientCommand, ClientEvent, Message, Query, Response, ServerType,
         ClientId, ServerId, SessionId, FloodId, FragmentIndex
     },
+    ui_traits::Monitoring,
     clients::Client
 };
-use crate::ui_traits::Monitoring;
 use super::MessageFragments;
 
 pub type Node = (NodeId, NodeType);
@@ -155,6 +155,12 @@ impl ChatClientDanylo {
             }
             ClientCommand::SendMessageTo(to, message) => {
                 self.send_message_to(to, message)
+            }
+            ClientCommand::RegisterToServer(server_id) => {
+                self.request_to_register(server_id)
+            }
+            ClientCommand::AskListClients(server_id) => {
+                self.request_clients_list(server_id)
             }
             _ => {}
         }
