@@ -67,7 +67,6 @@ pub enum ClientCommand {
     RemoveSender(NodeId),
     AddSender(NodeId, Sender<Packet>),
     SendMessageTo(ClientId, Message),  //if you order a client to send messages to another client you can do it
-    RunUI,
     StartFlooding,
     AskTypeTo(ServerId),
     RequestListFile(ServerId),   //request the list of the file that the server has.

@@ -432,17 +432,6 @@ It uses the command_senders map to find the appropriate sender channel.
         Ok(())
     }
 
-    pub fn run_client_ui(&self, client_id: NodeId) -> Result<(), String> {
-        if let Some((command_sender, _)) = self.command_senders_clients.get(&client_id) {
-            if let Err(e) = command_sender.send(ClientCommand::RunUI) {
-                return Err(format!("Failed to send RunUI command to client {}: {:?}", client_id, e));
-            }
-            Ok(())
-        } else {
-            Err(format!("Client with ID {} not found", client_id))
-        }
-    }
-
     pub fn get_list_clients(&self) -> Vec<(ClientType, NodeId)> {
         self.command_senders_clients
             .iter()
