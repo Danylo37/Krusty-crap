@@ -1,12 +1,9 @@
-use crate::general_use::{ClientId, FloodId, Message, ServerId, ServerType, SessionId};
-use crate::ui_traits::{crossbeam_to_tokio_bridge, Monitoring};
+use crate::general_use::{ClientId, FloodId, ServerId, ServerType, SessionId};
+use crate::ui_traits::Monitoring;
 use serde::Serialize;
 use std::collections::{HashMap, HashSet};
-use std::future::Future;
 use crossbeam_channel::Sender;
-use futures_util::select_biased;
 use log::info;
-use tokio::time::interval;
 use wg_2024::network::NodeId;
 use super::{ChatClientDanylo, ChatHistory};
 
@@ -25,6 +22,9 @@ pub struct ChatClientDisplayData {
     discovered_servers: HashMap<ServerId, ServerType>,
     //registered_communication_servers: HashMap<ServerId, bool>,
     available_clients: HashMap<ServerId, Vec<ClientId>>,
+
+    // Chats
+    chats: HashMap<ClientId, ChatHistory>,
 }
 
 
@@ -40,6 +40,7 @@ impl Monitoring for ChatClientDanylo {
             discovered_servers: self.servers.clone(),
             //registered_communication_servers: self.is_registered.clone(),
             available_clients: self.clients.clone(),
+            chats: self.chats.clone(),
         };
 
         // Serialize the DisplayData to MessagePack binary
