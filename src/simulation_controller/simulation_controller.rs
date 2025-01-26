@@ -379,15 +379,47 @@ impl SimulationController {
 It uses the command_senders map to find the appropriate sender channel.
 */
     pub fn request_drone_crash(&mut self, drone_id: NodeId) -> Result<(), String> {
+        let neighbors = self.state.topology.get(&drone_id).cloned(); // Get drone's neighbors
+
         if let Some(command_sender) = self.command_senders_drones.get(&drone_id) {
-            if let Err(e) = command_sender.send(DroneCommand::Crash) { // Error handling
+            if let Err(e) = command_sender.send(DroneCommand::Crash) {
                 eprintln!("Failed to send Crash command to drone {}: {:?}", drone_id, e);
-                return Err(format!("Failed to send Crash command to drone {}: {:?}", drone_id, e));
+                return Err(format!("Failed to send Crash command to drone {}: {:?}", drone_id, e)); //Return error if send failed
             }
-            Ok(())
         } else {
-            Err(format!("Drone {} not found in controller", drone_id))
+            return Err(format!("Drone {} not found in controller", drone_id)); //Return error if drone not found
         }
+        // Remove senders from neighbors.
+        if let Some(neighbors) = neighbors {
+            for neighbor in neighbors {
+                if let Some(NodeType::Drone) = self.state.nodes.get(&neighbor){        //If neighbour is a drone
+                    if let Err(err) = self.remove_sender(neighbor, NodeType::Drone, drone_id){  //Remove the sender
+                        eprintln!("{}", err);
+                    }
+                    if let Some(connected_nodes) = self.state.topology.get_mut(&neighbor) {
+                        connected_nodes.retain(|&id| id != drone_id);
+                    }
+                } else if let Some(NodeType::Client) = self.state.nodes.get(&neighbor){   //If neighbour is a client
+                    if let Err(err) = self.remove_sender(neighbor, NodeType::Client, drone_id){
+                        eprintln!("{}", err);
+                    }
+                    if let Some(connected_nodes) = self.state.topology.get_mut(&neighbor) {
+                        connected_nodes.retain(|&id| id != drone_id);
+                    }
+                } else if let Some(NodeType::Server) = self.state.nodes.get(&neighbor){   //If neighbour is a server
+                    if let Err(err) = self.remove_sender(neighbor, NodeType::Server, drone_id){
+                        eprintln!("{}", err);
+                    }
+                    if let Some(connected_nodes) = self.state.topology.get_mut(&neighbor) {
+                        connected_nodes.retain(|&id| id != drone_id);
+                    }
+                }
+            }
+        }
+        self.state.topology.remove(&drone_id);
+        self.command_senders_drones.remove(&drone_id);
+
+        Ok(())
     }
 
     pub fn run_client_ui(&self, client_id: NodeId) -> Result<(), String> {
