@@ -40,6 +40,8 @@ pub struct ChatClientDanylo {
     pub clients: HashMap<ServerId, Vec<ClientId>>,                    // Available clients on different servers
 
     // Used IDs
+    pub session_id_counter: SessionId,                                // Counter for session IDs
+    pub flood_id_counter: FloodId,                                    // Counter for flood IDs
     pub session_ids: Vec<SessionId>,                                  // Used session IDs
     pub flood_ids: Vec<FloodId>,                                      // Used flood IDs
 
@@ -73,6 +75,8 @@ impl Client for ChatClientDanylo {
             servers: HashMap::new(),
             is_registered: HashMap::new(),
             clients: HashMap::new(),
+            session_id_counter: 0,
+            flood_id_counter: 0,
             session_ids: Vec::new(),
             flood_ids: Vec::new(),
             topology: HashMap::new(),
@@ -594,25 +598,22 @@ impl ChatClientDanylo {
     }
 
     /// ###### Generates a new session ID.
-    fn generate_session_id(&self) -> SessionId {
-        let next_session_id: SessionId = self
-            .session_ids
-            .last()
-            .map_or(1, |last| last + 1);
-
-        format!("{}{}", self.id, next_session_id)
-            .parse()
-            .unwrap()
+    fn generate_session_id(&mut self) -> SessionId {
+        self.session_id_counter += 1;
+        let next_session_id: SessionId = self.session_id_counter;
+        self.parse_id(next_session_id)
     }
 
     /// ###### Generates a new flood ID.
-    fn generate_flood_id(&self) -> FloodId {
-        let next_session_id: FloodId = self
-            .flood_ids
-            .last()
-            .map_or(1, |last| last + 1);
+    fn generate_flood_id(&mut self) -> FloodId {
+        self.flood_id_counter += 1;
+        let next_flood_id: FloodId = self.flood_id_counter;
+        self.parse_id(next_flood_id)
+    }
 
-        format!("{}{}", self.id, next_session_id)
+    /// ###### Parses the ID by concatenating the client ID and the provided ID.
+    fn parse_id(&self, id: u64) -> u64 {
+        format!("{}{}", self.id, id)
             .parse()
             .unwrap()
     }
@@ -629,7 +630,7 @@ impl ChatClientDanylo {
                 info!("Client {}: Request for server type sent successfully.", self.id);
             }
             Err(err) => {
-                error!("Client {}: Failed to receive server type: {}", self.id, err);
+                error!("Client {}: Failed to send request for server type: {}", self.id, err);
             },
         }
     }
@@ -646,7 +647,7 @@ impl ChatClientDanylo {
                 info!("Client {}: Request to register sent successfully.", self.id);
             }
             Err(err) => {
-                error!("Client {}: Failed to register client: {}", self.id, err);
+                error!("Client {}: Failed to send request to register: {}", self.id, err);
             },
         }
     }
@@ -663,7 +664,7 @@ impl ChatClientDanylo {
                 info!("Client {}: Request for clients list sent successfully.", self.id);
             }
             Err(err) => {
-                error!("Client {}: Failed to get list of clients: {}", self.id, err);
+                error!("Client {}: Failed to send request for clients list: {}", self.id, err);
             },
         }
     }
