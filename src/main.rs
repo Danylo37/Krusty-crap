@@ -19,15 +19,14 @@ fn main() {
     env_logger::init();
 
     let (tx, rx) = unbounded();
+    let (sender_from_ws, receiver_from_ws) = unbounded();
+
     let mut my_net = network_initializer::NetworkInitializer::new(tx.clone());
     my_net.initialize_from_file("input.toml");
 
     // Start WebSocket server
-
-    let (sender_from_ws, receiver_from_ws) = unbounded();
-
     websocket::start_websocket_server(rx, sender_from_ws);
-
+   
     // Start HTTP server for web interface
     thread::spawn(|| {
         println!("HTTP server started on http://0.0.0.0:8000");

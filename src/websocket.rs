@@ -6,10 +6,15 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use futures_util::AsyncReadExt;
 use tungstenite::{accept, Message, Utf8Bytes};
+use wg_2024::controller::DroneCommand;
+use crate::general_use::{ClientCommand, ClientId, DroneId, ServerCommand, ServerId};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum WsCommand {
-    UpdateData,
+    UpdateData,  //in general, it asks all the nodes to send the data to the monitor
+    DroneCommand(DroneId, DroneCommand),
+    ClientCommand(ClientId ,ClientCommand),
+    ServerCommand(ServerId, ServerCommand),
 }
 
 pub fn start_websocket_server(rx: Receiver<String>, cmd_tx: Sender<WsCommand>) {
