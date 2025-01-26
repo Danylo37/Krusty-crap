@@ -26,7 +26,7 @@ impl WebBrowserClientTrait for ClientChen{
     }
 }
 
-fn filter_media_refs_from_text(input: String) -> Vec<MediaRef> {
+pub fn filter_media_refs_from_text(input: String) -> Vec<MediaRef> {
     input
         .split_whitespace()
         .filter(|word| {

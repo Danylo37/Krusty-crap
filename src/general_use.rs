@@ -54,7 +54,7 @@ pub enum ServerEvent {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 /// From controller to Client
 pub enum ClientCommand {
     //Controller functions
