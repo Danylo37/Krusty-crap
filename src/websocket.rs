@@ -1,21 +1,42 @@
-use crossbeam_channel::{bounded, Receiver, Sender};
+use crossbeam_channel::{ Receiver, Sender};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use futures_util::AsyncReadExt;
-use tungstenite::{accept, Message, Utf8Bytes};
+use tungstenite::{accept, Message};
 use wg_2024::controller::DroneCommand;
+use wg_2024::network::NodeId;
+use wg_2024::packet::Packet;
 use crate::general_use::{ClientCommand, ClientId, DroneId, ServerCommand, ServerId};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum WsCommand {
-    UpdateData,  //in general, it asks all the nodes to send the data to the monitor
-    DroneCommand(DroneId, DroneCommand),
-    ClientCommand(ClientId ,ClientCommand),
-    ServerCommand(ServerId, ServerCommand),
+    WsUpdateData,  //in general, it asks all the nodes to send the data to the monitor
+    WsDroneCommand(DroneId, DroneCommandWs),
+    WsClientCommand(ClientId ,ClientCommandWs),
+    WsServerCommand(ServerId, ServerCommandWs),
 }
+
+//Just this to implement the Serialize and Deserialize
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum DroneCommandWs{
+    //for now just crash, we will see when we have more buttons
+    Crash,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ClientCommandWs{
+    //for now just update the monitoring data, we will see when we have more buttons
+    UpdateMonitoringData,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ServerCommandWs{
+    //for now just update the monitoring data, we will see when we have more buttons
+    UpdateMonitoringData,
+}
+
 
 pub fn start_websocket_server(rx: Receiver<String>, cmd_tx: Sender<WsCommand>) {
     let listener = TcpListener::bind("0.0.0.0:8080").unwrap();
@@ -38,8 +59,6 @@ pub fn start_websocket_server(rx: Receiver<String>, cmd_tx: Sender<WsCommand>) {
                         clients.insert(addr, stream.try_clone().unwrap());
                     }
 
-                    // Spawn separate thread for this connection
-                    // Spawn separate thread for this connection
                     // Spawn separate thread for this connection
                     thread::spawn(move || {
                         let websocket = accept(stream).unwrap();

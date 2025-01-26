@@ -48,8 +48,7 @@ use RF_drone::RustAndFurious;
 //UI
 use crate::ui_traits::Monitoring;
 use crate::ui::start_ui;
-
-
+use crate::websocket::WsCommand;
 
 //Drone Enum + iterator over it
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
@@ -99,7 +98,7 @@ pub struct NetworkInitializer {
 }
 
 impl NetworkInitializer {
-    pub fn new( sender_to_gui: Sender<String>) -> Self {
+    pub fn new( sender_to_gui: Sender<String>, ws_receiver: Receiver<WsCommand>) -> Self {
         // Create event channels for drones, clients, and servers
         let (drone_event_sender, drone_event_receiver) = unbounded();
         let (client_event_sender, client_event_receiver) = unbounded();
@@ -113,6 +112,8 @@ impl NetworkInitializer {
             client_event_receiver,
             server_event_sender,
             server_event_receiver,
+
+            ws_receiver
         );
 
         Self {

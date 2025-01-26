@@ -44,6 +44,9 @@ pub enum PacketStatus{
 /// From controller to Server
 #[derive(Debug, Clone)]
 pub enum ServerCommand {
+    //for monitoring
+    UpdateMonitoringData,
+
     RemoveSender(NodeId),
     AddSender(NodeId, Sender<Packet>),
     ShortcutPacket(Packet),
@@ -58,6 +61,9 @@ pub enum ServerEvent {
 /// From controller to Client
 pub enum ClientCommand {
     //Controller functions
+    //for monitoring
+    UpdateMonitoringData,
+
     RemoveSender(NodeId),
     AddSender(NodeId, Sender<Packet>),
     SendMessageTo(ClientId, Message),  //if you order a client to send messages to another client you can do it

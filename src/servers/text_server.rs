@@ -114,6 +114,9 @@ impl Monitoring for TextServer {
                 recv(self.get_from_controller_command()) -> command_res => {
                     if let Ok(command) = command_res {
                         match command {
+                            ServerCommand::UpdateMonitoringData => {
+                                self.send_display_data(sender_to_gui.clone());
+                            }
                             ServerCommand::AddSender(id, sender) => {
                                 self.get_packet_send().insert(id, sender);
 

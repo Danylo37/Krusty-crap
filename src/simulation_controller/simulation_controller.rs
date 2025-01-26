@@ -9,6 +9,7 @@ use wg_2024::{
     packet::{NodeType, Packet, PacketType}
 };
 use crate::general_use::{ClientCommand, ClientEvent, ServerCommand, ServerEvent, ServerType, ClientType, ServerId, Query};
+use crate::websocket::WsCommand;
 
 pub struct SimulationState {
     pub nodes: HashMap<NodeId, NodeType>,
@@ -38,6 +39,9 @@ pub struct SimulationController {
     pub command_senders_clients: HashMap<NodeId, (Sender<ClientCommand>, ClientType)>,
     pub command_senders_servers: HashMap<NodeId, (Sender<ServerCommand>, ServerType)>,
     pub packet_senders: HashMap<NodeId, Sender<Packet>>,
+
+    //for the monitoring
+    pub ws_command_receiver: Receiver<WsCommand>,
 }
 
 
@@ -49,6 +53,9 @@ impl SimulationController {
         client_event_receiver: Receiver<ClientEvent>,
         server_event_sender: Sender<ServerEvent>,
         server_event_receiver: Receiver<ServerEvent>,
+
+        //for the monitoring
+        ws_command_receiver: Receiver<WsCommand>,
     ) -> Self {
         Self {
             state: SimulationState {
@@ -66,6 +73,9 @@ impl SimulationController {
             server_event_sender,
             server_event_receiver,
             packet_senders: HashMap::new(),
+
+            //for the monitoring
+            ws_command_receiver,
         }
     }
 

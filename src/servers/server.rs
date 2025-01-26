@@ -56,6 +56,7 @@ pub trait Server{
                                     PacketType::FloodResponse(flood_response) => self.handle_flood_response(flood_response),
                                 }
                             }
+                            _ =>{},
                         }
                     }
                 },

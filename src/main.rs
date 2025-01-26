@@ -21,7 +21,7 @@ fn main() {
     let (tx, rx) = unbounded();
     let (sender_from_ws, receiver_from_ws) = unbounded();
 
-    let mut my_net = network_initializer::NetworkInitializer::new(tx.clone());
+    let mut my_net = network_initializer::NetworkInitializer::new(tx.clone(), receiver_from_ws);
     my_net.initialize_from_file("input.toml");
 
     // Start WebSocket server

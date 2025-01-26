@@ -1,9 +1,9 @@
-use crate::general_use::{ClientId, FloodId, ServerId, ServerType, SessionId};
+use crate::general_use::{ClientCommand, ClientId, FloodId, ServerId, ServerType, SessionId};
 use crate::ui_traits::Monitoring;
 use serde::Serialize;
 use std::collections::{HashMap, HashSet};
 use crossbeam_channel::Sender;
-use log::info;
+use log::{debug, info};
 use wg_2024::network::NodeId;
 use super::{ChatClientDanylo, ChatHistory};
 
@@ -57,7 +57,7 @@ impl Monitoring for ChatClientDanylo {
             crossbeam_channel::select_biased! {
                 recv(self.controller_recv) -> command_res => {
                     if let Ok(command) = command_res {
-                        self.handle_command(command);
+                        self.handle_command_with_monitoring(command, sender_to_gui.clone());
                         self.send_display_data(sender_to_gui.clone());
                     }
                 },
@@ -68,6 +68,43 @@ impl Monitoring for ChatClientDanylo {
                     }
                 },
             }
+        }
+    }
+}
+
+impl ChatClientDanylo{
+    pub(crate) fn handle_command_with_monitoring(&mut self, command: ClientCommand, sender_to_gui: Sender<String>) {
+        debug!("Client {}: Handling command: {:?}", self.id, command);
+
+        match command {
+            ClientCommand::UpdateMonitoringData => {
+                self.send_display_data(sender_to_gui.clone());
+            },
+            ClientCommand::AddSender(id, sender) => {
+                self.packet_send.insert(id, sender);
+                info!("Client {}: Added sender for node {}", self.id, id);
+            }
+            ClientCommand::RemoveSender(id) => {
+                self.packet_send.remove(&id);
+                info!("Client {}: Removed sender for node {}", self.id, id);
+            }
+            ClientCommand::ShortcutPacket(packet) => {
+                info!("Client {}: Shortcut packet received from SC: {:?}", self.id, packet);
+                self.handle_packet(packet);
+            }
+            ClientCommand::GetKnownServers => {
+                self.handle_get_known_servers()
+            }
+            ClientCommand::StartFlooding => {
+                self.discovery()
+            }
+            ClientCommand::AskTypeTo(server_id) => {
+                self.request_server_type(server_id)
+            }
+            ClientCommand::SendMessageTo(to, message) => {
+                self.send_message_to(to, message)
+            }
+            _ => {}
         }
     }
 }

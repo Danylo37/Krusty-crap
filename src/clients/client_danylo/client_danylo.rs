@@ -19,6 +19,7 @@ use crate::{
     },
     clients::Client
 };
+use crate::ui_traits::Monitoring;
 use super::MessageFragments;
 
 pub type Node = (NodeId, NodeType);
@@ -86,7 +87,6 @@ impl Client for ChatClientDanylo {
             chats: HashMap::new(),
         }
     }
-
     fn run(&mut self) {
         info!("Running ChatClientDanylo with ID: {}", self.id);
         loop {
@@ -162,7 +162,7 @@ impl ChatClientDanylo {
 
     /// ###### Handles the 'GetKnownServers' command.
     /// Sends the list of known servers to the simulation controller.
-    fn handle_get_known_servers(&mut self) {
+    pub(crate) fn handle_get_known_servers(&mut self) {
         let servers: Vec<(ServerId, ServerType, bool)> = self
             .servers
             .iter()

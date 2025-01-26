@@ -68,7 +68,7 @@ impl Monitoring for ClientChen{
                 recv(self.communication_tools.controller_recv) -> command_res => {
                     if let Ok(command) = command_res {
                         // Handle the command
-                        self.handle_controller_command(command);
+                        self.handle_controller_command_with_monitoring(command, sender_to_gui.clone());
 
                         // Things to do after handling the command
                         self.handle_fragments_in_buffer_with_checking_status();
