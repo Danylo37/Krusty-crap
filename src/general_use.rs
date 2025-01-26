@@ -69,6 +69,8 @@ pub enum ClientCommand {
     RequestMedia(ServerId, MediaRef), //the type Media is alias of String, we are requesting the content referenced by the MediaRef.
     ShortcutPacket(Packet),
     GetKnownServers,
+    RegisterToServer(ServerId),
+    AskListClients(ServerId),
 }
 
 
