@@ -3,6 +3,8 @@ use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::thread::sleep;
 use std::time::Duration;
+use log::warn;
+use serde::Serialize;
 use wg_2024::{
     controller::{DroneCommand, DroneEvent},
     drone::Drone,
@@ -27,6 +29,22 @@ pub struct PacketInfo {
     pub dropped: bool,
 }
 
+// Define DisplayDataSimulationController and DroneMonitoringData structs here
+#[derive(Debug, Serialize)]
+pub(super) struct DisplayDataSimulationController {
+    node_type: String,
+    clients: Vec<NodeId>,
+    servers: Vec<NodeId>,
+    topology: HashMap<NodeId, Vec<NodeId>>,
+    drones: HashMap<NodeId, DroneMonitoringData>,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub(super) struct DroneMonitoringData {   //Make it public
+    neighbors: Vec<NodeId>,
+    pdr: f32,
+}
+
 
 pub struct SimulationController {
     pub state: SimulationState,
@@ -40,6 +58,8 @@ pub struct SimulationController {
     pub command_senders_clients: HashMap<NodeId, (Sender<ClientCommand>, ClientType)>,
     pub command_senders_servers: HashMap<NodeId, (Sender<ServerCommand>, ServerType)>,
     pub packet_senders: HashMap<NodeId, Sender<Packet>>,
+
+    drones_pdr: HashMap<NodeId, f32>,
 
     //for the monitoring
     pub web_clients_data: HashMap<NodeId, DisplayDataWebBrowser>,
@@ -81,6 +101,8 @@ impl SimulationController {
             server_event_receiver,
             packet_senders: HashMap::new(),
 
+            drones_pdr: HashMap::new(),
+
             //for the monitoring
             web_clients_data: HashMap::new(),
             chat_clients_data: HashMap::new(),
@@ -99,6 +121,8 @@ impl SimulationController {
             self.process_packet_sent_events();
             self.process_packet_dropped_events();
             self.process_controller_shortcut_events();
+            self.process_client_events();
+            self.process_server_events();
             // GUI updates and user input...                                                            TODO
             sleep(Duration::from_millis(100));
         }
@@ -243,29 +267,117 @@ impl SimulationController {
 
                                 if let Some((client_sender, _)) = self.command_senders_clients.get(&destination) {
                                     if let Err(e) = client_sender.send(ClientCommand::ShortcutPacket(packet.clone())) {
-                                        eprintln!("Error sending to client {}: {:?}", destination, e);
+                                        warn!("Error sending to client {}: {:?}", destination, e);
                                     }
                                 } else {
 
-                                    eprintln!("No sender found for client {}", destination);
+                                    warn!("No sender found for client {}", destination);
                                 }
                             } else if self.command_senders_servers.contains_key(&destination) {   // If it's server
                                 if let Some((server_sender, _)) = self.command_senders_servers.get(&destination) {
                                     if let Err(e) = server_sender.send(ServerCommand::ShortcutPacket(packet.clone())) {
-                                        eprintln!("Error sending to server {}: {:?}", destination, e);
+                                        warn!("Error sending to server {}: {:?}", destination, e);
                                     }
                                 } else {
-                                    eprintln!("No sender found for server {}", destination);
+                                    warn!("No sender found for server {}", destination);
                                 }
                             } else {
-                                eprintln!("Invalid destination or unknown node type: {}", destination);
+                                warn!("Invalid destination or unknown node type: {}", destination);
                             }
                         } else {
-                            eprintln!("Could not determine destination for ControllerShortcut");
+                            warn!("Could not determine destination for ControllerShortcut");
                         }
                     }
-                    _ => eprintln!("Unexpected packet type in ControllerShortcut: {:?}", packet.pack_type),
+                    _ => warn!("Unexpected packet type in ControllerShortcut: {:?}", packet.pack_type),
                 }
+            }
+        }
+    }
+
+    fn process_client_events(&mut self){
+        while let Ok(event) = self.client_event_receiver.try_recv(){
+            match event {
+                ClientEvent::WebClientData(id, data) => {
+                    self.web_clients_data.insert(id, data);
+                },
+                ClientEvent::ChatClientData(id, data) => {
+                    self.chat_clients_data.insert(id, data);
+                },
+                other => {
+                    warn!("Unexpected client event: {:?}", other);
+                }
+            }
+        }
+    }
+
+    fn process_server_events(&mut self){
+        while let Ok(event) = self.server_event_receiver.try_recv() {
+            match event{
+                ServerEvent::CommunicationServerData(id, data) => {
+                    self.comm_servers_data.insert(id, data);
+                },
+                ServerEvent::TextServerData(id, data) =>{
+                    self.text_servers_data.insert(id, data);
+                },
+                ServerEvent::MediaServerData(id, data) =>{
+                    self.media_servers_data.insert(id, data);
+                },
+                other => {
+                    warn!("Unexpected server event: {:?}", other);
+                }
+            }
+        }
+    }
+
+
+
+    fn update_and_send_data_to_gui(&mut self, sender_to_gui: &Sender<String>) {
+
+        //Drones
+        let mut drone_data: HashMap<NodeId, DroneMonitoringData> = HashMap::new();
+        for (drone_id, _) in self.command_senders_drones.iter() {
+
+            //Get drone's neighbors and pdr
+            let neighbors = self.state.topology.get(drone_id).cloned().unwrap_or_default();
+            let pdr = self.drones_pdr.get(drone_id).copied().unwrap_or(0.0);
+
+            // Insert drone data into the HashMap
+            drone_data.insert(*drone_id, DroneMonitoringData { neighbors, pdr });
+        }
+
+        let display_data = DisplayDataSimulationController {
+            node_type: "SimulationController".to_string(),
+            clients: self.command_senders_clients.keys().copied().collect(),
+            servers: self.command_senders_servers.keys().copied().collect(),
+            topology: self.state.topology.clone(),
+
+            drones: drone_data, // Use the gathered drone data
+
+        };
+        // Serialize and send display data
+        let json_string = serde_json::to_string(&display_data).unwrap();
+
+        sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
+
+        //Now, after sending data, request updates from clients and servers
+
+        //Clients
+        for (client_id, (client_com_sender, _)) in self.command_senders_clients.iter() {
+            self.updating_nodes.insert(*client_id);  //Add this client to the updating_nodes set
+
+
+            if let Err(err) = client_com_sender.send(ClientCommand::UpdateMonitoringData) {
+                warn!("Error sending UpdateMonitoringData to client {}: {:?}", client_id, err);
+            }
+        }
+
+
+        //Servers
+        for (server_id, (server_com_sender, _)) in self.command_senders_servers.iter() {
+            self.updating_nodes.insert(*server_id);    //Add this server to the updating_nodes set
+
+            if let Err(err) = server_com_sender.send(ServerCommand::UpdateMonitoringData) {
+                warn!("Error sending UpdateMonitoringData to server {}: {:?}", server_id, err);
             }
         }
     }
@@ -321,29 +433,29 @@ impl SimulationController {
             NodeType::Drone => {
                 if let Some(command_sender) = self.command_senders_drones.get(&node_id) {
                     if let Err(e) = command_sender.send(DroneCommand::AddSender(connected_node_id, sender)) {
-                        eprintln!("Failed to send AddSender command to drone {}: {:?}", node_id, e);
+                        warn!("Failed to send AddSender command to drone {}: {:?}", node_id, e);
                     }
                 } else {
-                    eprintln!("Drone {} not found in controller", node_id);
+                    warn!("Drone {} not found in controller", node_id);
                 }
             }
             NodeType::Client => {
                 if let Some((command_sender, _)) = self.command_senders_clients.get(&node_id) {
                     if let Err(e) = command_sender.send(ClientCommand::AddSender(connected_node_id, sender.clone())) {
-                        eprintln!("Failed to send AddSender command to client {}: {:?}", node_id, e);
+                        warn!("Failed to send AddSender command to client {}: {:?}", node_id, e);
                     }
                 } else {
-                    eprintln!("Client {} not found in controller", node_id);
+                    warn!("Client {} not found in controller", node_id);
                 }
             }
             NodeType::Server => {
 
                 if let Some((command_sender, _)) = self.command_senders_servers.get(&node_id) {
                     if let Err(e) = command_sender.send(ServerCommand::AddSender(connected_node_id, sender.clone())) {
-                        eprintln!("Failed to send AddSender command to server {}: {:?}", node_id, e);
+                        warn!("Failed to send AddSender command to server {}: {:?}", node_id, e);
                     }
                 } else {
-                    eprintln!("Server {} not found in controller", node_id);
+                    warn!("Server {} not found in controller", node_id);
                 }
             }
         }
@@ -391,10 +503,10 @@ impl SimulationController {
     pub fn set_packet_drop_rate(&mut self, drone_id: NodeId, pdr: f32) {
         if let Some(command_sender) = self.command_senders_drones.get(&drone_id) {
             if let Err(e) = command_sender.send(DroneCommand::SetPacketDropRate(pdr)) { // Error handling
-                eprintln!("Failed to send SetPacketDropRate command to drone {}: {:?}", drone_id, e);
+                warn!("Failed to send SetPacketDropRate command to drone {}: {:?}", drone_id, e);
             }
         } else {
-            eprintln!("Drone {} not found in controller", drone_id);
+            warn!("Drone {} not found in controller", drone_id);
         }
     }
 
@@ -406,7 +518,7 @@ It uses the command_senders map to find the appropriate sender channel.
 
         if let Some(command_sender) = self.command_senders_drones.get(&drone_id) {
             if let Err(e) = command_sender.send(DroneCommand::Crash) {
-                eprintln!("Failed to send Crash command to drone {}: {:?}", drone_id, e);
+                warn!("Failed to send Crash command to drone {}: {:?}", drone_id, e);
                 return Err(format!("Failed to send Crash command to drone {}: {:?}", drone_id, e)); //Return error if send failed
             }
         } else {
@@ -417,21 +529,21 @@ It uses the command_senders map to find the appropriate sender channel.
             for neighbor in neighbors {
                 if let Some(NodeType::Drone) = self.state.nodes.get(&neighbor){        //If neighbour is a drone
                     if let Err(err) = self.remove_sender(neighbor, NodeType::Drone, drone_id){  //Remove the sender
-                        eprintln!("{}", err);
+                        warn!("{}", err);
                     }
                     if let Some(connected_nodes) = self.state.topology.get_mut(&neighbor) {
                         connected_nodes.retain(|&id| id != drone_id);
                     }
                 } else if let Some(NodeType::Client) = self.state.nodes.get(&neighbor){   //If neighbour is a client
                     if let Err(err) = self.remove_sender(neighbor, NodeType::Client, drone_id){
-                        eprintln!("{}", err);
+                        warn!("{}", err);
                     }
                     if let Some(connected_nodes) = self.state.topology.get_mut(&neighbor) {
                         connected_nodes.retain(|&id| id != drone_id);
                     }
                 } else if let Some(NodeType::Server) = self.state.nodes.get(&neighbor){   //If neighbour is a server
                     if let Err(err) = self.remove_sender(neighbor, NodeType::Server, drone_id){
-                        eprintln!("{}", err);
+                        warn!("{}", err);
                     }
                     if let Some(connected_nodes) = self.state.topology.get_mut(&neighbor) {
                         connected_nodes.retain(|&id| id != drone_id);
