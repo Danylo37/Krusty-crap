@@ -1,12 +1,11 @@
 use std::collections::{HashMap, HashSet};
 use crossbeam_channel::{select_biased, Sender};
+use log::info;
 use wg_2024::controller::DroneCommand;
 use crate::clients::client_chen::{NodeId, Serialize};
-use crate::clients::client_danylo::Node;
 use crate::simulation_controller::SimulationController;
 use crate::ui_traits::Monitoring;
 use crate::websocket::{ClientCommandWs, DroneCommandWs, ServerCommandWs, WsCommand};
-use crate::websocket::WsCommand::{WsClientCommand, WsDroneCommand, WsServerCommand};
 use crate::general_use::{ClientCommand, ServerCommand};
 
 
@@ -36,6 +35,7 @@ impl Monitoring for SimulationController {
         loop {
             select_biased! {
                 recv(self.ws_command_receiver) -> command_res => {
+                    eprintln!("Controller received command {:?}", command_res);
                     if let Ok(command) = command_res {
                         self.handle_ws_command(sender_to_gui.clone(), command);
                     }
@@ -49,6 +49,7 @@ impl SimulationController {
     fn handle_ws_command(&mut self, sender_to_gui: Sender<String>, command: WsCommand) {
         match command {
             WsCommand::WsUpdateData=> {
+                eprintln!("Now I handle the updating data");
                 // Update data from the simulation controller
                 self.send_display_data(sender_to_gui.clone());
                 let clients: Vec<NodeId> = self.command_senders_clients.keys().cloned().collect();

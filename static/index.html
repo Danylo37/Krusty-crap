@@ -1,1371 +1,1371 @@
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <title>Network Manager & Real-Time Monitor</title>
-        <style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Network Manager & Real-Time Monitor</title>
+    <style>
 
-            /* Basic CSS */
+        /* Basic CSS */
 
-            html, body, #controller-view, #monitoring-container {
-                margin: 0;
-                padding: 0;
-                height: 100%; /* Ensure the body fits within the viewport */
-            }
+        html, body, #controller-view, #monitoring-container {
+            margin: 0;
+            padding: 0;
+            height: 100%; /* Ensure the body fits within the viewport */
+        }
 
-            body {
-                font-family: Arial, sans-serif;
-                background-color: #f5f7fa; /* Pleasant light background color */
-                overflow: hidden;
-            }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f7fa; /* Pleasant light background color */
+            overflow: hidden;
+        }
 
-            .header {
-                width:100%;
-                background-color:#007bff;
-                height:24px;
-                padding-top:20px;
-                padding-bottom:20px;
-                border-bottom: 2px solid #000000; /* Bottom border for emphasis */
-            }
+        .header {
+            width:100%;
+            background-color:#007bff;
+            height:24px;
+            padding-top:20px;
+            padding-bottom:20px;
+            border-bottom: 2px solid #000000; /* Bottom border for emphasis */
+        }
 
-            /* HEADER OF CONTROLLER */
+        /* HEADER OF CONTROLLER */
 
-            .previewContainer{
-                height:100%;
-                user-select: none;
-                margin-left: 20px;
-                margin-right: 20px;
-            }
+        .previewContainer{
+            height:100%;
+            user-select: none;
+            margin-left: 20px;
+            margin-right: 20px;
+        }
 
-            .previewButton {
-                width: 100%;
-                height:100%;
-                position: relative;
-                transform-style: preserve-3d;
-                transition: transform 2s;
-            }
-            .box__face {
-                border:1px black solid;
-                border-radius:10px;
-                backface-visibility: hidden;
-                position: absolute;
-                font-size: 20px;
-                font-weight: bold;
-                color: white;
-                text-align: center;
-            }
-            .box__face--front,
-            .box__face--back {
-                width: 100%;
-                height:100%;
-            }
+        .previewButton {
+            width: 100%;
+            height:100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 2s;
+        }
+        .box__face {
+            border:1px black solid;
+            border-radius:10px;
+            backface-visibility: hidden;
+            position: absolute;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+        }
+        .box__face--front,
+        .box__face--back {
+            width: 100%;
+            height:100%;
+        }
 
-            .box__face--front  { transform: rotateY(0deg)}
-            .box__face--back   { transform: rotateX(180deg) rotateZ(180deg)}
-
-
-            .previewButton.show-back   { transform: rotateY(0deg) rotateZ(0deg)}
-            .previewButton.show-front    { transform: rotateY( -1260deg) rotateZ(1.5deg)}
+        .box__face--front  { transform: rotateY(0deg)}
+        .box__face--back   { transform: rotateX(180deg) rotateZ(180deg)}
 
 
-            .inside_rotating_button{
-                display:flex;
-                align-items:center;
-                height:100%;
-                width:100%;
-            }
-
-            /* MONITORING CSS */
-
-            /* Tabs at the top of monitoring-container */
-            #monitoring-tabs {
-                position: absolute;
-                left: 10px;
-                right: 10px;
-                padding-left:30px;
-                padding-right:30px;
-                display: flex;
-                justify-content: space-around;
-                border-bottom-left-radius: 15px;
-                border-bottom-right-radius: 15px;
-                z-index: 1;
-            }
-
-            .tab-button {
-                flex: 1;
-                padding: 10px;
-                font-size: 16px;
-                background-color: #dfccff;
-                color: white;
-                border: none;
-                cursor: pointer;
-                border-radius: 0 0 10px 10px;
-                margin: 0 5px;
-                transition: background-color 0.3s ease;
-            }
-
-            .tab-button:hover {
-                background-color: #003d80;
-            }
-
-            /* Section containers */
-            .section {
-                height:100%;
-                padding: 20px;
-                display: none;
-                animation: slide-in 0.5s ease-out;
-            }
-
-            /* Filters on the right */
-            #filters {
-                position: absolute;
-                top: 50%; /* Centered vertically */
-                right: 7px;
-                transform: translateY(-50%);
-                display: flex;
-                flex-direction: column;
-                gap: 15px;
-            }
-
-            .filter-button {
-                width: 50px;
-                height: 50px;
-                border-radius: 50%;
-                background-color: #f1f1f1;
-                border: 2px solid #007bff;
-                cursor: pointer;
-                transition: background-color 0.3s ease;
-            }
-
-            .filter-button:hover {
-                background-color: #007bff;
-                color: white;
-            }
-
-            /* Animations */
-            @keyframes slide-in {
-                from {
-                    opacity: 0;
-                    transform: translateX(-50%);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateX(0);
-                }
-            }
-            @keyframes slide-out {
-                from {
-                    opacity: 1;
-                    transform: translateX(0);
-                }
-                to {
-                    opacity: 0;
-                    transform: translateX(50%);
-                }
-            }
-
-            /* DROPDOWN CSS */
-            @keyframes slide-in {
-                from {
-                    transform: translateX(-200px);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-            }
-            @keyframes slide-out {
-                from {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-                to {
-                    transform: translateX(-200px);
-                    opacity: 0;
-                }
-            }
-            .dropdown {
-                position: relative;
-                top: 10px;
-                left: 20px;
-                z-index: 500;
-                display: inline-block;
-            }
-            .dropdown button {
-                padding: 10px 20px;
-                background-color: #007bff;
-                color: white;
-                font-size: 16px;
-                cursor: pointer;
-                border-radius: 5px;
-            }
-            .dropdown button:hover {
-                background-color: #0056b3;
-            }
-            .dropdown-content {
-                display: none; /* Hidden by default */
-                position: absolute;
-                background-color: white;
-                min-width: 150px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                border-radius: 5px;
-                z-index: 1000;
-                transform: translateX(-200px); /* Start hidden on the left */
-                opacity: 0; /* Start fully transparent */
-                transition: none; /* No transition since animation will handle it */
-            }
-
-            .dropdown-content.active {
-                display: block; /* Show the content */
-                animation: slide-in 0.3s ease-out forwards;
-            }
-
-            .dropdown-content.closing {
-                animation: slide-out 0.3s ease-out forwards;
-            }
-
-            .dropdown-content button {
-                padding: 10px 20px;
-                background-color: white;
-                color: #007bff;
-                border: none;
-                font-size: 14px;
-                cursor: pointer;
-                text-align: left;
-                width: 100%;
-            }
-            .dropdown-content button:hover {
-                background-color: #f1f1f1;
-            }
+        .previewButton.show-back   { transform: rotateY(0deg) rotateZ(0deg)}
+        .previewButton.show-front    { transform: rotateY( -1260deg) rotateZ(1.5deg)}
 
 
-            /* CLIENTS DISPLAY DIVS CSS*/
-            .panel {
-                margin: 20px auto;
-                padding: 15px;
-                background-color: white;
-                border: 1px solid #ccc;
-                border-radius: 5px;
-                max-width: 800px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            }
-            .confirm-button, .back-button {
-                margin-top: 20px;
-                padding: 10px 20px;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-            }
-            .confirm-button {
-                background-color: #28a745;
-                color: white;
-            }
-            .back-button {
-                background-color: #dc3545;
-                color: white;
-            }
+        .inside_rotating_button{
+            display:flex;
+            align-items:center;
+            height:100%;
+            width:100%;
+        }
 
+        /* MONITORING CSS */
 
+        /* Tabs at the top of monitoring-container */
+        #monitoring-tabs {
+            position: absolute;
+            left: 10px;
+            right: 10px;
+            padding-left:30px;
+            padding-right:30px;
+            display: flex;
+            justify-content: space-around;
+            border-bottom-left-radius: 15px;
+            border-bottom-right-radius: 15px;
+            z-index: 1;
+        }
 
+        .tab-button {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #dfccff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 0 0 10px 10px;
+            margin: 0 5px;
+            transition: background-color 0.3s ease;
+        }
 
+        .tab-button:hover {
+            background-color: #003d80;
+        }
 
-            /* ROLE POP-UP CSS */
+        /* Section containers */
+        .section {
+            height:100%;
+            padding: 20px;
+            display: none;
+            animation: slide-in 0.5s ease-out;
+        }
 
-            .popup {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.8);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 1000;
-                padding-left: 20px;
-                padding-right: 20px;
-            }
+        /* Filters on the right */
+        #filters {
+            position: absolute;
+            top: 50%; /* Centered vertically */
+            right: 7px;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
 
-            .popup-content {
-                background: white;
-                padding: 30px;
-                text-align: center;
-                border-radius: 10px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                max-width: 500px;
-                width: 90%;
-            }
+        .filter-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #f1f1f1;
+            border: 2px solid #007bff;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
 
-            .container-roles {
-                display: flex;
-                justify-content: space-around;
-                align-items: center;
-            }
+        .filter-button:hover {
+            background-color: #007bff;
+            color: white;
+        }
 
-            .role {
-                position: relative;
-                cursor: pointer;
-                text-align: center;
-            }
-
-            .role-image {
-                max-width: 150px;
-                transition: opacity 0.3s ease;
-            }
-
-            .role:hover .role-image {
-                opacity: 0.4; /* Decrease image opacity on hover */
-            }
-
-            .role-text {
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                color: white;
-                font-size: 18px;
-                font-weight: bold;
+        /* Animations */
+        @keyframes slide-in {
+            from {
                 opacity: 0;
-                transition: opacity 0.3s ease;
-
-                padding: 5px 10px;
-                margin: 10px;
-                background-color: #007bff;
-                border: none;
-                border-radius: 5px;
+                transform: translateX(-50%);
             }
-
-            .role:hover .role-text {
-                opacity: 1; /* Show the text on hover */
+            to {
+                opacity: 1;
+                transform: translateX(0);
             }
-
-
-            /* GRAPH CSS */
-
-            #network-container {
-                width: 100%;
-                height: 100vh;
-                overflow: hidden;
-                position: relative;
-                background-color: #f5f7fa;
-                z-index: 5;
-                border: 1px solid #ccc;
+        }
+        @keyframes slide-out {
+            from {
+                opacity: 1;
+                transform: translateX(0);
             }
-
-            #network-canvas {
-                width: 2000px; /* Initial canvas size */
-                height: 2000px;
-                position: absolute;
-                z-index: 5;
-                transform-origin: top left;
-                transform: scale(1);
+            to {
+                opacity: 0;
+                transform: translateX(50%);
             }
+        }
 
-            .node {
-                fill: #007bff;
-                stroke: #0056b3;
-                stroke-width: 2;
-                cursor: pointer;
+        /* DROPDOWN CSS */
+        @keyframes slide-in {
+            from {
+                transform: translateX(-200px);
+                opacity: 0;
             }
-
-            .client {
-                fill: #28a745;
+            to {
+                transform: translateX(0);
+                opacity: 1;
             }
-            .server {
-                fill: #dc3545;
+        }
+        @keyframes slide-out {
+            from {
+                transform: translateX(0);
+                opacity: 1;
             }
-
-            .connection {
-                stroke: #333;
-                stroke-width: 2;
+            to {
+                transform: translateX(-200px);
+                opacity: 0;
             }
+        }
+        .dropdown {
+            position: relative;
+            top: 10px;
+            left: 20px;
+            z-index: 500;
+            display: inline-block;
+        }
+        .dropdown button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .dropdown button:hover {
+            background-color: #0056b3;
+        }
+        .dropdown-content {
+            display: none; /* Hidden by default */
+            position: absolute;
+            background-color: white;
+            min-width: 150px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            z-index: 1000;
+            transform: translateX(-200px); /* Start hidden on the left */
+            opacity: 0; /* Start fully transparent */
+            transition: none; /* No transition since animation will handle it */
+        }
 
-            #zoom-controls {
-                position: absolute;
-                top: 10px;
-                right: 10px;
-                display: flex;
-                flex-direction: column;
-                gap: 5px;
-            }
+        .dropdown-content.active {
+            display: block; /* Show the content */
+            animation: slide-in 0.3s ease-out forwards;
+        }
 
-            #instructions-container {
-                position: absolute;
-                top: 10px;
-                right: 10px;
-                background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white background */
-                border: 1px solid #ccc;
-                border-radius: 8px;
-                padding: 10px;
-                z-index: 100; /* Ensure it's above other elements */
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Optional shadow */
-            }
+        .dropdown-content.closing {
+            animation: slide-out 0.3s ease-out forwards;
+        }
 
-            .instruction {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-
-            .instruction-icon {
-                width: 24px; /* Adjust size of the icons */
-                height: 24px;
-            }
-
-            /* LIST CLIENTS CSS */
-
-            .container-clients {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                margin-top: 20px;
-            }
-
-            .client-option {
-                background: #007bff;
-                color: white;
-
-                padding: 5px 15px;
-
-                margin: 10px 0;
-                border-radius: 5px;
-                cursor: pointer;
-                width: 80%;
-                text-align: center;
-                transition: background 0.3s ease;
-            }
-
-            .client-option:hover {
-                background: #0056b3;
-            }
+        .dropdown-content button {
+            padding: 10px 20px;
+            background-color: white;
+            color: #007bff;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+            text-align: left;
+            width: 100%;
+        }
+        .dropdown-content button:hover {
+            background-color: #f1f1f1;
+        }
 
 
-
-            /* GENERAL FOR CLIENTS APPLICATIONS */
-
-            .log_out_button {
-                position: absolute;
-                top: 10px;
-                right: 10px;
-                width: 40px;
-                cursor: pointer;
-                z-index: 100; /* Ensure it appears above other elements */
-            }
-
-
-            /* WHATSAPP PALETTE
-
-            /* Header */
-            #chat-header {
-                padding: 10px;
-                background-color: #075e54; /* WhatsApp header green */
-                color: white;
-                font-weight: bold;
-                border-bottom: 1px solid #004d40;
-            }
-
-            /* Sidebar */
-            #chat-sidebar {
-                background-color: #ededed; /* WhatsApp sidebar background */
-                border-right: 1px solid #d1d1d1;
-            }
-
-            #sidebar-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                color: black;
-                font-weight: bold;
-                padding: 10px;
-                border-bottom: 1px solid #004d40;
-            }
-
-            .chat-item {
-                padding: 10px;
-                border-bottom: 1px solid #d1d1d1;
-                cursor: pointer;
-                transition: background-color 0.2s ease;
-            }
-
-            .chat-item:hover {
-                background-color: #d9fdd3; /* Light green for hover */
-            }
-
-            .chat-item.active {
-                background-color: #c8e6c9; /* Slightly darker green than hover */
-                font-weight: bold;
-                color: #2e7d32;
-            }
+        /* CLIENTS DISPLAY DIVS CSS*/
+        .panel {
+            margin: 20px auto;
+            padding: 15px;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            max-width: 800px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .confirm-button, .back-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .confirm-button {
+            background-color: #28a745;
+            color: white;
+        }
+        .back-button {
+            background-color: #dc3545;
+            color: white;
+        }
 
 
-            /* Chat Window */
-            #chat-messages {
-                flex-grow: 1;
-                overflow-y: auto;
-                padding: 10px;
-                background: url("content_objects/whatsapp_bg.jpg"); /* Use your specific WhatsApp background */
-                background-size: cover;
-                background-position: center;
-            }
-
-            /* Messages */
-            .message {
-                margin-bottom: 10px;
-                padding: 10px;
-                border-radius: 10px;
-                max-width: 60%;
-                box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1); /* Shadow for detachment */
-            }
-
-            .message.sent {
-                background-color: #dcf8c6; /* WhatsApp sent message green */
-                align-self: flex-end;
-            }
-
-            .message.received {
-                background-color: #ffffff; /* WhatsApp received message white */
-                align-self: flex-start;
-            }
-
-            /* Input Area */
-            #chat-input {
-                padding: 10px;
-                border-top: 1px solid #d1d1d1;
-                display: flex;
-                gap: 10px;
-                align-items: center;
-                background-color: #f1f1f1;
-            }
-
-            #message-input {
-                flex-grow: 1;
-                padding: 10px;
-                border: 1px solid #d1d1d1;
-                border-radius: 20px;
-            }
-
-            #chat-input button {
-                padding: 10px 20px;
-                background-color: #25d366; /* WhatsApp button green */
-                color: white;
-                border: none;
-                border-radius: 20px;
-                cursor: pointer;
-                transition: background-color 0.2s ease;
-            }
-
-            #chat-input button:hover {
-                background-color: #1ebe5a;
-            }
-
-            .receiver-item {
-                padding: 10px;
-                border: 1px solid #ccc;
-                border-radius: 5px;
-                cursor: pointer;
-                text-align: left;
-                margin-bottom: 5px;
-            }
-
-            .receiver-item:hover {
-                background-color: #f1f1f1;
-            }
 
 
-            /* General CSS */
 
-            .flex-center-all{
-                display:flex;
-                align-items: center;
-                align-content: center;
-            }
+        /* ROLE POP-UP CSS */
 
-            @keyframes jump {
-                0%   {transform: translate3d(0,-5%,0) scale3d(1,1,1);}
-                40%  {transform: translate3d(0,30%,0) scale3d(1,1,1);}
-                100% {transform: translate3d(0,40%,0) scale3d(1.5,.7,1);}
-            }
+        .popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
 
-            .jump {
-                transform-origin: 50% 50%;
-                animation: jump .6s linear alternate infinite;
-            }
+        .popup-content {
+            background: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+        }
 
-            .rounded{
-                border-radius: 0.25rem;
-            }
+        .container-roles {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
 
-        </style>
-    </head>
-    <body>
+        .role {
+            position: relative;
+            cursor: pointer;
+            text-align: center;
+        }
 
-    <div id="role-popup" class="popup">
-        <div class="popup-content">
-            <h1 id="popup-title">Select Your Role</h1>
-            <div class="container-roles" id="role-selection">
-                <div class="role" onclick="selectRole('controller')">
-                    <img src="content_objects/controller.png" class="role-image jump">
-                    <span class="role-text">Controller</span>
-                </div>
-                <div class="role" onclick="selectRole('client')">
-                    <img src="content_objects/client.png" class="role-image jump">
-                    <span class="role-text">Client</span>
-                </div>
+        .role-image {
+            max-width: 150px;
+            transition: opacity 0.3s ease;
+        }
+
+        .role:hover .role-image {
+            opacity: 0.4; /* Decrease image opacity on hover */
+        }
+
+        .role-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+
+            padding: 5px 10px;
+            margin: 10px;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .role:hover .role-text {
+            opacity: 1; /* Show the text on hover */
+        }
+
+
+        /* GRAPH CSS */
+
+        #network-container {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+            background-color: #f5f7fa;
+            z-index: 5;
+            border: 1px solid #ccc;
+        }
+
+        #network-canvas {
+            width: 2000px; /* Initial canvas size */
+            height: 2000px;
+            position: absolute;
+            z-index: 5;
+            transform-origin: top left;
+            transform: scale(1);
+        }
+
+        .node {
+            fill: #007bff;
+            stroke: #0056b3;
+            stroke-width: 2;
+            cursor: pointer;
+        }
+
+        .client {
+            fill: #28a745;
+        }
+        .server {
+            fill: #dc3545;
+        }
+
+        .connection {
+            stroke: #333;
+            stroke-width: 2;
+        }
+
+        #zoom-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        #instructions-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white background */
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            z-index: 100; /* Ensure it's above other elements */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Optional shadow */
+        }
+
+        .instruction {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .instruction-icon {
+            width: 24px; /* Adjust size of the icons */
+            height: 24px;
+        }
+
+        /* LIST CLIENTS CSS */
+
+        .container-clients {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .client-option {
+            background: #007bff;
+            color: white;
+
+            padding: 5px 15px;
+
+            margin: 10px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 80%;
+            text-align: center;
+            transition: background 0.3s ease;
+        }
+
+        .client-option:hover {
+            background: #0056b3;
+        }
+
+
+
+        /* GENERAL FOR CLIENTS APPLICATIONS */
+
+        .log_out_button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            cursor: pointer;
+            z-index: 100; /* Ensure it appears above other elements */
+        }
+
+
+        /* WHATSAPP PALETTE
+
+        /* Header */
+        #chat-header {
+            padding: 10px;
+            background-color: #075e54; /* WhatsApp header green */
+            color: white;
+            font-weight: bold;
+            border-bottom: 1px solid #004d40;
+        }
+
+        /* Sidebar */
+        #chat-sidebar {
+            background-color: #ededed; /* WhatsApp sidebar background */
+            border-right: 1px solid #d1d1d1;
+        }
+
+        #sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: black;
+            font-weight: bold;
+            padding: 10px;
+            border-bottom: 1px solid #004d40;
+        }
+
+        .chat-item {
+            padding: 10px;
+            border-bottom: 1px solid #d1d1d1;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .chat-item:hover {
+            background-color: #d9fdd3; /* Light green for hover */
+        }
+
+        .chat-item.active {
+            background-color: #c8e6c9; /* Slightly darker green than hover */
+            font-weight: bold;
+            color: #2e7d32;
+        }
+
+
+        /* Chat Window */
+        #chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px;
+            background: url("content_objects/whatsapp_bg.jpg"); /* Use your specific WhatsApp background */
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Messages */
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 60%;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1); /* Shadow for detachment */
+        }
+
+        .message.sent {
+            background-color: #dcf8c6; /* WhatsApp sent message green */
+            align-self: flex-end;
+        }
+
+        .message.received {
+            background-color: #ffffff; /* WhatsApp received message white */
+            align-self: flex-start;
+        }
+
+        /* Input Area */
+        #chat-input {
+            padding: 10px;
+            border-top: 1px solid #d1d1d1;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background-color: #f1f1f1;
+        }
+
+        #message-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #d1d1d1;
+            border-radius: 20px;
+        }
+
+        #chat-input button {
+            padding: 10px 20px;
+            background-color: #25d366; /* WhatsApp button green */
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        #chat-input button:hover {
+            background-color: #1ebe5a;
+        }
+
+        .receiver-item {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: left;
+            margin-bottom: 5px;
+        }
+
+        .receiver-item:hover {
+            background-color: #f1f1f1;
+        }
+
+
+        /* General CSS */
+
+        .flex-center-all{
+            display:flex;
+            align-items: center;
+            align-content: center;
+        }
+
+        @keyframes jump {
+            0%   {transform: translate3d(0,-5%,0) scale3d(1,1,1);}
+            40%  {transform: translate3d(0,30%,0) scale3d(1,1,1);}
+            100% {transform: translate3d(0,40%,0) scale3d(1.5,.7,1);}
+        }
+
+        .jump {
+            transform-origin: 50% 50%;
+            animation: jump .6s linear alternate infinite;
+        }
+
+        .rounded{
+            border-radius: 0.25rem;
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="role-popup" class="popup">
+    <div class="popup-content">
+        <h1 id="popup-title">Select Your Role</h1>
+        <div class="container-roles" id="role-selection">
+            <div class="role" onclick="selectRole('controller')">
+                <img src="content_objects/controller.png" class="role-image jump">
+                <span class="role-text">Controller</span>
             </div>
-            <div class="container-clients" id="client-selection" style="display: none;">
-                <div class="client-option" onclick="chooseClient('Client 1')">Client 1</div>
-                <div class="client-option" onclick="chooseClient('Client 2')">Client 2</div>
-                <div class="client-option" onclick="chooseClient('Client 3')">Client 3</div>
+            <div class="role" onclick="selectRole('client')">
+                <img src="content_objects/client.png" class="role-image jump">
+                <span class="role-text">Client</span>
+            </div>
+        </div>
+        <div class="container-clients" id="client-selection" style="display: none;">
+            <div class="client-option" onclick="chooseClient('Client 1')">Client 1</div>
+            <div class="client-option" onclick="chooseClient('Client 2')">Client 2</div>
+            <div class="client-option" onclick="chooseClient('Client 3')">Client 3</div>
+        </div>
+    </div>
+</div>
+
+
+<div id="controller-view" style="display: none;">
+    <div class="header">
+        <div class="previewContainer me-4 ms-4">
+            <div class="previewButton">
+                <div class="box__face box__face--front rounded" style="background:#00000075"><div class="inside_rotating_button"><div style="text-align:center; width: 100%" class="text-center w-100">
+                    Network Manager
+                </div></div></div>
+                <div class="box__face box__face--back rounded"  style="color:black;background:hsl(186.01deg 100% 50%);"><div class="inside_rotating_button"><div style="text-align:center; width: 100%">
+                    Monitoring
+                </div></div></div>
             </div>
         </div>
     </div>
 
 
-    <div id="controller-view" style="display: none;">
-        <div class="header">
-            <div class="previewContainer me-4 ms-4">
-                <div class="previewButton">
-                    <div class="box__face box__face--front rounded" style="background:#00000075"><div class="inside_rotating_button"><div style="text-align:center; width: 100%" class="text-center w-100">
-                        Network Manager
-                    </div></div></div>
-                    <div class="box__face box__face--back rounded"  style="color:black;background:hsl(186.01deg 100% 50%);"><div class="inside_rotating_button"><div style="text-align:center; width: 100%">
-                        Monitoring
-                    </div></div></div>
-                </div>
+    <!-- Clients Display -->
+    <div id="network-container">
+        <div class="dropdown">
+            <button onclick="toggleDropdown()">Menu</button>
+            <div class="dropdown-content" id="dropdown-menu">
+                <button onclick="orderPanelsByNodeId()">Ordering</button>
+                <button onclick="toggleSelectionMode()">Select</button>
+                <button class="confirm-button" onclick="confirmSelection()" style="display: none;">Confirm</button>
+                <button class="back-button" onclick="goBackToAllNodes()" style="display: none;">Back</button>
+            </div>
+        </div>
+        <svg id="network-canvas"></svg>
+
+        <div id="instructions-container">
+            <div class="instruction">
+                <img src="content_objects/move-arrows.png" alt="Move the mouse" class="instruction-icon" />
+                <span>Move the mouse</span>
+            </div>
+            <div class="instruction">
+                <img src="content_objects/increase_size_icon.png" alt="Use mouse wheel" class="instruction-icon" />
+                <span>Use mouse wheel</span>
+            </div>
+        </div>
+    </div>
+    <div id="monitoring-container" style="position: relative;">
+        <!-- Top Buttons (inside monitoring-container, below header) -->
+        <div id="monitoring-tabs">
+            <button onclick="showSection('clients-container')" class="tab-button">Clients</button>
+            <button onclick="showSection('servers-container')" class="tab-button">Servers</button>
+            <button onclick="showSection('drones-container')" class="tab-button">Drones</button>
+        </div>
+
+        <!-- Sections -->
+        <div id="clients-container" class="section" style="display: block;"></div>
+        <div id="servers-container" class="section" style="display: none;"></div>
+        <div id="drones-container" class="section" style="display: none;"></div>
+
+        <!-- Filters on the right -->
+        <div id="filters">
+            <button class="filter-button"></button>
+            <button class="filter-button"></button>
+            <button class="filter-button"></button>
+        </div>
+    </div>
+</div>
+
+<div id="client-view" style="display: none;">
+    <header style="background-color: #075e54;">WhatsApp</header>
+
+    <!-- COMMUNICATION APPLICATION -->
+    <div id="communication-ui" style="display: none; height: 100vh; display: flex; flex-direction: row; border: 1px solid #ccc; border-top: 0px; border-left: 0px;">
+        <!-- Logout Button -->
+        <img src="content_objects/log_out_button.png" alt="Log Out" class="log_out_button" onclick="logOut()">
+
+        <!-- Sidebar for Chats -->
+        <div id="chat-sidebar" style="width: 30%; display: flex; flex-direction: column;">
+            <div id="sidebar-header">
+                <span>Chats</span>
+                <img src="content_objects/new_chat_icon.png" alt="create_chat" onclick="createNewChat()" style="width:100%; max-width:30px; padding: 5px 10px; cursor: pointer;">
+            </div>
+            <div id="chat-list" style="flex-grow: 1; overflow-y: auto;">
+                <!-- Example Chat Items -->
+                <div class="chat-item" onclick="openChat('Chat 1')">Chat 1</div>
+                <div class="chat-item" onclick="openChat('Chat 2')">Chat 2</div>
+                <div class="chat-item" onclick="openChat('Chat 3')">Chat 3</div>
             </div>
         </div>
 
-
-        <!-- Clients Display -->
-        <div id="network-container">
-            <div class="dropdown">
-                <button onclick="toggleDropdown()">Menu</button>
-                <div class="dropdown-content" id="dropdown-menu">
-                    <button onclick="orderPanelsByNodeId()">Ordering</button>
-                    <button onclick="toggleSelectionMode()">Select</button>
-                    <button class="confirm-button" onclick="confirmSelection()" style="display: none;">Confirm</button>
-                    <button class="back-button" onclick="goBackToAllNodes()" style="display: none;">Back</button>
-                </div>
+        <!-- Chat Window -->
+        <div id="chat-window" style="flex-grow: 1; display: flex; flex-direction: column;">
+            <div id="chat-header">
+                Current chat
             </div>
-            <svg id="network-canvas"></svg>
-
-            <div id="instructions-container">
-                <div class="instruction">
-                    <img src="content_objects/move-arrows.png" alt="Move the mouse" class="instruction-icon" />
-                    <span>Move the mouse</span>
-                </div>
-                <div class="instruction">
-                    <img src="content_objects/increase_size_icon.png" alt="Use mouse wheel" class="instruction-icon" />
-                    <span>Use mouse wheel</span>
-                </div>
+            <div id="chat-messages">
+                <!-- Example Messages -->
+                <div class="message received">Hello!</div>
+                <div class="message sent">Hi there!</div>
             </div>
-        </div>
-        <div id="monitoring-container" style="position: relative;">
-            <!-- Top Buttons (inside monitoring-container, below header) -->
-            <div id="monitoring-tabs">
-                <button onclick="showSection('clients-container')" class="tab-button">Clients</button>
-                <button onclick="showSection('servers-container')" class="tab-button">Servers</button>
-                <button onclick="showSection('drones-container')" class="tab-button">Drones</button>
-            </div>
-
-            <!-- Sections -->
-            <div id="clients-container" class="section" style="display: block;"></div>
-            <div id="servers-container" class="section" style="display: none;"></div>
-            <div id="drones-container" class="section" style="display: none;"></div>
-
-            <!-- Filters on the right -->
-            <div id="filters">
-                <button class="filter-button"></button>
-                <button class="filter-button"></button>
-                <button class="filter-button"></button>
+            <div id="chat-input">
+                <input type="text" id="message-input" placeholder="Type a message...">
+                <button onclick="sendMessage()">Send</button>
             </div>
         </div>
     </div>
 
-    <div id="client-view" style="display: none;">
-        <header style="background-color: #075e54;">WhatsApp</header>
-
-        <!-- COMMUNICATION APPLICATION -->
-        <div id="communication-ui" style="display: none; height: 100vh; display: flex; flex-direction: row; border: 1px solid #ccc; border-top: 0px; border-left: 0px;">
-            <!-- Logout Button -->
-            <img src="content_objects/log_out_button.png" alt="Log Out" class="log_out_button" onclick="logOut()">
-
-            <!-- Sidebar for Chats -->
-            <div id="chat-sidebar" style="width: 30%; display: flex; flex-direction: column;">
-                <div id="sidebar-header">
-                    <span>Chats</span>
-                    <img src="content_objects/new_chat_icon.png" alt="create_chat" onclick="createNewChat()" style="width:100%; max-width:30px; padding: 5px 10px; cursor: pointer;">
-                </div>
-                <div id="chat-list" style="flex-grow: 1; overflow-y: auto;">
-                    <!-- Example Chat Items -->
-                    <div class="chat-item" onclick="openChat('Chat 1')">Chat 1</div>
-                    <div class="chat-item" onclick="openChat('Chat 2')">Chat 2</div>
-                    <div class="chat-item" onclick="openChat('Chat 3')">Chat 3</div>
-                </div>
-            </div>
-
-            <!-- Chat Window -->
-            <div id="chat-window" style="flex-grow: 1; display: flex; flex-direction: column;">
-                <div id="chat-header">
-                    Current chat
-                </div>
-                <div id="chat-messages">
-                    <!-- Example Messages -->
-                    <div class="message received">Hello!</div>
-                    <div class="message sent">Hi there!</div>
-                </div>
-                <div id="chat-input">
-                    <input type="text" id="message-input" placeholder="Type a message...">
-                    <button onclick="sendMessage()">Send</button>
-                </div>
-            </div>
-        </div>
 
 
+    <!-- CONTENT APPLICATION -->
+    <div id="content-ui" style="display: none; position: relative;">
+        <!-- Logout Button -->
+        <img src="content_objects/log_out_button.png" alt="Log Out" class="log_out_button" onclick="logOut()">
 
-        <!-- CONTENT APPLICATION -->
-        <div id="content-ui" style="display: none; position: relative;">
-            <!-- Logout Button -->
-            <img src="content_objects/log_out_button.png" alt="Log Out" class="log_out_button" onclick="logOut()">
-
-            <h2>Content Storing Application</h2>
-            <p>Welcome to the content storing app! Here you can manage your files and data.</p>
-            <!-- Additional UI for content storing can go here -->
-        </div>
+        <h2>Content Storing Application</h2>
+        <p>Welcome to the content storing app! Here you can manage your files and data.</p>
+        <!-- Additional UI for content storing can go here -->
     </div>
+</div>
 
 
-    <!-- Pop Ups -->
+<!-- Pop Ups -->
 
-    <div id="chat-popup" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 2000; justify-content: center; align-items: center;">
-        <div style="background: white; padding: 20px; border-radius: 10px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-            <h2>Select a Server</h2>
-            <div id="receiver-list" style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
-                <!-- Default receiver boxes -->
-                <div class="receiver-item" onclick="selectReceiver('Receiver 1')" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; text-align: left;">
-                    Receiver 1
-                </div>
-                <div class="receiver-item" onclick="selectReceiver('Receiver 2')" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; text-align: left;">
-                    Receiver 2
-                </div>
-                <div class="receiver-item" onclick="selectReceiver('Receiver 3')" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; text-align: left;">
-                    Receiver 3
-                </div>
+<div id="chat-popup" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 2000; justify-content: center; align-items: center;">
+    <div style="background: white; padding: 20px; border-radius: 10px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <h2>Select a Server</h2>
+        <div id="receiver-list" style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+            <!-- Default receiver boxes -->
+            <div class="receiver-item" onclick="selectReceiver('Receiver 1')" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; text-align: left;">
+                Receiver 1
             </div>
-            <button onclick="closeChatPopup()" style="margin-top: 20px; padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                Close
-            </button>
+            <div class="receiver-item" onclick="selectReceiver('Receiver 2')" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; text-align: left;">
+                Receiver 2
+            </div>
+            <div class="receiver-item" onclick="selectReceiver('Receiver 3')" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; text-align: left;">
+                Receiver 3
+            </div>
         </div>
+        <button onclick="closeChatPopup()" style="margin-top: 20px; padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            Close
+        </button>
     </div>
+</div>
 
-    <script>
-        const panelsContainer = document.getElementById("monitoring-container"); // Container for all panels
-        const panels = {}; // Object to track panels by node_id
-        const selectedNodes = new Set(); // Set to track selected nodes
-        let isSelectionMode = false; // Flag to track selection mode
+<script>
+    const panelsContainer = document.getElementById("monitoring-container"); // Container for all panels
+    const panels = {}; // Object to track panels by node_id
+    const selectedNodes = new Set(); // Set to track selected nodes
+    let isSelectionMode = false; // Flag to track selection mode
 
-        // Create a WebSocket connection to the Rust server
-        const wsHost = window.location.hostname || 'localhost';
-        const ws = new WebSocket(`ws://${wsHost}:8080`);
+    // Create a WebSocket connection to the Rust server
+    const wsHost = window.location.hostname || 'localhost';
+    const ws = new WebSocket(`ws://${wsHost}:8080`);
 
-        // Phonebooks STORED
+    // Phonebooks STORED
 
-        const phonebooks = {
-            "Server1": ["Mom", "Dad", "Sibling"],
-            "Server2": ["Alice", "Bob", "Charlie"],
-            "Server3": ["Manager", "Colleague A", "Colleague B"],
-        };
+    const phonebooks = {
+        "Server1": ["Mom", "Dad", "Sibling"],
+        "Server2": ["Alice", "Bob", "Charlie"],
+        "Server3": ["Manager", "Colleague A", "Colleague B"],
+    };
 
-        // MONITORING STUFF
+    // MONITORING STUFF
 
-        document.querySelector(".previewContainer").addEventListener("click", function() {
-            const network_container = document.querySelector('#network-container');
-            const monitoring_container = document.querySelector('#monitoring-container');
-            const previewButton = document.querySelector('.previewButton');
-            const fakeProposalTitle = document.querySelector('#fakeProposalTitle');
-            const fakeProposal = document.querySelector('#fakeProposal');
+    document.querySelector(".previewContainer").addEventListener("click", function() {
+        const network_container = document.querySelector('#network-container');
+        const monitoring_container = document.querySelector('#monitoring-container');
+        const previewButton = document.querySelector('.previewButton');
+        const fakeProposalTitle = document.querySelector('#fakeProposalTitle');
+        const fakeProposal = document.querySelector('#fakeProposal');
 
-            if (network_container.style.display === 'none') {
-                previewButton.classList.remove('show-front');
-                previewButton.classList.add('show-back');
-                monitoring_container.style.display = 'none';
-                network_container.style.display = 'block';
+        if (network_container.style.display === 'none') {
+            previewButton.classList.remove('show-front');
+            previewButton.classList.add('show-back');
+            monitoring_container.style.display = 'none';
+            network_container.style.display = 'block';
+        } else {
+            previewButton.classList.remove('show-back');
+            previewButton.classList.add('show-front');
+            network_container.style.display = 'none';
+            monitoring_container.style.display = 'block';
+
+            /*if (fakeProposal.scrollHeight > 100) {
+                expandButton.style.display = "block";
             } else {
-                previewButton.classList.remove('show-back');
-                previewButton.classList.add('show-front');
-                network_container.style.display = 'none';
-                monitoring_container.style.display = 'block';
-
-                /*if (fakeProposal.scrollHeight > 100) {
-                    expandButton.style.display = "block";
-                } else {
-                    expandButton.style.display = "none";
-                }*/
-            }
-        });
-
-        // Function to toggle between sections
-        function showSection(sectionId) {
-            const sections = document.querySelectorAll('.section');
-            sections.forEach(section => {
-                if (section.id === sectionId) {
-                    section.style.display = 'block';
-                    section.style.animation = 'slide-in 0.5s ease-out';
-                } else {
-                    section.style.animation = 'slide-out 0.5s ease-out';
-                    setTimeout(() => {
-                        section.style.display = 'none';
-                    }, 500); // Match the duration of the animation
-                }
-            });
+                expandButton.style.display = "none";
+            }*/
         }
+    });
 
-        // Initialize the default view
-        showSection('clients-container');
-
-        // GRAPH STUFF
-
-        const nodes = [
-            { id: "C1", type: "client", x: 100, y: 400 },
-            { id: "S1", type: "server", x: 900, y: 400 },
-            { id: "D1", type: "drone", x: 500, y: 300 },
-            { id: "D2", type: "drone", x: 400, y: 200 },
-            { id: "D3", type: "drone", x: 600, y: 200 },
-        ];
-
-        const connections = [
-            { from: "C1", to: "D1" },
-            { from: "S1", to: "D1" },
-            { from: "D1", to: "D2" },
-            { from: "D1", to: "D3" },
-        ];
-
-        // Declare these variables only once at the top of the script
-        let translateX = 0; // Horizontal panning offset
-        let translateY = 0; // Vertical panning offset
-        let scale = 1; // Initial zoom level
-        let isPanning = false;
-        let startX, startY;
-        let currentTranslateX = 0; // Smoothed horizontal panning offset
-        let currentTranslateY = 0; // Smoothed vertical panning offset
-        let panAnimationFrame; // For requestAnimationFrame
-        const dampingFactor = 0.15; // Damping factor for smoother movement
-
-        const container = document.getElementById("network-container");
-        const canvas = document.getElementById("network-canvas");
-
-
-        // Draw connections
-        connections.forEach(({ from, to }) => {
-            const fromNode = nodes.find((n) => n.id === from);
-            const toNode = nodes.find((n) => n.id === to);
-
-            if (fromNode && toNode) {
-                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                line.setAttribute("x1", fromNode.x);
-                line.setAttribute("y1", fromNode.y);
-                line.setAttribute("x2", toNode.x);
-                line.setAttribute("y2", toNode.y);
-                line.classList.add("connection");
-                canvas.appendChild(line);
-            }
-        });
-
-        // Draw nodes
-        nodes.forEach(({ id, type, x, y }) => {
-            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            circle.setAttribute("cx", x);
-            circle.setAttribute("cy", y);
-            circle.setAttribute("r", 15);
-            circle.classList.add("node", type);
-            circle.addEventListener("click", () => alert(`Node: ${id}`));
-            canvas.appendChild(circle);
-        });
-
-        // Zoom in/out
-        const zoomSpeed = 0.08; // Adjust for smoother zooming
-
-        document.getElementById("network-container").addEventListener("wheel", (e) => {
-            e.preventDefault(); // Prevent default scrolling behavior
-
-            // Get mouse position relative to the container
-            const containerRect = container.getBoundingClientRect();
-            const canvasRect = canvas.getBoundingClientRect();
-
-            const mouseX = e.clientX - containerRect.left;
-            const mouseY = e.clientY - containerRect.top;
-
-            console.log(`Mouse X: ${mouseX}, Mouse Y: ${mouseY}`);
-
-            // Determine zoom direction
-            const delta = e.deltaY < 0 ? zoomSpeed : -zoomSpeed;
-            const newScale = Math.min(Math.max(scale + delta, 0.5), 2); // Clamp scale between 0.5 and 2
-
-            // Calculate scale factor
-            const shiftX = mouseX * delta; // Adjust X based on mouse position and delta
-            const shiftY = mouseY * delta; // Adjust Y based on mouse position and delta
-            translateX -= shiftX;
-            translateY -= shiftY;
-            const mousePercentage = (mouseX / ((1/2)*containerRect.right));
-            const supposedShift = delta*canvasRect.width;
-
-            //translateX = translateX + (-1)*(mousePercentage * supposedShift);
-            console.log(`${scale-newScale}, \ncontainerRect.bottom: ${containerRect.bottom}, canvasRect.bottom: ${canvasRect.bottom}   \ncontainerRect.right: ${containerRect.right}, canvasRect.right: ${canvasRect.right} `);
-
-            console.log(`ratio mouse: ${mouseX / ((1/2)*containerRect.right)}`);
-            console.log(` supposed shift: ${canvasRect.width * delta}`);
-            let oldVal = canvasRect.width*scale;
-            console.log(`Shift done: ${(((mouseX / ((1/2)*containerRect.right)) * (canvasRect.width * -delta)))}`)
-
-            //translateX = translateX + () * ((canvasRect.width*scale) * -delta));
-            //const transformY = (1 - (mouseY / containerRect.bottom)) * (canvaYLength * -delta);
-
-
-            //translateX = translateX + (mouseX/((1/2)*containerRect.right))*((canvasRect.right*(-delta)))//(mouseX/containerRect.bottom)*(canvasRect.bottom*(-delta));
-
-
-            //translateY = 0//translateY + mouseY*((canvasRect.bottom*(-delta)/containerRect.bottom));
-            /*const scaleFactor = newScale / scale;
-            const mouseCanvasYBefore = (mouseY - translateY) / scale; // Mouse position in canvas space
-            translateY = mouseY - mouseCanvasYBefore * newScale;
-            // Adjust translateX and translateY to center zoom at the mouse pointer
-            translateX = mouseX - scaleFactor * (mouseX - translateX);
-            //translateY = mouseY - scaleFactor * (mouseY - translateY);
-            */
-
-            // Apply the new scale and translation
-            scale = newScale;
-
-            canvas.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
-            console.log(`Difference after: ${(canvasRect.width*scale) -oldVal}`);
-            console.log({
-
-                mouseX,
-                mouseY,
-                translateX,
-                translateY,
-                scale
-            });
-        });
-
-
-        // Start panning
-        container.addEventListener("mousedown", (e) => {
-            isPanning = true;
-            startX = e.clientX;
-            startY = e.clientY;
-
-            // Cancel any existing animation frame
-            if (panAnimationFrame) cancelAnimationFrame(panAnimationFrame);
-        });
-
-        // Perform panning
-        document.addEventListener("mousemove", (e) => {
-                if (!isPanning) return;
-
-
-                // Calculate the difference between the current and starting mouse positions
-                const dx = (e.clientX - startX) / scale; // Adjust for current zoom level
-                const dy = (e.clientY - startY) / scale;
-
-                // Update target translation values
-                translateX += dx;
-                translateY += dy;
-
-                // Update the starting position for the next frame
-                startX = e.clientX;
-                startY = e.clientY;
-
-                // Start the smooth transition using requestAnimationFrame
-                smoothPan();
-
-        });
-
-        // Smooth panning using requestAnimationFrame
-        function smoothPan() {
-            // Update current translation values towards the target
-            currentTranslateX += (translateX - currentTranslateX) * dampingFactor;
-            currentTranslateY += (translateY - currentTranslateY) * dampingFactor;
-
-            // Apply the transformation
-            canvas.style.transform = `translate(${currentTranslateX}px, ${currentTranslateY}px) scale(${scale})`;
-
-            // Continue animation if there's a significant difference
-            if (Math.abs(translateX - currentTranslateX) > 0.1 || Math.abs(translateY - currentTranslateY) > 0.1) {
-                panAnimationFrame = requestAnimationFrame(smoothPan);
+    // Function to toggle between sections
+    function showSection(sectionId) {
+        const sections = document.querySelectorAll('.section');
+        sections.forEach(section => {
+            if (section.id === sectionId) {
+                section.style.display = 'block';
+                section.style.animation = 'slide-in 0.5s ease-out';
             } else {
-                // Snap to the target values when close enough
-                currentTranslateX = translateX;
-                currentTranslateY = translateY;
+                section.style.animation = 'slide-out 0.5s ease-out';
+                setTimeout(() => {
+                    section.style.display = 'none';
+                }, 500); // Match the duration of the animation
             }
-        }
-
-        // Stop panning
-        document.addEventListener("mouseup", () => {
-            isPanning = false;
         });
+    }
+
+    // Initialize the default view
+    showSection('clients-container');
+
+    // GRAPH STUFF
+
+    const nodes = [
+        { id: "C1", type: "client", x: 100, y: 400 },
+        { id: "S1", type: "server", x: 900, y: 400 },
+        { id: "D1", type: "drone", x: 500, y: 300 },
+        { id: "D2", type: "drone", x: 400, y: 200 },
+        { id: "D3", type: "drone", x: 600, y: 200 },
+    ];
+
+    const connections = [
+        { from: "C1", to: "D1" },
+        { from: "S1", to: "D1" },
+        { from: "D1", to: "D2" },
+        { from: "D1", to: "D3" },
+    ];
+
+    // Declare these variables only once at the top of the script
+    let translateX = 0; // Horizontal panning offset
+    let translateY = 0; // Vertical panning offset
+    let scale = 1; // Initial zoom level
+    let isPanning = false;
+    let startX, startY;
+    let currentTranslateX = 0; // Smoothed horizontal panning offset
+    let currentTranslateY = 0; // Smoothed vertical panning offset
+    let panAnimationFrame; // For requestAnimationFrame
+    const dampingFactor = 0.15; // Damping factor for smoother movement
+
+    const container = document.getElementById("network-container");
+    const canvas = document.getElementById("network-canvas");
 
 
+    // Draw connections
+    connections.forEach(({ from, to }) => {
+        const fromNode = nodes.find((n) => n.id === from);
+        const toNode = nodes.find((n) => n.id === to);
 
-
-        // ROLE POP-UP JS
-
-        function selectRole(role) {
-            const popupTitle = document.getElementById('popup-title');
-            const roleSelection = document.getElementById('role-selection');
-            const clientSelection = document.getElementById('client-selection');
-            const clientsDisplayDiv = document.getElementById('monitoring-container'); // Ensure correct reference
-
-            if (role === 'controller') {
-                // Hide the pop-up and show the controller view
-                document.getElementById('role-popup').style.display = 'none';
-                document.getElementById('controller-view').style.display = 'block';
-            } else if (role === 'client') {
-                // Update the pop-up for client selection
-                popupTitle.textContent = 'Select a Client';
-                roleSelection.style.display = 'none';
-                clientSelection.style.display = 'flex';
-
-                // Dynamically create client options
-                const panelsArray = Array.from(clientsDisplayDiv.querySelectorAll('.panel'));
-                clientSelection.innerHTML = ''; // Clear existing options
-
-                if (panelsArray.length === 0) {
-                    // No nodes found, show error message
-                    const errorMessage = document.createElement('div');
-                    errorMessage.textContent = 'No clients available.';
-                    errorMessage.style.color = 'red';
-                    errorMessage.style.textAlign = 'center';
-                    clientSelection.appendChild(errorMessage);
-                } else {
-                    // Create buttons for each panel (node)
-                    panelsArray.forEach((panel) => {
-                        const nodeId = panel.dataset.nodeId || 'Unknown'; // Retrieve node_id from panel's dataset
-                        const typeClient = "WhatsApp";
-
-                        // Create the button-option
-                        const clientButton = document.createElement('div');
-                        clientButton.style = "display:flex; align-items: center; justify-content: start";
-                        clientButton.className = "client-option";
-                        clientButton.onclick = () => chooseClient(nodeId);
-
-                        // Create the image associated with client Type
-                        const img = document.createElement('img');
-                        img.alt = "typeOfClient";
-                        img.style.width = "100%";
-                        img.style.maxWidth = "30px";
-                        img.style.borderRadius = "7px";
-
-                        if (typeClient === "WhatsApp") {
-                            img.src = "whatsapp.jpg";
-                        } else {
-                            img.src = "google_drive.png";
-                        }
-
-                        // Create text next to the image
-                        const text = document.createElement('p');
-                        text.textContent = `Client nodeId: ${nodeId}`;
-                        text.style = "margin-left: 10px";
-
-                        clientButton.appendChild(img);
-                        clientButton.appendChild(text);
-
-                        clientSelection.appendChild(clientButton);
-                    });
-                }
-            }
+        if (fromNode && toNode) {
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", fromNode.x);
+            line.setAttribute("y1", fromNode.y);
+            line.setAttribute("x2", toNode.x);
+            line.setAttribute("y2", toNode.y);
+            line.classList.add("connection");
+            canvas.appendChild(line);
         }
+    });
 
-        function chooseClient(nodeId) {
-            console.log(`Client chosen: Node ${nodeId}`);
+    // Draw nodes
+    nodes.forEach(({ id, type, x, y }) => {
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", x);
+        circle.setAttribute("cy", y);
+        circle.setAttribute("r", 15);
+        circle.classList.add("node", type);
+        circle.addEventListener("click", () => alert(`Node: ${id}`));
+        canvas.appendChild(circle);
+    });
 
-            // Find the panel corresponding to the selected nodeId
-            const panel = document.querySelector(`.panel[data-node-id="${nodeId}"]`);
+    // Zoom in/out
+    const zoomSpeed = 0.08; // Adjust for smoother zooming
 
-            if (!panel) {
-                console.error(`No panel found for Node ${nodeId}`);
-                return;
-            }
+    document.getElementById("network-container").addEventListener("wheel", (e) => {
+        e.preventDefault(); // Prevent default scrolling behavior
 
-            // Simulate retrieving the typeClient from the panel (replace with actual data if needed)
-            const typeClient = panel.dataset.typeClient || 'WhatsApp'; // Default to WhatsApp if not set
+        // Get mouse position relative to the container
+        const containerRect = container.getBoundingClientRect();
+        const canvasRect = canvas.getBoundingClientRect();
 
-            // Transition to the client view
+        const mouseX = e.clientX - containerRect.left;
+        const mouseY = e.clientY - containerRect.top;
+
+        console.log(`Mouse X: ${mouseX}, Mouse Y: ${mouseY}`);
+
+        // Determine zoom direction
+        const delta = e.deltaY < 0 ? zoomSpeed : -zoomSpeed;
+        const newScale = Math.min(Math.max(scale + delta, 0.5), 2); // Clamp scale between 0.5 and 2
+
+        // Calculate scale factor
+        const shiftX = mouseX * delta; // Adjust X based on mouse position and delta
+        const shiftY = mouseY * delta; // Adjust Y based on mouse position and delta
+        translateX -= shiftX;
+        translateY -= shiftY;
+        const mousePercentage = (mouseX / ((1/2)*containerRect.right));
+        const supposedShift = delta*canvasRect.width;
+
+        //translateX = translateX + (-1)*(mousePercentage * supposedShift);
+        console.log(`${scale-newScale}, \ncontainerRect.bottom: ${containerRect.bottom}, canvasRect.bottom: ${canvasRect.bottom}   \ncontainerRect.right: ${containerRect.right}, canvasRect.right: ${canvasRect.right} `);
+
+        console.log(`ratio mouse: ${mouseX / ((1/2)*containerRect.right)}`);
+        console.log(` supposed shift: ${canvasRect.width * delta}`);
+        let oldVal = canvasRect.width*scale;
+        console.log(`Shift done: ${(((mouseX / ((1/2)*containerRect.right)) * (canvasRect.width * -delta)))}`)
+
+        //translateX = translateX + () * ((canvasRect.width*scale) * -delta));
+        //const transformY = (1 - (mouseY / containerRect.bottom)) * (canvaYLength * -delta);
+
+
+        //translateX = translateX + (mouseX/((1/2)*containerRect.right))*((canvasRect.right*(-delta)))//(mouseX/containerRect.bottom)*(canvasRect.bottom*(-delta));
+
+
+        //translateY = 0//translateY + mouseY*((canvasRect.bottom*(-delta)/containerRect.bottom));
+        /*const scaleFactor = newScale / scale;
+        const mouseCanvasYBefore = (mouseY - translateY) / scale; // Mouse position in canvas space
+        translateY = mouseY - mouseCanvasYBefore * newScale;
+        // Adjust translateX and translateY to center zoom at the mouse pointer
+        translateX = mouseX - scaleFactor * (mouseX - translateX);
+        //translateY = mouseY - scaleFactor * (mouseY - translateY);
+        */
+
+        // Apply the new scale and translation
+        scale = newScale;
+
+        canvas.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+        console.log(`Difference after: ${(canvasRect.width*scale) -oldVal}`);
+        console.log({
+
+            mouseX,
+            mouseY,
+            translateX,
+            translateY,
+            scale
+        });
+    });
+
+
+    // Start panning
+    container.addEventListener("mousedown", (e) => {
+        isPanning = true;
+        startX = e.clientX;
+        startY = e.clientY;
+
+        // Cancel any existing animation frame
+        if (panAnimationFrame) cancelAnimationFrame(panAnimationFrame);
+    });
+
+    // Perform panning
+    document.addEventListener("mousemove", (e) => {
+        if (!isPanning) return;
+
+
+        // Calculate the difference between the current and starting mouse positions
+        const dx = (e.clientX - startX) / scale; // Adjust for current zoom level
+        const dy = (e.clientY - startY) / scale;
+
+        // Update target translation values
+        translateX += dx;
+        translateY += dy;
+
+        // Update the starting position for the next frame
+        startX = e.clientX;
+        startY = e.clientY;
+
+        // Start the smooth transition using requestAnimationFrame
+        smoothPan();
+
+    });
+
+    // Smooth panning using requestAnimationFrame
+    function smoothPan() {
+        // Update current translation values towards the target
+        currentTranslateX += (translateX - currentTranslateX) * dampingFactor;
+        currentTranslateY += (translateY - currentTranslateY) * dampingFactor;
+
+        // Apply the transformation
+        canvas.style.transform = `translate(${currentTranslateX}px, ${currentTranslateY}px) scale(${scale})`;
+
+        // Continue animation if there's a significant difference
+        if (Math.abs(translateX - currentTranslateX) > 0.1 || Math.abs(translateY - currentTranslateY) > 0.1) {
+            panAnimationFrame = requestAnimationFrame(smoothPan);
+        } else {
+            // Snap to the target values when close enough
+            currentTranslateX = translateX;
+            currentTranslateY = translateY;
+        }
+    }
+
+    // Stop panning
+    document.addEventListener("mouseup", () => {
+        isPanning = false;
+    });
+
+
+
+
+    // ROLE POP-UP JS
+
+    function selectRole(role) {
+        const popupTitle = document.getElementById('popup-title');
+        const roleSelection = document.getElementById('role-selection');
+        const clientSelection = document.getElementById('client-selection');
+        const clientsDisplayDiv = document.getElementById('monitoring-container'); // Ensure correct reference
+
+        if (role === 'controller') {
+            // Hide the pop-up and show the controller view
             document.getElementById('role-popup').style.display = 'none';
-            document.getElementById('client-view').style.display = 'block';
+            document.getElementById('controller-view').style.display = 'block';
+        } else if (role === 'client') {
+            // Update the pop-up for client selection
+            popupTitle.textContent = 'Select a Client';
+            roleSelection.style.display = 'none';
+            clientSelection.style.display = 'flex';
 
-            // Show the appropriate UI based on the typeClient
-            const communicationUI = document.getElementById('communication-ui');
-            const contentUI = document.getElementById('content-ui');
-            if (typeClient === 'WhatsApp') {
-                communicationUI.style.display = 'flex';
-                contentUI.style.display = 'none';
+            // Dynamically create client options
+            const panelsArray = Array.from(clientsDisplayDiv.querySelectorAll('.panel'));
+            clientSelection.innerHTML = ''; // Clear existing options
 
-                // Add placeholder image and text in chat messages
-                const chatMessages = document.getElementById('chat-messages');
-                chatMessages.innerHTML = `
+            if (panelsArray.length === 0) {
+                // No nodes found, show error message
+                const errorMessage = document.createElement('div');
+                errorMessage.textContent = 'No clients available.';
+                errorMessage.style.color = 'red';
+                errorMessage.style.textAlign = 'center';
+                clientSelection.appendChild(errorMessage);
+            } else {
+                // Create buttons for each panel (node)
+                panelsArray.forEach((panel) => {
+                    const nodeId = panel.dataset.nodeId || 'Unknown'; // Retrieve node_id from panel's dataset
+                    const typeClient = "WhatsApp";
+
+                    // Create the button-option
+                    const clientButton = document.createElement('div');
+                    clientButton.style = "display:flex; align-items: center; justify-content: start";
+                    clientButton.className = "client-option";
+                    clientButton.onclick = () => chooseClient(nodeId);
+
+                    // Create the image associated with client Type
+                    const img = document.createElement('img');
+                    img.alt = "typeOfClient";
+                    img.style.width = "100%";
+                    img.style.maxWidth = "30px";
+                    img.style.borderRadius = "7px";
+
+                    if (typeClient === "WhatsApp") {
+                        img.src = "whatsapp.jpg";
+                    } else {
+                        img.src = "google_drive.png";
+                    }
+
+                    // Create text next to the image
+                    const text = document.createElement('p');
+                    text.textContent = `Client nodeId: ${nodeId}`;
+                    text.style = "margin-left: 10px";
+
+                    clientButton.appendChild(img);
+                    clientButton.appendChild(text);
+
+                    clientSelection.appendChild(clientButton);
+                });
+            }
+        }
+    }
+
+    function chooseClient(nodeId) {
+        console.log(`Client chosen: Node ${nodeId}`);
+
+        // Find the panel corresponding to the selected nodeId
+        const panel = document.querySelector(`.panel[data-node-id="${nodeId}"]`);
+
+        if (!panel) {
+            console.error(`No panel found for Node ${nodeId}`);
+            return;
+        }
+
+        // Simulate retrieving the typeClient from the panel (replace with actual data if needed)
+        const typeClient = panel.dataset.typeClient || 'WhatsApp'; // Default to WhatsApp if not set
+
+        // Transition to the client view
+        document.getElementById('role-popup').style.display = 'none';
+        document.getElementById('client-view').style.display = 'block';
+
+        // Show the appropriate UI based on the typeClient
+        const communicationUI = document.getElementById('communication-ui');
+        const contentUI = document.getElementById('content-ui');
+        if (typeClient === 'WhatsApp') {
+            communicationUI.style.display = 'flex';
+            contentUI.style.display = 'none';
+
+            // Add placeholder image and text in chat messages
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.innerHTML = `
                     <div style="text-align: center; padding: 20px;">
                         <img src="content_objects/whatsapp_light_icon.png" alt="WhatsApp Icon" style="max-width: 150px; opacity: 0.7;">
                         <p style="color: #555; margin-top: 10px; font-size: 16px; color: #54656f">Here there will be shown your personal chats!</p>
                     </div>
                 `;
-                chatMessages.style.background = 'none'; // Clear background for placeholder
-            } else {
-                communicationUI.style.display = 'none';
-                contentUI.style.display = 'flex';
-            }
+            chatMessages.style.background = 'none'; // Clear background for placeholder
+        } else {
+            communicationUI.style.display = 'none';
+            contentUI.style.display = 'flex';
         }
+    }
 
-        function logOut() {
-            // Redirect to the login or home screen
-            console.log('Logging out...');
-            alert('You have been logged out.');
+    function logOut() {
+        // Redirect to the login or home screen
+        console.log('Logging out...');
+        alert('You have been logged out.');
 
-            // Optional: Redirect to the login page
-            window.location.reload(); // Reload the page to reset state
-        }
+        // Optional: Redirect to the login page
+        window.location.reload(); // Reload the page to reset state
+    }
 
 
-        /* COMMUNICATION JAVASCRIPT */
+    /* COMMUNICATION JAVASCRIPT */
 
-        function createNewChat() {
-            const chatPopup = document.getElementById('chat-popup');
-            const receiverList = document.getElementById('receiver-list');
-            receiverList.innerHTML = ''; // Clear existing list
+    function createNewChat() {
+        const chatPopup = document.getElementById('chat-popup');
+        const receiverList = document.getElementById('receiver-list');
+        receiverList.innerHTML = ''; // Clear existing list
 
-            // Add phonebooks to the popup
-            Object.keys(phonebooks).forEach((phonebook) => {
-                const phonebookItem = document.createElement('div');
-                phonebookItem.className = 'receiver-item';
-                phonebookItem.textContent = phonebook;
-                phonebookItem.onclick = () => showReceivers(phonebook); // Show receivers for the selected phonebook
-                receiverList.appendChild(phonebookItem);
-            });
+        // Add phonebooks to the popup
+        Object.keys(phonebooks).forEach((phonebook) => {
+            const phonebookItem = document.createElement('div');
+            phonebookItem.className = 'receiver-item';
+            phonebookItem.textContent = phonebook;
+            phonebookItem.onclick = () => showReceivers(phonebook); // Show receivers for the selected phonebook
+            receiverList.appendChild(phonebookItem);
+        });
 
-            chatPopup.style.display = 'flex'; // Show the popup
-        }
+        chatPopup.style.display = 'flex'; // Show the popup
+    }
 
-        function closeChatPopup() {
-            const chatPopup = document.getElementById('chat-popup');
-            chatPopup.style.display = 'none'; // Hide the pop-up
-        }
+    function closeChatPopup() {
+        const chatPopup = document.getElementById('chat-popup');
+        chatPopup.style.display = 'none'; // Hide the pop-up
+    }
 
-        function showReceivers(phonebook) {
-            const receiverList = document.getElementById('receiver-list');
-            receiverList.innerHTML = ''; // Clear existing list
+    function showReceivers(phonebook) {
+        const receiverList = document.getElementById('receiver-list');
+        receiverList.innerHTML = ''; // Clear existing list
 
-            // Add receivers for the selected phonebook
-            phonebooks[phonebook].forEach((receiver) => {
-                const receiverItem = document.createElement('div');
-                receiverItem.className = 'receiver-item';
-                receiverItem.textContent = receiver;
-                receiverItem.onclick = () => selectReceiver(receiver); // Handle receiver selection
-                receiverList.appendChild(receiverItem);
-            });
-        }
+        // Add receivers for the selected phonebook
+        phonebooks[phonebook].forEach((receiver) => {
+            const receiverItem = document.createElement('div');
+            receiverItem.className = 'receiver-item';
+            receiverItem.textContent = receiver;
+            receiverItem.onclick = () => selectReceiver(receiver); // Handle receiver selection
+            receiverList.appendChild(receiverItem);
+        });
+    }
 
-        function selectReceiver(receiverName) {
-            // Handle receiver selection
-            console.log(`Receiver selected: ${receiverName}`);
+    function selectReceiver(receiverName) {
+        // Handle receiver selection
+        console.log(`Receiver selected: ${receiverName}`);
 
-            // Optionally, add the chat to the chat list
-            const chatList = document.getElementById('chat-list');
-            const chatItem = document.createElement('div');
-            chatItem.className = 'chat-item';
-            chatItem.textContent = receiverName;
-            chatItem.style = 'padding: 10px; border-bottom: 1px solid #ddd; cursor: pointer;';
-            chatItem.onclick = () => openChat(receiverName);
-            chatList.appendChild(chatItem);
+        // Optionally, add the chat to the chat list
+        const chatList = document.getElementById('chat-list');
+        const chatItem = document.createElement('div');
+        chatItem.className = 'chat-item';
+        chatItem.textContent = receiverName;
+        chatItem.style = 'padding: 10px; border-bottom: 1px solid #ddd; cursor: pointer;';
+        chatItem.onclick = () => openChat(receiverName);
+        chatList.appendChild(chatItem);
 
-            // Close the pop-up after selection
-            closeChatPopup();
-        }
+        // Close the pop-up after selection
+        closeChatPopup();
+    }
 
-        function openChat(chatName) {
-            // Update the chat header with the selected chat name
-            document.getElementById('chat-header').textContent = chatName;
+    function openChat(chatName) {
+        // Update the chat header with the selected chat name
+        document.getElementById('chat-header').textContent = chatName;
 
-            // Update the chat messages area with a new background and placeholder messages
-            const chatMessages = document.getElementById('chat-messages');
-            chatMessages.innerHTML = `
+        // Update the chat messages area with a new background and placeholder messages
+        const chatMessages = document.getElementById('chat-messages');
+        chatMessages.innerHTML = `
                 <div class="message received">Welcome to ${chatName}!</div>
                 <div class="message sent">Hi there!</div>
             `;
 
-            chatMessages.style.background = 'url("whatsapp_bg.jpg")';
-            chatMessages.style.backgroundSize = 'cover';
-            chatMessages.style.backgroundPosition = 'center';
+        chatMessages.style.background = 'url("whatsapp_bg.jpg")';
+        chatMessages.style.backgroundSize = 'cover';
+        chatMessages.style.backgroundPosition = 'center';
 
-            // Highlight the active chat in the sidebar
-            const chatItems = document.querySelectorAll('.chat-item');
-            chatItems.forEach((item) => item.classList.remove('active')); // Remove active class from all
-            const selectedChat = [...chatItems].find((item) => item.textContent === chatName);
-            if (selectedChat) selectedChat.classList.add('active');
+        // Highlight the active chat in the sidebar
+        const chatItems = document.querySelectorAll('.chat-item');
+        chatItems.forEach((item) => item.classList.remove('active')); // Remove active class from all
+        const selectedChat = [...chatItems].find((item) => item.textContent === chatName);
+        if (selectedChat) selectedChat.classList.add('active');
+    }
+
+    function sendMessage() {
+        const messageInput = document.getElementById('message-input');
+        const chatMessages = document.getElementById('chat-messages');
+        const messageText = messageInput.value.trim();
+
+        if (messageText) {
+            // Add the sent message to the chat window
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message sent';
+            messageDiv.style = 'margin-bottom: 10px; background-color: #007bff; padding: 10px; border-radius: 10px; max-width: 60%; color: white; align-self: flex-end;';
+            messageDiv.textContent = messageText;
+
+            chatMessages.appendChild(messageDiv);
+
+            // Scroll to the bottom of the chat window
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // Clear the input field
+            messageInput.value = '';
         }
-
-        function sendMessage() {
-            const messageInput = document.getElementById('message-input');
-            const chatMessages = document.getElementById('chat-messages');
-            const messageText = messageInput.value.trim();
-
-            if (messageText) {
-                // Add the sent message to the chat window
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'message sent';
-                messageDiv.style = 'margin-bottom: 10px; background-color: #007bff; padding: 10px; border-radius: 10px; max-width: 60%; color: white; align-self: flex-end;';
-                messageDiv.textContent = messageText;
-
-                chatMessages.appendChild(messageDiv);
-
-                // Scroll to the bottom of the chat window
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-
-                // Clear the input field
-                messageInput.value = '';
-            }
-        }
+    }
 
 
-        // CONTROLLER STUFF
+    // CONTROLLER STUFF
 
-        // Function to order panels by node_id
-        function orderPanelsByNodeId() {
-            const panelsArray = Object.values(panels);
-            panelsArray.sort((a, b) => {
-                const nodeIdA = parseInt(a.dataset.nodeId, 10);
-                const nodeIdB = parseInt(b.dataset.nodeId, 10);
-                return nodeIdA - nodeIdB;
-            });
-
-            // Clear the container and re-append panels in sorted order
-            panelsContainer.innerHTML = '';
-            panelsArray.forEach(panel => panelsContainer.appendChild(panel));
-        }
-
-        // Function to toggle selection mode
-        function toggleSelectionMode() {
-            isSelectionMode = !isSelectionMode;
-            document.querySelector('.confirm-button').style.display = isSelectionMode ? 'block' : 'none';
-            document.querySelector('.back-button').style.display = 'none'; // Hide back button in selection mode
-            updateSelectionSquaresVisibility();
-        }
-
-        // Function to update the visibility of selection squares
-        function updateSelectionSquaresVisibility() {
-            Object.values(panels).forEach(panel => {
-                const square = panel.querySelector('.selection-square');
-                if (square) {
-                    square.style.display = isSelectionMode ? 'block' : 'none';
-                }
-            });
-        }
-
-        // Function to confirm the selection
-        function confirmSelection() {
-            isSelectionMode = false;
-            document.querySelector('.confirm-button').style.display = 'none';
-            document.querySelector('.back-button').style.display = 'block'; // Show back button after confirmation
-            updateSelectionSquaresVisibility();
-            filterPanelsBySelectedNodes();
-        }
-
-        // Function to filter panels based on selected nodes
-        function filterPanelsBySelectedNodes() {
-            Object.values(panels).forEach(panel => {
-                const nodeId = panel.dataset.nodeId;
-                if (selectedNodes.has(nodeId)) {
-                    panel.style.display = 'block';
-                } else {
-                    panel.style.display = 'none';
-                }
-            });
-        }
-
-        // Function to go back to monitoring all nodes
-        function goBackToAllNodes() {
-            selectedNodes.clear(); // Clear selected nodes
-            document.querySelector('.back-button').style.display = 'none'; // Hide back button
-            document.querySelector('.confirm-button').style.display = 'none'; // Hide confirm button
-            Object.values(panels).forEach(panel => {
-                panel.style.display = 'block'; // Show all panels
-                const square = panel.querySelector('.selection-square');
-                if (square) {
-                    square.classList.remove('selected'); // Remove selection tick
-                }
-            });
-        }
-
-        // Function to toggle node selection
-        function toggleNodeSelection(nodeId) {
-            if (selectedNodes.has(nodeId)) {
-                selectedNodes.delete(nodeId);
-            } else {
-                selectedNodes.add(nodeId);
-            }
-            const square = document.querySelector(`.panel[data-node-id="${nodeId}"] .selection-square`);
-            square.classList.toggle('selected');
-        }
-
-
-
-        /* DROPDOWN JS */
-
-        // Function to toggle the dropdown menu visibility
-        function toggleDropdown() {
-            const dropdownMenu = document.getElementById('dropdown-menu');
-
-            if (dropdownMenu.classList.contains('active')) {
-                // Start slide-out animation
-                dropdownMenu.classList.remove('active');
-                dropdownMenu.classList.add('closing');
-
-                // After animation completes, hide the menu
-                dropdownMenu.addEventListener(
-                    'animationend',
-                    () => {
-                        dropdownMenu.classList.remove('closing');
-                        dropdownMenu.style.display = 'none';
-                    },
-                    { once: true } // Ensure the listener runs only once
-                );
-            } else {
-                // Start slide-in animation
-                dropdownMenu.style.display = 'block'; // Ensure the content is displayed
-                dropdownMenu.classList.add('active');
-            }
-        }
-
-        // Close the dropdown if the user clicks outside
-        document.addEventListener('click', (event) => {
-            const dropdownMenu = document.getElementById('dropdown-menu');
-            const dropdownButton = document.querySelector('.dropdown button');
-            if (!dropdownMenu.contains(event.target) && !dropdownButton.contains(event.target)) {
-                dropdownMenu.style.display = 'none';
-            }
+    // Function to order panels by node_id
+    function orderPanelsByNodeId() {
+        const panelsArray = Object.values(panels);
+        panelsArray.sort((a, b) => {
+            const nodeIdA = parseInt(a.dataset.nodeId, 10);
+            const nodeIdB = parseInt(b.dataset.nodeId, 10);
+            return nodeIdA - nodeIdB;
         });
 
+        // Clear the container and re-append panels in sorted order
+        panelsContainer.innerHTML = '';
+        panelsArray.forEach(panel => panelsContainer.appendChild(panel));
+    }
 
-        //WEB SOCKET STUFF
+    // Function to toggle selection mode
+    function toggleSelectionMode() {
+        isSelectionMode = !isSelectionMode;
+        document.querySelector('.confirm-button').style.display = isSelectionMode ? 'block' : 'none';
+        document.querySelector('.back-button').style.display = 'none'; // Hide back button in selection mode
+        updateSelectionSquaresVisibility();
+    }
 
-        // Handle WebSocket messages
-        ws.onmessage = async (event) => {
-            try {
-                const text = await event.data;
-                const data = JSON.parse(text);
-                console.log('WebSocket data received:', data); // Add this line
-                // Update the DOM based on node_type
-                let panel = panels[data.node_id];
-                if (!panel) {
-                    panel = document.createElement("div");
-                    panel.className = "panel";
-                    panel.dataset.nodeId = data.node_id;
-                    // Populate the panel content based on the node_type
-                    switch (data.node_type) {
-                        case "Web Browser":
-                            panel.innerHTML = `
+    // Function to update the visibility of selection squares
+    function updateSelectionSquaresVisibility() {
+        Object.values(panels).forEach(panel => {
+            const square = panel.querySelector('.selection-square');
+            if (square) {
+                square.style.display = isSelectionMode ? 'block' : 'none';
+            }
+        });
+    }
+
+    // Function to confirm the selection
+    function confirmSelection() {
+        isSelectionMode = false;
+        document.querySelector('.confirm-button').style.display = 'none';
+        document.querySelector('.back-button').style.display = 'block'; // Show back button after confirmation
+        updateSelectionSquaresVisibility();
+        filterPanelsBySelectedNodes();
+    }
+
+    // Function to filter panels based on selected nodes
+    function filterPanelsBySelectedNodes() {
+        Object.values(panels).forEach(panel => {
+            const nodeId = panel.dataset.nodeId;
+            if (selectedNodes.has(nodeId)) {
+                panel.style.display = 'block';
+            } else {
+                panel.style.display = 'none';
+            }
+        });
+    }
+
+    // Function to go back to monitoring all nodes
+    function goBackToAllNodes() {
+        selectedNodes.clear(); // Clear selected nodes
+        document.querySelector('.back-button').style.display = 'none'; // Hide back button
+        document.querySelector('.confirm-button').style.display = 'none'; // Hide confirm button
+        Object.values(panels).forEach(panel => {
+            panel.style.display = 'block'; // Show all panels
+            const square = panel.querySelector('.selection-square');
+            if (square) {
+                square.classList.remove('selected'); // Remove selection tick
+            }
+        });
+    }
+
+    // Function to toggle node selection
+    function toggleNodeSelection(nodeId) {
+        if (selectedNodes.has(nodeId)) {
+            selectedNodes.delete(nodeId);
+        } else {
+            selectedNodes.add(nodeId);
+        }
+        const square = document.querySelector(`.panel[data-node-id="${nodeId}"] .selection-square`);
+        square.classList.toggle('selected');
+    }
+
+
+
+    /* DROPDOWN JS */
+
+    // Function to toggle the dropdown menu visibility
+    function toggleDropdown() {
+        const dropdownMenu = document.getElementById('dropdown-menu');
+
+        if (dropdownMenu.classList.contains('active')) {
+            // Start slide-out animation
+            dropdownMenu.classList.remove('active');
+            dropdownMenu.classList.add('closing');
+
+            // After animation completes, hide the menu
+            dropdownMenu.addEventListener(
+                'animationend',
+                () => {
+                    dropdownMenu.classList.remove('closing');
+                    dropdownMenu.style.display = 'none';
+                },
+                { once: true } // Ensure the listener runs only once
+            );
+        } else {
+            // Start slide-in animation
+            dropdownMenu.style.display = 'block'; // Ensure the content is displayed
+            dropdownMenu.classList.add('active');
+        }
+    }
+
+    // Close the dropdown if the user clicks outside
+    document.addEventListener('click', (event) => {
+        const dropdownMenu = document.getElementById('dropdown-menu');
+        const dropdownButton = document.querySelector('.dropdown button');
+        if (!dropdownMenu.contains(event.target) && !dropdownButton.contains(event.target)) {
+            dropdownMenu.style.display = 'none';
+        }
+    });
+
+
+    //WEB SOCKET STUFF
+
+    // Handle WebSocket messages
+    ws.onmessage = async (event) => {
+        try {
+            const text = await event.data;
+            const data = JSON.parse(text);
+            console.log('WebSocket data received:', data); // Add this line
+            // Update the DOM based on node_type
+            let panel = panels[data.node_id];
+            if (!panel) {
+                panel = document.createElement("div");
+                panel.className = "panel";
+                panel.dataset.nodeId = data.node_id;
+                // Populate the panel content based on the node_type
+                switch (data.node_type) {
+                    case "Web Browser":
+                        panel.innerHTML = `
                         <div class="selection-square" onclick="toggleNodeSelection('${data.node_id}')"></div>
                         <h2>Node ${data.node_id} (${data.node_type})</h2>
                         <div class="session">Session ID: <span id="session-${data.node_id}">${data.session_id}</span></div>
@@ -1377,9 +1377,9 @@
                         <div class="chosen-file">Chosen File: <span id="chosen-file-${data.node_id}">${data.chosen_file_text}</span></div>
                         <div class="serialized-media">Serialized Media: <pre id="serialized-media-${data.node_id}">${JSON.stringify(data.serialized_media, null, 2)}</pre></div>
                     `;
-                            break;
-                        case "Chat Client":
-                            panel.innerHTML = `
+                        break;
+                    case "Chat Client":
+                        panel.innerHTML = `
                         <div class="selection-square" onclick="toggleNodeSelection('${data.node_id}')"></div>
                         <h2>Node ${data.node_id} (${data.node_type})</h2>
                         <div class="flood-ids">Flood IDs: <span id="flood-ids-${data.node_id}">${data.flood_ids.join(', ')}</span></div>
@@ -1389,9 +1389,9 @@
                         <div class="available-clients">Available Clients: <pre id="available-clients-${data.node_id}">${JSON.stringify(data.available_clients, null, 2)}</pre></div>
                         <div class="received-messages">Received Messages: <pre id="received-messages-${data.node_id}">${JSON.stringify(data.received_messages, null, 2)}</pre></div>
                     `;
-                            break;
-                        case "Communication Server":
-                            panel.innerHTML = `
+                        break;
+                    case "Communication Server":
+                        panel.innerHTML = `
                         <div class="selection-square" onclick="toggleNodeSelection('${data.node_id}')"></div>
                         <h2>Node ${data.node_id} (${data.node_type})</h2>
                         <div class="flood-id">Flood ID: <span id="flood-id-${data.node_id}">${data.flood_id}</span></div>
@@ -1399,9 +1399,9 @@
                         <div class="routing-table">Routing Table: <pre id="routing-table-${data.node_id}">${JSON.stringify(data.routing_table, null, 2)}</pre></div>
                         <div class="registered-clients">Registered Clients: <span id="registered-clients-${data.node_id}">${data.registered_clients.join(', ')}</span></div>
                     `;
-                            break;
-                        case "Media Server":
-                            panel.innerHTML = `
+                        break;
+                    case "Media Server":
+                        panel.innerHTML = `
                         <div class="selection-square" onclick="toggleNodeSelection('${data.node_id}')"></div>
                         <h2>Node ${data.node_id} (${data.node_type})</h2>
                         <div class="flood-id">Flood ID: <span id="flood-id-${data.node_id}">${data.flood_id}</span></div>
@@ -1409,9 +1409,9 @@
                         <div class="routing-table">Routing Table: <pre id="routing-table-${data.node_id}">${JSON.stringify(data.routing_table, null, 2)}</pre></div>
                         <div class="media">Media: <pre id="media-${data.node_id}">${JSON.stringify(data.media, null, 2)}</pre></div>
                     `;
-                            break;
-                        case "Text Server":
-                            panel.innerHTML = `
+                        break;
+                    case "Text Server":
+                        panel.innerHTML = `
                         <div class="selection-square" onclick="toggleNodeSelection('${data.node_id}')"></div>
                         <h2>Node ${data.node_id} (${data.node_type})</h2>
                         <div class="flood-id">Flood ID: <span id="flood-id-${data.node_id}">${data.flood_id}</span></div>
@@ -1419,102 +1419,102 @@
                         <div class="routing-table">Routing Table: <pre id="routing-table-${data.node_id}">${JSON.stringify(data.routing_table, null, 2)}</pre></div>
                         <div class="text-files">Text Files: <pre id="text-files-${data.node_id}">${JSON.stringify(data.text_files, null, 2)}</pre></div>
                     `;
-                            break;
-                        default:
-                            panel.innerHTML = `<h2>Node ${data.node_id} (${data.node_type})</h2><div>Unsupported node type</div>`;
-                            break;
-                    }
-                    panelsContainer.appendChild(panel);
-                    panels[data.node_id] = panel;
-                } else {
-                    // Update logic for existing panels
-                    switch (data.node_type) {
-                        case "Web Browser":
-                            document.getElementById(`session-${data.node_id}`).textContent = data.session_id;
-                            document.getElementById(`connected-nodes-${data.node_id}`).textContent = Array.from(data.connected_node_ids).join(', ');
-                            document.getElementById(`registered-communication-servers-${data.node_id}`).textContent = JSON.stringify(data.registered_communication_servers, null, 2);
-                            document.getElementById(`registered-content-servers-${data.node_id}`).textContent = JSON.stringify(data.registered_content_servers, null, 2);
-                            document.getElementById(`routing-table-${data.node_id}`).textContent = JSON.stringify(data.routing_table, null, 2);
-                            document.getElementById(`curr-files-${data.node_id}`).textContent = JSON.stringify(data.curr_received_file_list, null, 2);
-                            document.getElementById(`chosen-file-${data.node_id}`).textContent = data.chosen_file_text;
-                            document.getElementById(`serialized-media-${data.node_id}`).textContent = JSON.stringify(data.serialized_media, null, 2);
-                            break;
-                        case "Chat Client":
-                            document.getElementById(`flood-ids-${data.node_id}`).textContent = data.flood_ids.join(', ');
-                            document.getElementById(`session-ids-${data.node_id}`).textContent = data.session_ids.join(', ');
-                            document.getElementById(`neighbours-${data.node_id}`).textContent = Array.from(data.neighbours).join(', ');
-                            document.getElementById(`discovered-servers-${data.node_id}`).textContent = JSON.stringify(data.discovered_servers, null, 2);
-                            document.getElementById(`available-clients-${data.node_id}`).textContent = JSON.stringify(data.available_clients, null, 2);
-                            document.getElementById(`received-messages-${data.node_id}`).textContent = JSON.stringify(data.received_messages, null, 2);
-                            break;
-                        case "Communication Server":
-                            document.getElementById(`flood-id-${data.node_id}`).textContent = data.flood_id;
-                            document.getElementById(`connected-nodes-${data.node_id}`).textContent = Array.from(data.connected_node_ids).join(', ');
-                            document.getElementById(`routing-table-${data.node_id}`).textContent = JSON.stringify(data.routing_table, null, 2);
-                            document.getElementById(`registered-clients-${data.node_id}`).textContent = data.registered_clients.join(', ');
-                            break;
-                        case "Media Server":
-                            document.getElementById(`flood-id-${data.node_id}`).textContent = data.flood_id;
-                            document.getElementById(`connected-nodes-${data.node_id}`).textContent = Array.from(data.connected_node_ids).join(', ');
-                            document.getElementById(`routing-table-${data.node_id}`).textContent = JSON.stringify(data.routing_table, null, 2);
-                            document.getElementById(`media-${data.node_id}`).textContent = JSON.stringify(data.media, null, 2);
-                            break;
-                        case "Text Server":
-                            document.getElementById(`flood-id-${data.node_id}`).textContent = data.flood_id;
-                            document.getElementById(`connected-nodes-${data.node_id}`).textContent = Array.from(data.connected_node_ids).join(', ');
-                            document.getElementById(`routing-table-${data.node_id}`).textContent = JSON.stringify(data.routing_table, null, 2);
-                            document.getElementById(`text-files-${data.node_id}`).textContent = JSON.stringify(data.text_files, null, 2);
-                            break;
-                        default:
-                            console.warn(`Unknown node type: ${data.node_type}`);
-                            break;
-                    }
+                        break;
+                    default:
+                        panel.innerHTML = `<h2>Node ${data.node_id} (${data.node_type})</h2><div>Unsupported node type</div>`;
+                        break;
                 }
-            } catch (e) {
-                console.error('Error processing message:', e);
-            }
-        };
-
-        // Handle WebSocket connection close
-        ws.onclose = () => {
-            const msgDiv = document.createElement("div");
-            msgDiv.className = "message error";
-            msgDiv.textContent = 'WebSocket connection closed.';
-            panelsContainer.appendChild(msgDiv);
-        };
-
-        // Handle WebSocket connection open
-        ws.onopen = () => {
-            console.log('WebSocket connection established');
-            sendUpdateCommand(); // Request initial data on connection
-        };
-        // Handle page refresh/visibility changes
-        window.addEventListener('beforeunload', () => {
-            sendUpdateCommand(); // Optional: Send cleanup command if needed
-        });
-
-        // Request update when the page becomes visible again
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
-                sendUpdateCommand();
-            }
-        });
-
-        // Handle WebSocket errors
-        ws.onerror = (error) => {
-            console.error('WebSocket error:', error);
-        };
-
-        // Function to request data update from the server
-        function sendUpdateCommand() {
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ command: "update" }));
+                panelsContainer.appendChild(panel);
+                panels[data.node_id] = panel;
             } else {
-                console.error('WebSocket is not open. Unable to send update command.');
+                // Update logic for existing panels
+                switch (data.node_type) {
+                    case "Web Browser":
+                        document.getElementById(`session-${data.node_id}`).textContent = data.session_id;
+                        document.getElementById(`connected-nodes-${data.node_id}`).textContent = Array.from(data.connected_node_ids).join(', ');
+                        document.getElementById(`registered-communication-servers-${data.node_id}`).textContent = JSON.stringify(data.registered_communication_servers, null, 2);
+                        document.getElementById(`registered-content-servers-${data.node_id}`).textContent = JSON.stringify(data.registered_content_servers, null, 2);
+                        document.getElementById(`routing-table-${data.node_id}`).textContent = JSON.stringify(data.routing_table, null, 2);
+                        document.getElementById(`curr-files-${data.node_id}`).textContent = JSON.stringify(data.curr_received_file_list, null, 2);
+                        document.getElementById(`chosen-file-${data.node_id}`).textContent = data.chosen_file_text;
+                        document.getElementById(`serialized-media-${data.node_id}`).textContent = JSON.stringify(data.serialized_media, null, 2);
+                        break;
+                    case "Chat Client":
+                        document.getElementById(`flood-ids-${data.node_id}`).textContent = data.flood_ids.join(', ');
+                        document.getElementById(`session-ids-${data.node_id}`).textContent = data.session_ids.join(', ');
+                        document.getElementById(`neighbours-${data.node_id}`).textContent = Array.from(data.neighbours).join(', ');
+                        document.getElementById(`discovered-servers-${data.node_id}`).textContent = JSON.stringify(data.discovered_servers, null, 2);
+                        document.getElementById(`available-clients-${data.node_id}`).textContent = JSON.stringify(data.available_clients, null, 2);
+                        document.getElementById(`received-messages-${data.node_id}`).textContent = JSON.stringify(data.received_messages, null, 2);
+                        break;
+                    case "Communication Server":
+                        document.getElementById(`flood-id-${data.node_id}`).textContent = data.flood_id;
+                        document.getElementById(`connected-nodes-${data.node_id}`).textContent = Array.from(data.connected_node_ids).join(', ');
+                        document.getElementById(`routing-table-${data.node_id}`).textContent = JSON.stringify(data.routing_table, null, 2);
+                        document.getElementById(`registered-clients-${data.node_id}`).textContent = data.registered_clients.join(', ');
+                        break;
+                    case "Media Server":
+                        document.getElementById(`flood-id-${data.node_id}`).textContent = data.flood_id;
+                        document.getElementById(`connected-nodes-${data.node_id}`).textContent = Array.from(data.connected_node_ids).join(', ');
+                        document.getElementById(`routing-table-${data.node_id}`).textContent = JSON.stringify(data.routing_table, null, 2);
+                        document.getElementById(`media-${data.node_id}`).textContent = JSON.stringify(data.media, null, 2);
+                        break;
+                    case "Text Server":
+                        document.getElementById(`flood-id-${data.node_id}`).textContent = data.flood_id;
+                        document.getElementById(`connected-nodes-${data.node_id}`).textContent = Array.from(data.connected_node_ids).join(', ');
+                        document.getElementById(`routing-table-${data.node_id}`).textContent = JSON.stringify(data.routing_table, null, 2);
+                        document.getElementById(`text-files-${data.node_id}`).textContent = JSON.stringify(data.text_files, null, 2);
+                        break;
+                    default:
+                        console.warn(`Unknown node type: ${data.node_type}`);
+                        break;
+                }
             }
+        } catch (e) {
+            console.error('Error processing message:', e);
         }
+    };
+
+    // Handle WebSocket connection close
+    ws.onclose = () => {
+        const msgDiv = document.createElement("div");
+        msgDiv.className = "message error";
+        msgDiv.textContent = 'WebSocket connection closed.';
+        panelsContainer.appendChild(msgDiv);
+    };
+
+    // Handle WebSocket connection open
+    ws.onopen = () => {
+        console.log('WebSocket connection established');
+        sendUpdateCommand(); // Request initial data on connection
+    };
+    // Handle page refresh/visibility changes
+    window.addEventListener('beforeunload', () => {
+        sendUpdateCommand(); // Optional: Send cleanup command if needed
+    });
+
+    // Request update when the page becomes visible again
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            sendUpdateCommand();
+        }
+    });
+
+    // Handle WebSocket errors
+    ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+    };
+
+    // Function to request data update from the server
+    function sendUpdateCommand() {
+        if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify("WsUpdateData"));
+        } else {
+            console.error('WebSocket is not open. Unable to send update command.');
+        }
+    }
 
 
-    </script>
-    </body>
-    </html>
+</script>
+</body>
+</html>

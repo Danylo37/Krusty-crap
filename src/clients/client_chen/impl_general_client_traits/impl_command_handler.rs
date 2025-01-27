@@ -62,6 +62,7 @@ impl CommandHandler for ClientChen{
     fn handle_controller_command_with_monitoring(&mut self, command: ClientCommand, sender_to_gui: Sender<String>) {
         match command {
             ClientCommand::UpdateMonitoringData => {
+                eprintln!("I'm here sending data");
                 self.send_display_data(sender_to_gui.clone());
             }
             ClientCommand::AddSender(target_node_id, sender) => {
