@@ -142,15 +142,23 @@ impl NetworkInitializer {
 
         // Build the network topology
         let mut topology = HashMap::new();
+        let mut nodes: HashMap<NodeId, NodeType> = HashMap::new();
         for drone in &config.drone {
             topology.insert(drone.id, drone.connected_node_ids.clone());
+            nodes.insert(drone.id, NodeType::Drone);
         }
         for client in &config.client {
             topology.insert(client.id, client.connected_drone_ids.clone());
+            nodes.insert(client.id, NodeType::Client);
         }
         for server in &config.server {
             topology.insert(server.id, server.connected_drone_ids.clone());
+            nodes.insert(server.id, NodeType::Server);
         }
+
+        // Store the topology and nodes in the controller
+        self.simulation_controller.state.topology = topology.clone();
+        self.simulation_controller.state.nodes = nodes;
 
         // Initialize drones, clients, and servers
         self.create_drones(config.drone);
