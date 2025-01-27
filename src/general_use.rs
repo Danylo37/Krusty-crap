@@ -1,3 +1,4 @@
+use std::collections::{HashMap, HashSet};
 use std::fmt::{Display, Formatter};
 use crossbeam_channel::Sender;
 use serde::{Deserialize, Serialize};
@@ -6,6 +7,7 @@ use wg_2024::{
     network::NodeId,
     packet::Packet,
 };
+use crate::clients::client_danylo::ChatHistory;
 
 pub type Message = String;
 pub type MediaRef = String;
@@ -13,10 +15,81 @@ pub type FileRef = String;
 pub type ServerId = NodeId;
 pub type ClientId = NodeId;
 pub type DroneId = NodeId;
+pub type InitiatorId = NodeId;
 pub type SessionId = u64;
 pub type FloodId = u64;
 pub type FragmentIndex = u64;
 pub type UsingTimes = u64;  //to measure traffic of fragments in a path.
+
+
+
+///all the monitoring data
+#[derive(Debug, Serialize, Clone)]
+pub struct DisplayDataWebBrowser {
+    pub node_id: NodeId,
+    pub node_type: String,
+    pub flood_id: FloodId,
+    pub session_id: SessionId,
+    pub connected_node_ids: HashSet<NodeId>,
+    pub registered_communication_servers: HashMap<ServerId, Vec<ClientId>>,
+    pub registered_content_servers: HashSet<ServerId>,
+    pub routing_table: HashMap<NodeId, Vec<Vec<NodeId>>>,
+    pub curr_received_file_list: Vec<String>,
+    pub chosen_file_text: String,
+    pub serialized_media: HashMap<MediaRef, String>,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct DisplayDataChatClient {
+    // Client metadata
+    pub node_id: NodeId,
+    pub node_type: String,
+
+    // Used IDs
+    pub flood_ids: Vec<FloodId>,
+    pub session_ids: Vec<SessionId>,
+
+    // Connections
+    pub neighbours: HashSet<NodeId>,
+    pub discovered_servers: HashMap<ServerId, ServerType>,
+    //registered_communication_servers: HashMap<ServerId, bool>,
+    pub available_clients: HashMap<ServerId, Vec<ClientId>>,
+
+    // Chats
+    pub chats: HashMap<ClientId, ChatHistory>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct DisplayDataCommunicationServer{
+    pub node_id: NodeId,
+    pub node_type: String,
+    pub flood_id: crate::general_use::FloodId,
+    pub connected_node_ids: HashSet<NodeId>,
+    pub routing_table: HashMap<NodeId, Vec<NodeId>>,
+    pub registered_clients: Vec<NodeId>,
+}
+
+#[derive(Debug, Clone,  Serialize)]
+pub struct DisplayDataMediaServer{
+    pub node_id: NodeId,
+    pub node_type: String,
+    pub flood_id: crate::general_use::FloodId,
+    //session_id: crate::general_use::SessionId,
+    pub connected_node_ids: HashSet<NodeId>,
+    pub routing_table: HashMap<NodeId, Vec<NodeId>>,
+    pub media: HashMap<String, String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct DisplayDataTextServer{
+    pub node_id: NodeId,
+    pub node_type: String,
+    pub flood_id: crate::general_use::FloodId,
+    //session_id: crate::general_use::SessionId,
+    pub connected_node_ids: HashSet<NodeId>,
+    pub routing_table: HashMap<NodeId, Vec<NodeId>>,
+    pub text_files: Vec<String>,
+}
 
 ///packet sending status
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,6 +127,10 @@ pub enum ServerCommand {
 
 ///Server-Controller
 pub enum ServerEvent {
+    //for monitoring
+    CommunicationServerData(InitiatorId, DisplayDataCommunicationServer),
+    TextServerData(InitiatorId, DisplayDataTextServer),
+    MediaServerData(InitiatorId, DisplayDataMediaServer),
 }
 
 
@@ -81,6 +158,10 @@ pub enum ClientCommand {
 
 #[derive(Debug, Clone)]
 pub enum ClientEvent {
+    //for monitoring
+    ChatClientData(InitiatorId, DisplayDataChatClient),
+    WebClientData(InitiatorId, DisplayDataWebBrowser),
+
     PacketSent(Packet),
     KnownServers(Vec<(NodeId, ServerType, bool)>),
 }

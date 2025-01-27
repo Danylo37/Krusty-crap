@@ -12,7 +12,7 @@ use wg_2024::{
 };
 use tokio::sync::mpsc;
 use crate::clients::client_chen::Serialize;
-use crate::general_use::{Query, Response, ServerCommand, ServerEvent, ServerType};
+use crate::general_use::{DisplayDataMediaServer, Query, Response, ServerCommand, ServerEvent, ServerType};
 use crate::servers::text_server::TextServer;
 use crate::ui_traits::{crossbeam_to_tokio_bridge, Monitoring};
 use super::server::MediaServer as CharTrait;
@@ -77,16 +77,7 @@ impl MediaServer {
         }
     }
 }
-#[derive(Debug, Serialize)]
-struct DisplayDataMediaServer{
-    node_id: NodeId,
-    node_type: String,
-    flood_id: crate::general_use::FloodId,
-    //session_id: crate::general_use::SessionId,
-    connected_node_ids: HashSet<NodeId>,
-    routing_table: HashMap<NodeId, Vec<NodeId>>,
-    media: HashMap<String, String>,
-}
+
 
 impl Monitoring for MediaServer {
     fn send_display_data(&mut self, sender_to_gui: Sender<String>) {
@@ -99,9 +90,7 @@ impl Monitoring for MediaServer {
             routing_table: self.routes.clone(),
             media: self.media.clone(),
         };
-
-        let json_string = serde_json::to_string(&display_data).unwrap();
-        sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
+        self.to_controller_event.send(ServerEvent::MediaServerData(self.id, display_data)).expect("Failed to send media server data");
     }
     fn run_with_monitoring(
         &mut self,

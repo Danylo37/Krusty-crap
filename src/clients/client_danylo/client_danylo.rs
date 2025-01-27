@@ -824,6 +824,7 @@ impl ChatClientDanylo {
         let event_name = match event {
             ClientEvent::PacketSent(_) => "PacketSent",
             ClientEvent::KnownServers(_) => "KnownServers",
+            _ => "Unknown",
         };
 
         match result {
