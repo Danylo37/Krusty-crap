@@ -126,6 +126,7 @@ pub enum ServerCommand {
 }
 
 ///Server-Controller
+#[derive(Debug, Clone)]
 pub enum ServerEvent {
     //for monitoring
     CommunicationServerData(InitiatorId, DisplayDataCommunicationServer),
