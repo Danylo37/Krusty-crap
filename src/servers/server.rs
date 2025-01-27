@@ -48,13 +48,7 @@ pub trait Server{
                                 self.get_packet_send().remove(&id);
                             }
                             ServerCommand::ShortcutPacket(packet) => {
-                                 match packet.pack_type {
-                                    PacketType::Nack(nack) => self.handle_nack(nack, packet.session_id),
-                                    PacketType::Ack(ack) => self.handle_ack(ack),
-                                    PacketType::MsgFragment(fragment) => self.handle_fragment(fragment, packet.routing_header ,packet.session_id),
-                                    PacketType::FloodRequest(flood_request) => self.handle_flood_request(flood_request, packet.session_id),
-                                    PacketType::FloodResponse(flood_response) => self.handle_flood_response(flood_response),
-                                }
+                                self.handle_packet(packet);
                             }
                             _ =>{},
                         }
@@ -62,16 +56,20 @@ pub trait Server{
                 },
                 recv(self.get_packet_recv()) -> packet_res => {
                     if let Ok(packet) = packet_res {
-                        match packet.pack_type {
-                            PacketType::Nack(nack) => self.handle_nack(nack, packet.session_id),
-                            PacketType::Ack(ack) => self.handle_ack(ack),
-                            PacketType::MsgFragment(fragment) => self.handle_fragment(fragment, packet.routing_header ,packet.session_id),
-                            PacketType::FloodRequest(flood_request) => self.handle_flood_request(flood_request, packet.session_id),
-                            PacketType::FloodResponse(flood_response) => self.handle_flood_response(flood_response),
-                        }
+                        self.handle_packet(packet)
                     }
                 },
             }
+        }
+    }
+
+    fn handle_packet(&mut self, packet: Packet) {
+        match packet.pack_type {
+            PacketType::Nack(nack) => self.handle_nack(nack, packet.session_id),
+            PacketType::Ack(ack) => self.handle_ack(ack),
+            PacketType::MsgFragment(fragment) => self.handle_fragment(fragment, packet.routing_header ,packet.session_id),
+            PacketType::FloodRequest(flood_request) => self.handle_flood_request(flood_request, packet.session_id),
+            PacketType::FloodResponse(flood_response) => self.handle_flood_response(flood_response),
         }
     }
 
@@ -82,7 +80,7 @@ pub trait Server{
         self.get_routes().clear();
         self.get_topology().clear();
 
-        let flood_id = self.get_flood_id();
+        let flood_id = self.generate_unique_flood_id();
         self.push_flood_id(flood_id);
 
         // Create a new flood request initialized with the generated flood ID, the current node's ID, and its type.
@@ -92,8 +90,7 @@ pub trait Server{
             NodeType::Client,
         );
 
-        // Generate a new session ID, incrementing the last one or starting at 1 if none exists.
-        let session_id = self.get_session_id();
+        let session_id = self.generate_unique_session_id();
 
         // Create a new packet with the flood request and session ID.
         let packet = Packet::new_flood_request(
@@ -122,7 +119,50 @@ pub trait Server{
     }
 
     fn handle_flood_response(&mut self, flood_response: FloodResponse) {
-        println!("{:?}",flood_response);
+        info!("Handling flood response: {:?}", flood_response);
+        let path = &flood_response.path_trace;
+
+        self.update_routes_to_clients(path);
+        self.update_topology(path);
+    }
+
+    fn update_routes_to_clients(&mut self, path: &[(NodeId, NodeType)]) {
+        info!("Updating routes to clients with path: {:?}", path);
+        if let Some((id, NodeType::Client)) = path.last() {
+            if self
+                .get_routes()
+                .get(id)
+                .map_or(true, |prev_path| prev_path.len() > path.len())
+            {
+                // Update the routing table with the new, shorter path.
+                self.get_routes().insert(
+                    *id,
+                    path.iter().map(|entry| entry.0.clone()).collect(),
+                );
+                info!("Updated route to client {}: {:?}", id, path);
+            }
+        }
+    }
+
+    fn update_topology(&mut self, path: &[(NodeId, NodeType)]) {
+        info!("Updating topology with path: {:?}", path);
+        for i in 0..path.len() - 1 {
+            let current = path[i].0;
+            let next = path[i + 1].0;
+
+            // Add the connection between the current and next node in both directions.
+            self.get_topology()
+                .entry(current)
+                .or_insert_with(Vec::new)
+                .push(next);
+            info!("Added connection from {} to {}", current, next);
+
+            self.get_topology()
+                .entry(next)
+                .or_insert_with(Vec::new)
+                .push(current);
+            info!("Added connection from {} to {}", next, current);
+        }
     }
 
     //NACK
@@ -152,7 +192,7 @@ pub trait Server{
 
     //ACK
     fn handle_ack(&mut self, _ack: Ack){
-        //UI stuff i guess?
+        //UI stuff I guess?
     }
 
     fn send_ack(&self, ack: Ack, routing_header: SourceRoutingHeader, session_id: u64) {
@@ -389,9 +429,9 @@ pub trait Server{
     }
 
     fn generate_unique_session_id(&mut self) -> u64 {
-        let counter_flood_id = self.get_flood_id();
+        let counter_session_id = self.get_session_id();
         let id = self.get_id();
-        match format!("{}{}", id, counter_flood_id).parse() {
+        match format!("{}{}", id, counter_session_id).parse() {
             Ok(id) => id,
             Err(e) => panic!("{}, Not right number", e)
         }
