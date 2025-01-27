@@ -1,28 +1,9 @@
 use crate::clients::client_chen::prelude::*;
-use crate::ui_traits::{crossbeam_to_tokio_bridge, Monitoring};
+use crate::ui_traits::Monitoring;
 use crate::clients::client_chen::{ClientChen, CommandHandler, FragmentsHandler, PacketsReceiver, Router, Sending};
-use rmp_serde::encode::to_vec;
-use serde::Serialize;
-use std::collections::{HashMap, HashSet};
-use std::time::Duration;
-use crossbeam_channel::{Sender, Receiver, select_biased};
-use crate::clients::Client;
-use crate::general_use::MediaRef;
-
-#[derive(Debug, Serialize)]
-struct DisplayDataWebBrowser {
-    node_id: NodeId,
-    node_type: String,
-    flood_id: FloodId,
-    session_id: SessionId,
-    connected_node_ids: HashSet<NodeId>,
-    registered_communication_servers: HashMap<ServerId, Vec<ClientId>>,
-    registered_content_servers: HashSet<ServerId>,
-    routing_table: HashMap<NodeId, Vec<Vec<NodeId>>>,
-    curr_received_file_list: Vec<String>,
-    chosen_file_text: String,
-    serialized_media: HashMap<MediaRef, String>,
-}
+use std::collections::{HashMap};
+use crossbeam_channel::{Sender, select_biased};
+use crate::general_use::DisplayDataWebBrowser;
 
 
 impl Monitoring for ClientChen{
@@ -56,9 +37,7 @@ impl Monitoring for ClientChen{
             serialized_media: self.storage.current_received_serialized_media.clone(),
         };
 
-        // Serialize the DisplayData to MessagePack binary
-        let json_string = serde_json::to_string(&display_data).unwrap();
-        sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
+        self.communication_tools.controller_send.send(ClientEvent::WebClientData(self.metadata.node_id, display_data)).expect("Sending client data failed");
     }
 
     fn run_with_monitoring(&mut self, sender_to_gui: Sender<String>) {

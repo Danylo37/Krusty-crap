@@ -1,5 +1,6 @@
 use crossbeam_channel::{unbounded, Receiver, Sender};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::hash::Hash;
 use std::thread::sleep;
 use std::time::Duration;
 use wg_2024::{
@@ -8,7 +9,7 @@ use wg_2024::{
     network::NodeId,
     packet::{NodeType, Packet, PacketType}
 };
-use crate::general_use::{ClientCommand, ClientEvent, ServerCommand, ServerEvent, ServerType, ClientType, ServerId, Query};
+use crate::general_use::{ClientCommand, ClientEvent, ServerCommand, ServerEvent, ServerType, ClientType, ServerId, Query, DisplayDataWebBrowser, DisplayDataCommunicationServer, DisplayDataMediaServer, DisplayDataChatClient, DisplayDataTextServer};
 use crate::websocket::WsCommand;
 
 pub struct SimulationState {
@@ -41,6 +42,12 @@ pub struct SimulationController {
     pub packet_senders: HashMap<NodeId, Sender<Packet>>,
 
     //for the monitoring
+    pub web_clients_data: HashMap<NodeId, DisplayDataWebBrowser>,
+    pub chat_clients_data: HashMap<NodeId, DisplayDataChatClient>,
+    pub comm_servers_data: HashMap<NodeId, DisplayDataCommunicationServer>,
+    pub text_servers_data: HashMap<NodeId, DisplayDataTextServer>,
+    pub media_servers_data: HashMap<NodeId, DisplayDataMediaServer>,
+    pub updating_nodes: HashSet<NodeId>,
     pub ws_command_receiver: Receiver<WsCommand>,
 }
 
@@ -75,6 +82,12 @@ impl SimulationController {
             packet_senders: HashMap::new(),
 
             //for the monitoring
+            web_clients_data: HashMap::new(),
+            chat_clients_data: HashMap::new(),
+            comm_servers_data: HashMap::new(),
+            text_servers_data: HashMap::new(),
+            media_servers_data: HashMap::new(),
+            updating_nodes: HashSet::new(),
             ws_command_receiver,
         }
     }

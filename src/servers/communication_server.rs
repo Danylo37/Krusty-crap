@@ -18,7 +18,7 @@ use wg_2024::{
     },
 };
 use crate::clients::client_chen::Serialize;
-use crate::general_use::{ClientId, Message, Query, Response, ServerCommand, ServerEvent, ServerId, ServerType, Speaker};
+use crate::general_use::{ClientId, DisplayDataCommunicationServer, Message, Query, Response, ServerCommand, ServerEvent, ServerId, ServerType, Speaker};
 use crate::servers::text_server::TextServer;
 //UI
 use crate::ui_traits::{
@@ -89,15 +89,7 @@ impl CommunicationServer{
     }
 }
 
-#[derive(Debug, Serialize)]
-struct DisplayDataCommunicationServer{
-    node_id: NodeId,
-    node_type: String,
-    flood_id: crate::general_use::FloodId,
-    connected_node_ids: HashSet<NodeId>,
-    routing_table: HashMap<NodeId, Vec<NodeId>>,
-    registered_clients: Vec<NodeId>,
-}
+
 
 impl Monitoring for CommunicationServer {
     fn send_display_data(&mut self, sender_to_gui: Sender<String>) {
@@ -111,8 +103,7 @@ impl Monitoring for CommunicationServer {
             registered_clients: self.list_users.clone(),
         };
 
-        let json_string = serde_json::to_string(&display_data).unwrap();
-        sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
+        self.to_controller_event.send(ServerEvent::CommunicationServerData(self.id, display_data)).expect("Failed to send communication server data");
     }
     fn run_with_monitoring(
         &mut self,

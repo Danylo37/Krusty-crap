@@ -227,7 +227,7 @@ pub fn start_websocket_server(rx: Receiver<String>, cmd_tx: Sender<WsCommand>) {
                                             match rx.recv() {
                                                 Ok(updated_data) => {
                                                     println!("Sending updated data: {}", updated_data);
-                                                    if let Err(e) = websocket.write_message(Message::text(updated_data)) {
+                                                    if let Err(e) = websocket.send(Message::text(updated_data)) {
                                                         eprintln!("Failed to send data to WebSocket: {}", e);
                                                         break;
                                                     }

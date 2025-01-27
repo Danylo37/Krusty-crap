@@ -6,32 +6,45 @@ use crate::clients::client_chen::{NodeId, Serialize};
 use crate::simulation_controller::SimulationController;
 use crate::ui_traits::Monitoring;
 use crate::websocket::{ClientCommandWs, DroneCommandWs, ServerCommandWs, WsCommand};
-use crate::general_use::{ClientCommand, ServerCommand};
+use crate::general_use::{ClientCommand, ClientEvent, DisplayDataChatClient, DisplayDataCommunicationServer, DisplayDataMediaServer, DisplayDataTextServer, DisplayDataWebBrowser, ServerCommand, ServerEvent};
 
-
+//todo! send also the drone specific data (e.g. pdr, status: Crashed or NotCrashed, ...)
 #[derive(Debug, Serialize)]
-struct DisplayDataSimulationController{
+pub struct DisplayDataSimulationController{
     //drones
-    node_type: String,
-    drones: Vec<NodeId>,
-    clients: Vec<NodeId>,
-    servers: Vec<NodeId>,
-    topology: HashMap<NodeId, Vec<NodeId>>
+    pub data_title: String,
+    pub web_clients_data: HashMap<NodeId, DisplayDataWebBrowser>,
+    pub chat_clients_data: HashMap<NodeId, DisplayDataChatClient>,
+    pub comm_servers_data: HashMap<NodeId, DisplayDataCommunicationServer>,
+    pub text_servers_data: HashMap<NodeId, DisplayDataTextServer>,
+    pub media_servers_data: HashMap<NodeId, DisplayDataMediaServer>,
+    pub drones: Vec<NodeId>,
+    pub topology: HashMap<NodeId, Vec<NodeId>>,
 }
 impl Monitoring for SimulationController {
     fn send_display_data(&mut self, sender_to_gui: Sender<String>) {
         let display_data = DisplayDataSimulationController{
-            node_type: "SimulationController".to_string(),
+            data_title: "Network Data".to_string(),
+            web_clients_data: self.web_clients_data.clone(),
+            chat_clients_data: self.chat_clients_data.clone(),
+            comm_servers_data: self.comm_servers_data.clone(),
+            text_servers_data: self.text_servers_data.clone(),
+            media_servers_data: self.media_servers_data.clone(),
             drones: self.command_senders_drones.keys().cloned().collect(),
-            clients: self.command_senders_clients.keys().cloned().collect(),
-            servers: self.command_senders_servers.keys().cloned().collect(),
             topology: self.state.topology.clone(),
         };
         let json_string = serde_json::to_string(&display_data).unwrap();
+        eprintln!("Sent json data {:?}", json_string);
         sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
     }
 
     fn run_with_monitoring(&mut self, sender_to_gui: Sender<String>) {
+        ///Reminder: I put here the edge_nodes because I'm assuming the clients and the server must be fixed
+        ///created from the network initializer
+        let mut edge_nodes = self.command_senders_clients.keys().cloned().collect::<HashSet<NodeId>>();
+        edge_nodes.extend(self.command_senders_servers.keys().cloned().collect::<HashSet<NodeId>>());
+
+        self.updating_nodes = edge_nodes.clone();
         loop {
             select_biased! {
                 recv(self.ws_command_receiver) -> command_res => {
@@ -40,6 +53,52 @@ impl Monitoring for SimulationController {
                         self.handle_ws_command(sender_to_gui.clone(), command);
                     }
                 },
+                recv(self.client_event_receiver) -> client_event => {
+                    eprintln!("Controller received client event");
+                    if let Ok(event) = client_event {
+                        match event{
+                            ClientEvent::WebClientData(id, data) => {
+                                self.web_clients_data.insert(id, data);
+                                self.updating_nodes.remove(&id);
+                            },
+                            ClientEvent::ChatClientData(id, data) => {
+                                self.chat_clients_data.insert(id, data);
+                                self.updating_nodes.remove(&id);
+                            },
+                            _ =>{}
+                        }
+                        if self.updating_nodes.is_empty() {
+                            self.send_display_data(sender_to_gui.clone());
+                            self.updating_nodes = edge_nodes.clone();
+                            eprintln!("updating_node: {:?}", self.updating_nodes);
+                        }
+                    }
+                },
+                recv(self.server_event_receiver) -> server_event => {
+                    eprintln!("Controller received server event");
+                    if let Ok(event) = server_event {
+                        match event{
+                            ServerEvent::CommunicationServerData(id, data) =>{
+                                self.comm_servers_data.insert(id, data);
+                                self.updating_nodes.remove(&id);
+                            }
+                            ServerEvent::TextServerData(id, data) =>{
+                                self.text_servers_data.insert(id, data);
+                                self.updating_nodes.remove(&id);
+                            },
+                            ServerEvent::MediaServerData(id, data) =>{
+                                self.media_servers_data.insert(id, data);
+                                self.updating_nodes.remove(&id);
+                            },
+                            _=> {},
+                        }
+                        if self.updating_nodes.is_empty() {
+                            self.send_display_data(sender_to_gui.clone());
+                            self.updating_nodes = edge_nodes.clone();
+                            eprintln!("updating_node: {:?}", self.updating_nodes);
+                        }
+                    }
+                }
             }
         }
     }

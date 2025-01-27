@@ -1,4 +1,4 @@
-use crate::general_use::{ClientCommand, ClientId, FloodId, ServerId, ServerType, SessionId};
+use crate::general_use::{ClientCommand, ClientEvent, ClientId, DisplayDataChatClient, FloodId, ServerId, ServerType, SessionId};
 use crate::ui_traits::Monitoring;
 use serde::Serialize;
 use std::collections::{HashMap, HashSet};
@@ -7,31 +7,11 @@ use log::{debug, info};
 use wg_2024::network::NodeId;
 use super::{ChatClientDanylo, ChatHistory};
 
-#[derive(Debug, Serialize)]
-pub struct ChatClientDisplayData {
-    // Client metadata
-    node_id: NodeId,
-    node_type: String,
-
-    // Used IDs
-    flood_ids: Vec<FloodId>,
-    session_ids: Vec<SessionId>,
-
-    // Connections
-    neighbours: HashSet<NodeId>,
-    discovered_servers: HashMap<ServerId, ServerType>,
-    //registered_communication_servers: HashMap<ServerId, bool>,
-    available_clients: HashMap<ServerId, Vec<ClientId>>,
-
-    // Chats
-    chats: HashMap<ClientId, ChatHistory>,
-}
-
 
 impl Monitoring for ChatClientDanylo {
     fn send_display_data(&mut self, sender_to_gui: Sender<String>) {
         let connected_nodes_ids = self.packet_send.keys().cloned().collect();
-        let display_data = ChatClientDisplayData {
+        let display_data = DisplayDataChatClient {
             node_id: self.id,
             node_type: "Chat Client".to_string(),
             flood_ids: self.flood_ids.clone(),
@@ -43,9 +23,7 @@ impl Monitoring for ChatClientDanylo {
             chats: self.chats.clone(),
         };
 
-        // Serialize the DisplayData to MessagePack binary
-        let json_string = serde_json::to_string(&display_data).unwrap();
-        let _ = sender_to_gui.send(json_string).is_err();
+        self.controller_send.send(ClientEvent::ChatClientData(self.id, display_data)).expect("Failed to send chat client data");
     }
     fn run_with_monitoring(
         &mut self,
