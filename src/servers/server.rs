@@ -1,7 +1,7 @@
 //I am a god
 
 use crossbeam_channel::{select_biased, Receiver, Sender};
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use log::info;
 use wg_2024::{
     network::{NodeId, SourceRoutingHeader},
@@ -9,7 +9,7 @@ use wg_2024::{
         Ack, FloodRequest, FloodResponse, Fragment, Nack, NackType, NodeType, Packet, PacketType,
     },
 };
-use crate::general_use::{FloodId, Message, Response ,ServerCommand, ServerType};
+use crate::general_use::{FloodId, Message, Response, ServerCommand, ServerType};
 
 
 ///SERVER TRAIT
@@ -87,7 +87,7 @@ pub trait Server{
         let flood_request = FloodRequest::initialize(
             flood_id,
             self.get_id(),
-            NodeType::Client,
+            NodeType::Server,
         );
 
         let session_id = self.generate_unique_session_id();
