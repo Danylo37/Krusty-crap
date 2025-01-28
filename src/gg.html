@@ -1102,6 +1102,7 @@
 
 
 
+
     /*
 
         CHOOSE ROLE
@@ -1882,12 +1883,13 @@
 
 
 
+
+
     /*
 
-           WEB SOCKET FUNCTIONS
+       WEB SOCKET FUNCTIONS
 
      */
-
 
     ws.onmessage = async (event) => {
         try {
@@ -1965,6 +1967,7 @@
         const msgDiv = document.createElement("div");
         msgDiv.className = "message error";
         msgDiv.textContent = 'WebSocket connection closed.';
+        panelsContainer.appendChild(msgDiv);
     };
 
     // Handle WebSocket connection open
@@ -1989,26 +1992,14 @@
         console.error('WebSocket error:', error);
     };
 
-
+    // Function to request data update from the server
     function sendUpdateCommand() {
         if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify("WsUpdateData"));
-            console.log('Update Command Sent');
         } else {
             console.error('WebSocket is not open. Unable to send update command.');
         }
     }
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -2108,6 +2099,9 @@
 
         console.log("Monitoring sections updated!");
     }
+    ws.onopen = () => console.log('WebSocket connection established');
+    ws.onerror = (error) => console.error('WebSocket error:', error);
+    ws.onclose = () => console.warn('WebSocket connection closed');
     function updateNode(){
 
     }
