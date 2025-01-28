@@ -3,11 +3,11 @@ use crate::ui_traits::Monitoring;
 use crate::clients::client_chen::{ClientChen, CommandHandler, FragmentsHandler, PacketsReceiver, Router, Sending};
 use std::collections::{HashMap};
 use crossbeam_channel::{Sender, select_biased};
-use crate::general_use::DisplayDataWebBrowser;
-
+use crate::general_use::{DataScope, DisplayDataWebBrowser};
+use crate::general_use::DataScope::UpdateAll;
 
 impl Monitoring for ClientChen{
-    fn send_display_data(&mut self, sender_to_gui:Sender<String>){
+    fn send_display_data(&mut self, sender_to_gui: Sender<String>, data_scope: DataScope){
         self.update_connected_nodes();
         let transformed_routing_table: HashMap<NodeId, Vec<Vec<NodeId>>> = self
             .communication
@@ -37,11 +37,11 @@ impl Monitoring for ClientChen{
             serialized_media: self.storage.current_received_serialized_media.clone(),
         };
 
-        self.communication_tools.controller_send.send(ClientEvent::WebClientData(self.metadata.node_id, display_data)).expect("Sending client data failed");
+        self.communication_tools.controller_send.send(ClientEvent::WebClientData(self.metadata.node_id, display_data, data_scope)).expect("Sending client data failed");
     }
 
     fn run_with_monitoring(&mut self, sender_to_gui: Sender<String>) {
-        self.send_display_data(sender_to_gui.clone());
+        self.send_display_data(sender_to_gui.clone(), UpdateAll);
         loop {
             select_biased! {
                 recv(self.communication_tools.controller_recv) -> command_res => {
@@ -55,7 +55,7 @@ impl Monitoring for ClientChen{
                         self.update_routing_checking_status();
 
                         // Update the network
-                        self.send_display_data(sender_to_gui.clone());
+                        self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
                     }
                 },
                 recv(self.communication_tools.packet_recv) -> packet_res => {
@@ -69,7 +69,7 @@ impl Monitoring for ClientChen{
                         self.update_routing_checking_status();
 
                         // Update the network
-                        self.send_display_data(sender_to_gui.clone());
+                        self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
                     }
                 },
             }

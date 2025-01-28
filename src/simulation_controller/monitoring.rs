@@ -1,3 +1,4 @@
+use std::cmp::PartialEq;
 use std::collections::{HashMap, HashSet};
 use crossbeam_channel::{select_biased, Sender};
 use log::info;
@@ -6,7 +7,7 @@ use crate::clients::client_chen::{NodeId, Serialize};
 use crate::simulation_controller::SimulationController;
 use crate::ui_traits::Monitoring;
 use crate::websocket::{ClientCommandWs, DroneCommandWs, ServerCommandWs, WsCommand};
-use crate::general_use::{ClientCommand, ClientEvent, DisplayDataChatClient, DisplayDataCommunicationServer, DisplayDataMediaServer, DisplayDataTextServer, DisplayDataWebBrowser, ServerCommand, ServerEvent};
+use crate::general_use::{ClientCommand, ClientEvent, DataScope, DisplayDataChatClient, DisplayDataCommunicationServer, DisplayDataMediaServer, DisplayDataTextServer, DisplayDataWebBrowser, ServerCommand, ServerEvent};
 
 //todo! send also the drone specific data (e.g. pdr, status: Crashed or NotCrashed, ...)
 #[derive(Debug, Serialize)]
@@ -22,7 +23,7 @@ pub struct DisplayDataSimulationController{
     pub topology: HashMap<NodeId, Vec<NodeId>>,
 }
 impl Monitoring for SimulationController {
-    fn send_display_data(&mut self, sender_to_gui: Sender<String>) {
+    fn send_display_data(&mut self, sender_to_gui: Sender<String>, data_scope: DataScope) {
         let display_data = DisplayDataSimulationController{
             data_title: "Network Data".to_string(),
             web_clients_data: self.web_clients_data.clone(),
@@ -56,44 +57,111 @@ impl Monitoring for SimulationController {
                 recv(self.client_event_receiver) -> client_event => {
                     eprintln!("Controller received client event");
                     if let Ok(event) = client_event {
+                        let mut conditional_data_scope = DataScope::UpdateAll;
                         match event{
-                            ClientEvent::WebClientData(id, data) => {
-                                self.web_clients_data.insert(id, data);
-                                self.updating_nodes.remove(&id);
+                            ClientEvent::WebClientData(id, data, data_scope) => {
+                                match data_scope{
+                                    DataScope::UpdateAll =>{
+                                        conditional_data_scope = DataScope::UpdateAll;
+                                        self.web_clients_data.insert(id, data);
+                                        self.updating_nodes.remove(&id);
+                                    }
+                                    DataScope::UpdateSelf =>{
+                                        conditional_data_scope = DataScope::UpdateSelf;
+                                        self.web_clients_data.insert(id, data.clone());
+                                        let json_string = serde_json::to_string(&data).unwrap();
+                                        eprintln!("Sent json data {:?}", json_string);
+                                        sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
+                                    }
+                                }
+
                             },
-                            ClientEvent::ChatClientData(id, data) => {
-                                self.chat_clients_data.insert(id, data);
-                                self.updating_nodes.remove(&id);
+                            ClientEvent::ChatClientData(id, data, data_scope) => {
+                                match data_scope{
+                                    DataScope::UpdateAll =>{
+                                        conditional_data_scope = DataScope::UpdateAll;
+                                        self.chat_clients_data.insert(id, data);
+                                        self.updating_nodes.remove(&id);
+                                    },
+                                    DataScope::UpdateSelf =>{
+                                        conditional_data_scope = DataScope::UpdateSelf;
+                                        self.chat_clients_data.insert(id, data.clone());
+                                        let json_string = serde_json::to_string(&data).unwrap();
+                                        eprintln!("Sent json data {:?}", json_string);
+                                        sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
+                                    }
+                                }
                             },
                             _ =>{}
                         }
-                        if self.updating_nodes.is_empty() {
-                            self.send_display_data(sender_to_gui.clone());
+                        if self.updating_nodes.is_empty() && conditional_data_scope == DataScope::UpdateAll {
+                            self.send_display_data(sender_to_gui.clone(), DataScope::UpdateAll);
                             self.updating_nodes = edge_nodes.clone();
                             eprintln!("updating_node: {:?}", self.updating_nodes);
                         }
                     }
                 },
+
                 recv(self.server_event_receiver) -> server_event => {
                     eprintln!("Controller received server event");
                     if let Ok(event) = server_event {
+                        let mut conditional_data_scope = DataScope::UpdateAll;
                         match event{
-                            ServerEvent::CommunicationServerData(id, data) =>{
-                                self.comm_servers_data.insert(id, data);
-                                self.updating_nodes.remove(&id);
+                            ServerEvent::CommunicationServerData(id, data, data_scope) =>{
+                                match data_scope{
+                                    DataScope::UpdateAll =>{
+                                        conditional_data_scope = DataScope::UpdateAll;
+                                        self.comm_servers_data.insert(id, data);
+                                        self.updating_nodes.remove(&id);
+                                    },
+                                    DataScope::UpdateSelf =>{
+                                        conditional_data_scope = DataScope::UpdateSelf;
+                                        self.comm_servers_data.insert(id, data.clone());
+                                        let json_string = serde_json::to_string(&data).unwrap();
+                                        eprintln!("Sent json data {:?}", json_string);
+                                        sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
+                                    },
+                                }
+
                             }
-                            ServerEvent::TextServerData(id, data) =>{
-                                self.text_servers_data.insert(id, data);
-                                self.updating_nodes.remove(&id);
+                            ServerEvent::TextServerData(id, data, data_scope) =>{
+                                match data_scope{
+                                    DataScope::UpdateAll =>{
+                                        conditional_data_scope = DataScope::UpdateAll;
+                                        self.text_servers_data.insert(id, data);
+                                        self.updating_nodes.remove(&id);
+                                    },
+                                    DataScope::UpdateSelf =>{
+                                        conditional_data_scope = DataScope::UpdateSelf;
+                                        self.text_servers_data.insert(id, data.clone());
+                                        let json_string = serde_json::to_string(&data).unwrap();
+                                        eprintln!("Sent json data {:?}", json_string);
+                                        sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
+                                    },
+                                }
+
                             },
-                            ServerEvent::MediaServerData(id, data) =>{
-                                self.media_servers_data.insert(id, data);
-                                self.updating_nodes.remove(&id);
+                            ServerEvent::MediaServerData(id, data, data_scope) =>{
+                                match data_scope{
+                                    DataScope::UpdateAll =>{
+                                        conditional_data_scope = DataScope::UpdateAll;
+                                        self.media_servers_data.insert(id, data);
+                                        self.updating_nodes.remove(&id);
+                                    },
+                                    DataScope::UpdateSelf =>{
+                                        conditional_data_scope = DataScope::UpdateSelf;
+                                        self.media_servers_data.insert(id, data.clone());
+                                        let json_string = serde_json::to_string(&data).unwrap();
+                                        eprintln!("Sent json data {:?}", json_string);
+                                        sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
+                                    },
+                                }
+
                             },
                             _=> {},
                         }
-                        if self.updating_nodes.is_empty() {
-                            self.send_display_data(sender_to_gui.clone());
+                        if self.updating_nodes.is_empty() && conditional_data_scope == DataScope::UpdateAll {
+                            self.send_display_data(sender_to_gui.clone(), DataScope::UpdateAll);
                             self.updating_nodes = edge_nodes.clone();
                             eprintln!("updating_node: {:?}", self.updating_nodes);
                         }
@@ -110,7 +178,6 @@ impl SimulationController {
             WsCommand::WsUpdateData=> {
                 eprintln!("Now I handle the updating data");
                 // Update data from the simulation controller
-                self.send_display_data(sender_to_gui.clone());
                 let clients: Vec<NodeId> = self.command_senders_clients.keys().cloned().collect();
                 let servers: Vec<NodeId> = self.command_senders_servers.keys().cloned().collect();
 
