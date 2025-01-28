@@ -136,6 +136,7 @@ impl ChatClientDanylo {
             }
             ClientCommand::RemoveSender(id) => {
                 self.packet_send.remove(&id);
+                self.update_topology_and_routes(id);
                 info!("Client {}: Removed sender for node {}", self.id, id);
             }
             ClientCommand::ShortcutPacket(packet) => {
@@ -239,7 +240,7 @@ impl ChatClientDanylo {
     /// ###### Updates the network topology and routes.
     /// Removes the node that caused the error from the topology and routes.
     /// Finds new routes for the servers that need them.
-    fn update_topology_and_routes(&mut self, error_node: NodeId) {
+    pub(super) fn update_topology_and_routes(&mut self, error_node: NodeId) {
         // Remove the node that caused the error from the topology.
         for (_, neighbors) in self.topology.iter_mut() {
             neighbors.remove(&error_node);

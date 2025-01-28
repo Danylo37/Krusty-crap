@@ -64,6 +64,7 @@ impl ChatClientDanylo{
             }
             ClientCommand::RemoveSender(id) => {
                 self.packet_send.remove(&id);
+                self.update_topology_and_routes(id);
                 info!("Client {}: Removed sender for node {}", self.id, id);
             }
             ClientCommand::ShortcutPacket(packet) => {
