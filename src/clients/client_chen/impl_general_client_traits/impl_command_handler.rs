@@ -1,7 +1,7 @@
 use crate::clients::client_chen::{ClientChen, CommandHandler, SpecificInfo};
 use crate::clients::client_chen::prelude::*;
 use crate::clients::client_chen::general_client_traits::*;
-use crate::general_use::ServerType;
+use crate::general_use::{DataScope, ServerType};
 use crate::ui_traits::Monitoring;
 
 impl CommandHandler for ClientChen{
@@ -63,7 +63,7 @@ impl CommandHandler for ClientChen{
         match command {
             ClientCommand::UpdateMonitoringData => {
                 eprintln!("I'm here sending data");
-                self.send_display_data(sender_to_gui.clone());
+                self.send_display_data(sender_to_gui.clone(), DataScope::UpdateAll);
             }
             ClientCommand::AddSender(target_node_id, sender) => {
                 self.communication_tools.packet_send.insert(target_node_id, sender);

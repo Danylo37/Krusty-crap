@@ -297,10 +297,10 @@ impl SimulationController {
     fn process_client_events(&mut self){
         while let Ok(event) = self.client_event_receiver.try_recv(){
             match event {
-                ClientEvent::WebClientData(id, data) => {
+                ClientEvent::WebClientData(id, data, data_scope) => {
                     self.web_clients_data.insert(id, data);
                 },
-                ClientEvent::ChatClientData(id, data) => {
+                ClientEvent::ChatClientData(id, data, data_scope) => {
                     self.chat_clients_data.insert(id, data);
                 },
                 other => {
@@ -313,13 +313,13 @@ impl SimulationController {
     fn process_server_events(&mut self){
         while let Ok(event) = self.server_event_receiver.try_recv() {
             match event{
-                ServerEvent::CommunicationServerData(id, data) => {
+                ServerEvent::CommunicationServerData(id, data, data_scope) => {
                     self.comm_servers_data.insert(id, data);
                 },
-                ServerEvent::TextServerData(id, data) =>{
+                ServerEvent::TextServerData(id, data, data_scope) =>{
                     self.text_servers_data.insert(id, data);
                 },
-                ServerEvent::MediaServerData(id, data) =>{
+                ServerEvent::MediaServerData(id, data, data_scope) =>{
                     self.media_servers_data.insert(id, data);
                 },
                 other => {

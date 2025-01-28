@@ -12,9 +12,10 @@ use wg_2024::{
 };
 use tokio::sync::mpsc;
 use crate::clients::client_chen::Serialize;
-use crate::general_use::{DisplayDataMediaServer, Query, Response, ServerCommand, ServerEvent, ServerType};
+use crate::general_use::{DataScope, DisplayDataMediaServer, Query, Response, ServerCommand, ServerEvent, ServerType};
+use crate::general_use::DataScope::UpdateAll;
 use crate::servers::text_server::TextServer;
-use crate::ui_traits::{crossbeam_to_tokio_bridge, Monitoring};
+use crate::ui_traits::{Monitoring};
 use super::server::MediaServer as CharTrait;
 use super::server::Server as MainTrait;
 
@@ -80,7 +81,7 @@ impl MediaServer {
 
 
 impl Monitoring for MediaServer {
-    fn send_display_data(&mut self, sender_to_gui: Sender<String>) {
+    fn send_display_data(&mut self, sender_to_gui: Sender<String>, data_scope: DataScope) {
         let neighbors =  self.packet_send.keys().cloned().collect();
         let display_data = DisplayDataMediaServer {
             node_id: self.id,
@@ -90,22 +91,21 @@ impl Monitoring for MediaServer {
             routing_table: self.routes.clone(),
             media: self.media.clone(),
         };
-        self.to_controller_event.send(ServerEvent::MediaServerData(self.id, display_data)).expect("Failed to send media server data");
+        self.to_controller_event.send(ServerEvent::MediaServerData(self.id, display_data, data_scope)).expect("Failed to send media server data");
     }
     fn run_with_monitoring(
         &mut self,
         sender_to_gui: Sender<String>,
     ) {
-        self.send_display_data(sender_to_gui.clone());
+        self.send_display_data(sender_to_gui.clone(), DataScope::UpdateAll);
         loop {
             select_biased! {
                 recv(self.get_from_controller_command()) -> command_res => {
                     if let Ok(command) = command_res {
                         match command {
                             ServerCommand::UpdateMonitoringData => {
-                                self.send_display_data(sender_to_gui.clone());
+                                self.send_display_data(sender_to_gui.clone(), DataScope::UpdateAll);
                             }
-
                             ServerCommand::AddSender(id, sender) => {
                                 self.get_packet_send().insert(id, sender);
 
@@ -123,7 +123,7 @@ impl Monitoring for MediaServer {
                                 }
                             }
                         }
-                        self.send_display_data(sender_to_gui.clone());
+                        self.send_display_data(sender_to_gui.clone(), DataScope::UpdateSelf);
                     }
                 },
                 recv(self.get_packet_recv()) -> packet_res => {
@@ -135,7 +135,7 @@ impl Monitoring for MediaServer {
                             PacketType::FloodRequest(flood_request) => self.handle_flood_request(flood_request, packet.session_id),
                             PacketType::FloodResponse(flood_response) => self.handle_flood_response(flood_response),
                         }
-                        self.send_display_data(sender_to_gui.clone());
+                        self.send_display_data(sender_to_gui.clone(), DataScope::UpdateSelf);
                     }
                 },
             }

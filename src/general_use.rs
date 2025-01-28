@@ -129,9 +129,15 @@ pub enum ServerCommand {
 #[derive(Debug, Clone)]
 pub enum ServerEvent {
     //for monitoring
-    CommunicationServerData(InitiatorId, DisplayDataCommunicationServer),
-    TextServerData(InitiatorId, DisplayDataTextServer),
-    MediaServerData(InitiatorId, DisplayDataMediaServer),
+    CommunicationServerData(InitiatorId, DisplayDataCommunicationServer, DataScope),
+    TextServerData(InitiatorId, DisplayDataTextServer, DataScope),
+    MediaServerData(InitiatorId, DisplayDataMediaServer, DataScope),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum DataScope{
+    UpdateAll,
+    UpdateSelf,
 }
 
 
@@ -160,8 +166,8 @@ pub enum ClientCommand {
 #[derive(Debug, Clone)]
 pub enum ClientEvent {
     //for monitoring
-    ChatClientData(InitiatorId, DisplayDataChatClient),
-    WebClientData(InitiatorId, DisplayDataWebBrowser),
+    ChatClientData(InitiatorId, DisplayDataChatClient, DataScope),
+    WebClientData(InitiatorId, DisplayDataWebBrowser, DataScope),
 
     PacketSent(Packet),
     KnownServers(Vec<(NodeId, ServerType, bool)>),
