@@ -1891,10 +1891,12 @@
 
     ws.onmessage = async (event) => {
         try {
-            const text = await event.data;
+            // Log only critical information
+            console.time("PacketProcessing");
+            const text = event.data; // Removed unnecessary `await`
             const parsedData = JSON.parse(text);
 
-            console.log("Ciao1");
+            console.log(parsedData);
             switch (current_role_chosen) {
                 case "undefined":
                     // Handle only data with "data_title" field
@@ -1903,11 +1905,12 @@
                         createMonitoringSections(parsedData);
                         createTopology(parsedData);
                     } else {
-                        console.warn("Discarded data without 'data_title' for undefined role.");
+                        console.log("Discarded data without 'data_title' for undefined role.");
                     }
                     break;
 
                 case "controller":
+                    console.log(parsedData);
                     // Handle updates for individual nodes
                     if (parsedData.hasOwnProperty("node_type")) {
                         console.log("Processing node update for controller...");
@@ -1955,6 +1958,7 @@
                 default:
                     console.warn(`Unhandled role: ${current_role_chosen}`);
             }
+            console.timeEnd("PacketProcessing");
         } catch (error) {
             console.error("Error processing WebSocket message:", error);
         }
@@ -1974,11 +1978,13 @@
     };
     // Handle page refresh/visibility changes
     window.addEventListener('beforeunload', () => {
+        console.log("ciao4");
         sendUpdateCommand(); // Optional: Send cleanup command if needed
     });
 
     // Request update when the page becomes visible again
     document.addEventListener('visibilitychange', () => {
+        console.log("ciao5");
         if (document.visibilityState === 'visible') {
             sendUpdateCommand();
         }
