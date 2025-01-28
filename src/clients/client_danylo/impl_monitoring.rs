@@ -61,33 +61,42 @@ impl ChatClientDanylo{
             ClientCommand::AddSender(id, sender) => {
                 self.packet_send.insert(id, sender);
                 info!("Client {}: Added sender for node {}", self.id, id);
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             ClientCommand::RemoveSender(id) => {
                 self.packet_send.remove(&id);
                 self.update_topology_and_routes(id);
                 info!("Client {}: Removed sender for node {}", self.id, id);
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             ClientCommand::ShortcutPacket(packet) => {
                 info!("Client {}: Shortcut packet received from SC: {:?}", self.id, packet);
                 self.handle_packet(packet);
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             ClientCommand::GetKnownServers => {
-                self.handle_get_known_servers()
+                self.handle_get_known_servers();
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             ClientCommand::StartFlooding => {
-                self.discovery()
+                self.discovery();
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             ClientCommand::AskTypeTo(server_id) => {
-                self.request_server_type(server_id)
+                self.request_server_type(server_id);
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             ClientCommand::SendMessageTo(to, message) => {
-                self.send_message_to(to, message)
+                self.send_message_to(to, message);
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             ClientCommand::RegisterToServer(server_id) => {
-                self.request_to_register(server_id)
+                self.request_to_register(server_id);
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             ClientCommand::AskListClients(server_id) => {
-                self.request_clients_list(server_id)
+                self.request_clients_list(server_id);
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             _ => {}
         }

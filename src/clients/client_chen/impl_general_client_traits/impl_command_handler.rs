@@ -67,13 +67,16 @@ impl CommandHandler for ClientChen{
             }
             ClientCommand::AddSender(target_node_id, sender) => {
                 self.communication_tools.packet_send.insert(target_node_id, sender);
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             ClientCommand::RemoveSender(target_node_id) => {
                 self.communication_tools.packet_send.remove(&target_node_id);
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
 
             ClientCommand::StartFlooding => {
                 self.do_flooding();
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             ClientCommand::GetKnownServers => {
                 // Get the registered servers before the closure
@@ -99,19 +102,25 @@ impl CommandHandler for ClientChen{
                     })
                     .collect();
                 self.send_events(ClientEvent::KnownServers(servers));
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
 
             ClientCommand::AskTypeTo(server_id) => {
+
                 self.send_query(server_id, Query::AskType);
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             ClientCommand::RequestListFile(server_id) => {
                 self.send_query(server_id, Query::AskListFiles);
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             ClientCommand::RequestText(server_id, file) => {
                 self.send_query(server_id, Query::AskFile(file));
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             ClientCommand::RequestMedia(server_id, media_ref) => {
                 self.send_query(server_id, Query::AskMedia(media_ref));
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             _=>{}
         }
