@@ -1,215 +1,509 @@
-use std::collections::HashMap;
+//Outside libraries
+use std::{
+    collections::HashMap,
+    env, fs, thread,
+};
+use tokio::sync::Mutex;
+use std::sync::Arc;
 
-use std::{env, fs, thread};
 use crossbeam_channel::*;
-
+use rand::prelude::*;
+//Wg libraries
 use wg_2024::{
-    packet::{Packet, NodeType},
-    config::{Config,Drone,Server,Client},
-    controller::{DroneEvent},
+    config::{Client, Config, Drone, Server},
+    controller::{DroneCommand, DroneEvent},
     network::NodeId,
+    packet::{NodeType, Packet},
+    drone::Drone as TraitDrone,
 };
 
-use wg_2024::drone::Drone as TraitDrone;
-use krusty_drone::drone::drone::KrustyCrapDrone;
+//Inner libraries
+use crate::{
+    clients::{
+        client::Client as TraitClient,
+        client_chen::ClientChen,
+        client_chen::web_browser_client_traits::WebBrowserClientTrait,
+        client_danylo::ChatClientDanylo,
+    },
+    general_use::{ClientId, ClientCommand, ClientEvent, ServerEvent, ClientType, ServerType, DroneId, UsingTimes},
+    servers::{content, communication_server::CommunicationServer, text_server::TextServer, media_server::MediaServer, server::Server as ServerTrait},
+    simulation_controller::SimulationController
+};
 
-use crate::servers;
-use crate::servers::server::Server as ServerTrait;
 
-use crate::clients;
+//Drones
+use rusty_drones::RustyDrone;
+use rolling_drone::RollingDrone;
+use rustable_drone::RustableDrone;
+use rustbusters_drone::RustBustersDrone;
+use rusteze_drone::RustezeDrone;
+use fungi_drone::FungiDrone;
+use bagel_bomber::BagelBomber;
+use eframe::egui::util::hash;
+use skylink::SkyLinkDrone;
+use RF_drone::RustAndFurious;
+//use bobry_w_locie::drone::BoberDrone;
 
-use crate::general_use::{ClientCommand,ClientEvent, ServerCommand, ServerEvent, ServerType};
-use crate::simulation_controller::SimulationController;
+
+//UI
+use crate::ui_traits::Monitoring;
 use crate::ui::start_ui;
+use crate::websocket::WsCommand;
 
-pub struct NetworkInit {
-    drone_sender_channels: HashMap<NodeId, Sender<Packet>>,
-    clients_sender_channels: HashMap<NodeId, Sender<Packet>>,
-    servers_sender_channels: HashMap<NodeId, Sender<Packet>>,
+//Drone Enum + iterator over it
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
+pub enum DroneBrand {
+    RustyDrone,
+    Rustable,
+    BagelBomber,
+    RustAndFurious,
+    Fungi,
+    //RustBusters,
+    RustEze,
+    SkyLink,
+    RollingDrones,
+    // BobryWLucie,
 }
 
-impl NetworkInit {
-    pub fn new() -> NetworkInit {
-        NetworkInit {
-            drone_sender_channels: HashMap::new(),
-            clients_sender_channels: HashMap::new(),
-            servers_sender_channels: HashMap::new(),
-        }
+impl DroneBrand {
+    // Returns an iterator over all variants of DroneBrand
+    pub fn iter() -> impl Iterator<Item = DroneBrand> {
+        [
+            DroneBrand::RustyDrone,
+            DroneBrand::Rustable,
+            DroneBrand::BagelBomber,
+            DroneBrand::RustAndFurious,
+            DroneBrand::Fungi,
+            //DroneBrand::RustBusters,
+            DroneBrand::RustEze,
+            DroneBrand::SkyLink,
+            DroneBrand::RollingDrones,
+            //DroneBrand::BobryWLucie,
+        ]
+            .into_iter()
     }
-    pub fn parse(&mut self, input: &str){
+}
 
-        println!("{:?}", env::current_dir().expect("Failed to get current directory"));
+pub struct NetworkInitializer {
+    pub(crate) simulation_controller: SimulationController,
+    drone_channels: HashMap<NodeId, Sender<Packet>>,
+    client_channels: HashMap<NodeId, (Sender<Packet>, ClientType)>,
+    server_channels: HashMap<NodeId, (Sender<Packet>, ServerType)>,
+    drone_brand_usage: HashMap<DroneBrand, UsingTimes>,
+    client_type_usage: HashMap<ClientType, UsingTimes>,
+    sender_to_gui: Sender<String>,
+    command_senders: HashMap<NodeId, Sender<DroneCommand>>, // Add this field
+    //sender_to_gui: mpsc::Sender<Vec<u8>> for message packet
 
-        // Construct the full path by joining the current directory with the input path
-        let current_dir = env::current_dir().expect("Failed to get current directory");
-        let input_path = current_dir.join(input);  // This combines the current directory with the `input` file name
+}
 
-        //Deserializing the TOML file
-        let config_data =
-            fs::read_to_string(input_path).expect("Unable to read config file");
-        let config: Config = toml::from_str(&config_data).expect("Unable to parse TOML");
+impl NetworkInitializer {
+    pub fn new( sender_to_gui: Sender<String>, ws_receiver: Receiver<WsCommand>) -> Self {
+        // Create event channels for drones, clients, and servers
+        let (drone_event_sender, drone_event_receiver) = unbounded();
+        let (client_event_sender, client_event_receiver) = unbounded();
+        let (server_event_sender, server_event_receiver) = unbounded();
 
-        //Splitting information - getting data about neighbours
-        let mut neighbours: HashMap<NodeId, Vec<NodeId>> = HashMap::new();
-        for drone in &config.drone{
-            neighbours.insert(drone.id, drone.connected_node_ids.clone());
-        }
-        for client in &config.client{
-            neighbours.insert(client.id, client.connected_drone_ids.clone());
-        }
-        for server in &config.server{
-            neighbours.insert(server.id, server.connected_drone_ids.clone());
-        }
+        // Initialize SimulationController internally
+        let simulation_controller = SimulationController::new(
+            drone_event_sender,
+            drone_event_receiver,
+            client_event_sender,
+            client_event_receiver,
+            server_event_sender,
+            server_event_receiver,
 
-
-        //Creating the channels for sending Events to Controller (For Drones, Clients and Servers)
-        let (to_control_event_drone, control_get_event_drone) = unbounded();
-        let (to_control_event_client, control_get_event_client) = unbounded();
-        let (to_control_event_server, control_get_event_server) = unbounded();
-
-        
-        //Creating controller
-        let mut controller = SimulationController::new(
-            to_control_event_drone.clone(),
-            control_get_event_drone,
-            to_control_event_client.clone(),
-            control_get_event_client,
-            to_control_event_server.clone(),
-            control_get_event_server
+            ws_receiver
         );
 
-
-        //Looping to get Drones
-        self.create_drones(config.drone, &mut controller, to_control_event_drone);
-
-        //Looping through servers (we have to decide how to split since we have two)
-        self.create_clients(config.client, &mut controller, to_control_event_client);
-
-        //Looping through Clients
-        self.create_servers(config.server, &mut controller, to_control_event_server);
-
-        //Connecting the Nodes
-        self.connect_nodes(&mut controller, neighbours);
-
-        println!("Starting UI");
-        start_ui(controller);
+        Self {
+            simulation_controller,
+            drone_channels:HashMap::new(),
+            client_channels:HashMap::new(),
+            server_channels:HashMap::new(),
+            drone_brand_usage: DroneBrand::iter().map(|brand| (brand, 0)).collect(),
+            client_type_usage: ClientType::iter().map(|client_type| (client_type, 0)).collect(),
+            sender_to_gui,
+            command_senders: HashMap::new(),
+        }
     }
+    pub fn initialize_from_file(&mut self, config_path: &str) {
+        // Log the current directory for debugging purposes
+        println!("Current directory: {:?}", env::current_dir().expect("Failed to get current directory"));
 
+        // Construct the full path to the configuration file
+        let config_path = env::current_dir()
+            .expect("Failed to get current directory")
+            .join(config_path);
+
+        // Read and parse the configuration file
+        let config_data = fs::read_to_string(config_path).expect("Unable to read config file");
+        let config: Config = toml::from_str(&config_data).expect("Failed to parse TOML config");
+
+        // Build the network topology
+        let mut topology = HashMap::new();
+        let mut nodes: HashMap<NodeId, NodeType> = HashMap::new();
+        for drone in &config.drone {
+            topology.insert(drone.id, drone.connected_node_ids.clone());
+            nodes.insert(drone.id, NodeType::Drone);
+        }
+        for client in &config.client {
+            topology.insert(client.id, client.connected_drone_ids.clone());
+            nodes.insert(client.id, NodeType::Client);
+        }
+        for server in &config.server {
+            topology.insert(server.id, server.connected_drone_ids.clone());
+            nodes.insert(server.id, NodeType::Server);
+        }
+
+        // Store the topology and nodes in the controller
+        self.simulation_controller.state.topology = topology.clone();
+        self.simulation_controller.state.nodes = nodes;
+
+        // Initialize drones, clients, and servers
+        self.create_drones(config.drone);
+        self.create_clients(config.client);
+        self.create_servers(config.server);
+
+        //Connecting the network
+        self.connect_nodes(topology);
+    }
 
     ///DRONES GENERATION
 
-    pub fn create_drones(&mut self, config_drone : Vec<Drone>, controller: &mut SimulationController, to_contr_event: Sender<DroneEvent>) {
-        for drone in config_drone {
+    fn create_drones(
+        &mut self,
+        drones: Vec<Drone>,
+    ) {
+        for drone in drones {
+            // Adding channel to controller
+            let (command_sender, command_receiver) = unbounded();
+            self.simulation_controller.register_drone(drone.id, command_sender);
 
-            //Adding channel to controller
-            let (to_drone_command_sender,drone_get_command_recv) = unbounded();
-            controller.register_drone(drone.id, to_drone_command_sender);
-
-            //Creating receiver for Drone
+            // Creating channels with the connected nodes
             let (packet_sender, packet_receiver) = unbounded();
 
-            //Storing it for future usages
-            self.drone_sender_channels.insert(drone.id, packet_sender);
+            // Storing it for future usages
+            self.drone_channels.insert(drone.id, packet_sender);
 
-            //Copy of contrEvent
-            let copy_contr_event = to_contr_event.clone();
+            // Clone sender for drone events
+            let drone_events_sender_clone = self.simulation_controller.drone_event_sender.clone();
 
-            //Creating Drone
-            let mut drone = controller.create_drone::<KrustyCrapDrone>(
+            // Prepare parameters array for the macro
+
+            let drone_params = (
                 drone.id,
-                copy_contr_event,
-                drone_get_command_recv,
+                drone_events_sender_clone,
+                command_receiver,
                 packet_receiver,
                 HashMap::new(),
-                drone.pdr);
+                drone.pdr,
+            );
 
-            thread::spawn(move || {
+            // Use helper function or macro (in this case function) to create and spawn drones based on their brand
+            match self.choose_drone_brand_evenly() {
+                DroneBrand::RustyDrone => self.create_and_spawn_drone::<RustyDrone>(drone_params),
+                DroneBrand::RollingDrones => self.create_and_spawn_drone::<RollingDrone>(drone_params),
+                DroneBrand::Rustable => self.create_and_spawn_drone::<RustableDrone>(drone_params),
+                //DroneBrand::RustBusters => self.create_and_spawn_drone::<RustBustersDrone>(controller, drone_params),
+                DroneBrand::RustEze => self.create_and_spawn_drone::<RustezeDrone>(drone_params),
+                DroneBrand::Fungi => self.create_and_spawn_drone::<FungiDrone>(drone_params),
+                DroneBrand::BagelBomber => self.create_and_spawn_drone::<BagelBomber>(drone_params),
+                DroneBrand::SkyLink => self.create_and_spawn_drone::<SkyLinkDrone>(drone_params),
+                DroneBrand::RustAndFurious => self.create_and_spawn_drone::<RustAndFurious>(drone_params),
+                //DroneBrand::BobryWLucie => self.create_and_spawn_drone::<BoberDrone>(controller, drone_params),
+            }
+        }
+    }
+    fn create_and_spawn_drone<T>(
+        &mut self,
+        drone_params: (
+            DroneId,
+            Sender<DroneEvent>,
+            Receiver<DroneCommand>,
+            Receiver<Packet>,
+            HashMap<NodeId, Sender<Packet>>,
+            f32,
+        ),
+    ) where
+        T: TraitDrone + Send + 'static, // Ensure T implements the Drone trait and is Sendable
+    {
+        let (drone_id, event_sender, cmd_receiver, pkt_receiver, pkt_senders, pdr) = drone_params;
 
-                match drone {
-                    Ok(mut drone) => drone.run(),
-                    Err(e) => panic!("{}",e),
+        let drone_instance = self.simulation_controller.create_drone::<T>(
+            drone_id,
+            event_sender,
+            cmd_receiver,
+            pkt_receiver,
+            pkt_senders,
+            pdr,
+        );
+
+        thread::spawn(move || {
+            match drone_instance {
+                Ok(mut drone) => drone.run(),
+                Err(e) => panic!("Failed to run drone {}: {}", drone_id, e),
+            }
+        });
+    }
+
+    fn choose_drone_brand_evenly(&mut self) -> DroneBrand {
+        // Transform the DroneBrand enum into iterator and then collect into a vector
+        let drone_brands = DroneBrand::iter().collect::<Vec<_>>();
+        // We retain the Brands that are least used.
+        if let Some(&min_usage) = self.drone_brand_usage.values().min() {
+            let min_usage_drone_brands: Vec<_> = drone_brands
+                .iter()
+                .filter(|&&drone_brand| self.drone_brand_usage.get(&drone_brand) == Some(&min_usage))
+                .cloned()
+                .collect();
+            // From those we choose randomly one Brand and we use it
+            if let Some(&chosen_brand) = min_usage_drone_brands.choose(&mut thread_rng()) {
+                // Update usage count
+                if let Some(usage) = self.drone_brand_usage.get_mut(&chosen_brand) {
+                    *usage += 1;
                 }
-            });
+                return chosen_brand;
+            }
+        }
+        //Shouldn't happen
+        DroneBrand::Fungi
+    }
+    ///CLIENTS GENERATION
+    fn create_clients(
+        &mut self,
+        clients: Vec<Client>,
+    ) {
+        for client in clients {
+            // Create command channel between controller and clients
+            let (command_sender, command_receiver) = unbounded();
+
+            // Create packet channel between the client and the other nodes
+            let (packet_sender, packet_receiver) = unbounded();
+
+            // Clone sender for client events
+            let client_events_sender_clone = self.simulation_controller.client_event_sender.clone();
+
+            let client_params = (
+                client.id,
+                client_events_sender_clone,
+                command_receiver,
+                packet_receiver,
+                HashMap::new(),
+                );
+
+            let tx_clone = self.sender_to_gui.clone();
+            let mut client_type;
+            match self.choose_client_type_evenly() {
+                ClientType::Web => {
+                    client_type = ClientType::Chat;
+                    self.create_and_spawn_client_with_monitoring::<ClientChen>(tx_clone, client_params);
+                    self.client_channels.insert(client.id, (packet_sender , ClientType::Web));
+                },
+
+                ClientType::Chat=> {
+                    client_type = ClientType::Chat;
+                    self.create_and_spawn_client_with_monitoring::<ChatClientDanylo>(tx_clone,client_params);
+                    self.client_channels.insert(client.id, (packet_sender , ClientType::Chat));
+                }
+            };
+
+            self.simulation_controller.register_client(client.id, command_sender, client_type);
+
         }
     }
 
-    ///CLIENTS GENERATION
-
-    fn create_clients(&mut self, config_client: Vec<Client>, controller: &mut SimulationController, to_contr_event: Sender<ClientEvent> ) {
-        for client in config_client {
-
-            let (to_client_command_sender, client_get_command_recv):(Sender<ClientCommand>,Receiver<ClientCommand>) = unbounded();
-            controller.register_client(client.id,to_client_command_sender);
-            let (packet_sender, packet_receiver) = unbounded();
-
-            //
-            self.clients_sender_channels.insert(client.id, packet_sender);
-
-            //Copy of contrEvent
-            let copy_contr_event = to_contr_event.clone();
-
-            thread::spawn(move || {
-                let mut client = clients::client_danylo::ClientDanylo::new(
-                    client.id,
-                    client.connected_drone_ids,
-                    HashMap::new(),
-                    packet_receiver,
-                    copy_contr_event,
-                    client_get_command_recv,
-                );
-
-                client.run();
-            });
+    fn choose_client_type_evenly(&mut self) -> ClientType {
+        // Transform the DroneBrand enum into iterator and then collect into a vector
+        let client_types = ClientType::iter().collect::<Vec<_>>();
+        // We retain the Brands that are least used.
+        if let Some(&min_usage) = self.client_type_usage.values().min() {
+            let min_usage_client_types: Vec<_> = client_types
+                .iter()
+                .filter(|&&client_type| self.client_type_usage.get(&client_type) == Some(&min_usage))
+                .cloned()
+                .collect();
+            // From those we choose randomly one Brand and we use it
+            if let Some(&chosen_type) = min_usage_client_types.choose(&mut thread_rng()) {
+                // Update usage count
+                if let Some(usage) = self.client_type_usage.get_mut(&chosen_type) {
+                    *usage += 1;
+                }
+                return chosen_type;
+            }
         }
+        //Shouldn't happen
+        ClientType::Web
+    }
+
+    fn create_and_spawn_client<T>(   //without gui monitoring
+        &mut self,
+        client_params: (
+            ClientId,
+            Sender<ClientEvent>,
+            Receiver<ClientCommand>,
+            Receiver<Packet>,
+            HashMap<NodeId, Sender<Packet>>,
+        ),
+    ) where
+        T: TraitClient + Send + 'static, // Ensure T implements the Client trait and is Sendable
+    {
+        let (client_id, event_sender, cmd_receiver, pkt_receiver, pkt_senders) = client_params;
+
+        let mut client_instance = T::new(
+            client_id,
+            pkt_senders,
+            pkt_receiver,
+            event_sender,
+            cmd_receiver,
+        );
+
+        thread::spawn(move || {
+            client_instance.run();
+        });
+    }
+
+    fn create_and_spawn_client_with_monitoring<T: TraitClient + Monitoring + Send + 'static>(
+        &mut self,
+        sender_to_gui: Sender<String>,
+        client_params: (
+            ClientId,
+            Sender<ClientEvent>,
+            Receiver<ClientCommand>,
+            Receiver<Packet>,
+            HashMap<NodeId, Sender<Packet>>,
+        ),
+    ) {
+        let (client_id, event_sender, cmd_receiver, pkt_receiver, pkt_senders) = client_params;
+
+        let mut client_instance = T::new(
+            client_id,
+            pkt_senders,
+            pkt_receiver,
+            event_sender,
+            cmd_receiver,
+        );
+
+        thread::spawn( move|| {
+            client_instance.run_with_monitoring(sender_to_gui);
+        });
     }
 
     /// SERVERS GENERATION
+    pub fn create_servers(
+        &mut self,
+        servers: Vec<Server>,
+    ) {
+        let mut text_server_used = false;
+        let mut vec_files = Vec::new();
 
-    fn create_servers(&mut self, config_server: Vec<Server>, controller: &mut SimulationController, to_contr_event: Sender<ServerEvent> ) {
-        for server in config_server {
-            let (to_server_command_sender, server_get_command_recv):(Sender<ServerCommand>,Receiver<ServerCommand>) = unbounded();
-            controller.register_server(server.id, to_server_command_sender);
+        for server in servers {
+            let (command_sender, command_receiver) = unbounded();
 
-            //Creating receiver for Server
+            // Creating sender to this server and receiver of this server
             let (packet_sender, packet_receiver) = unbounded();
 
-            //Storing it for future usages
-            self.servers_sender_channels.insert(server.id, packet_sender);
+            // Clone sender for server events
+            let server_events_sender_clone = self.simulation_controller.server_event_sender.clone();
+            let sender_to_gui_clone = self.sender_to_gui.clone();
+            //Choosing type
+            let server_type;
+            //Fast fix on many servers
+            let mut server_instance_comm: Option<CommunicationServer> = None;
+            let mut server_instance_text: Option<TextServer>= None;
+            let mut server_instance_media: Option<MediaServer>= None;
 
-            //Copy of contrEvent
-            let copy_contr_event = to_contr_event.clone();
+            if random::<u8>()%2 == 0{
+                server_type = ServerType::Communication;
 
-            thread::spawn(move || {
-
-                let mut server = servers::communication_server::CommunicationServer::new(
+                server_instance_comm = Some(CommunicationServer::new(
                     server.id,
-                    Vec::new(),
-                    copy_contr_event,
-                    server_get_command_recv,
+                    server_events_sender_clone,
+                    command_receiver,
                     packet_receiver,
                     HashMap::new(),
-                );
+                ));
 
-                server.run();
-            });
+            }else{
+                if text_server_used {
+                    let content = content::get_media(vec_files.clone());
+                    server_type = ServerType::Media;
 
+                    server_instance_media = Some(MediaServer::new(
+                        server.id,
+                        content,
+                        server_events_sender_clone,
+                        command_receiver,
+                        packet_receiver,
+                        HashMap::new(),
+                    ));
+                }else{
+                    vec_files = content::choose_random_texts();
+                    server_type = ServerType::Text;
+
+                    server_instance_text = Some(TextServer::new(
+                        server.id,
+                        vec_files.iter().cloned().collect::<HashMap<String, String>>(),
+                        server_events_sender_clone,
+                        command_receiver,
+                        packet_receiver,
+                        HashMap::new(),
+                   ));
+                }
+            };
+
+            self.simulation_controller.register_server(server.id, command_sender, server_type);
+            self.server_channels.insert(server.id, (packet_sender, server_type));
+
+            // Create and run server
+            thread::spawn(move ||
+                match server_type {
+                    ServerType::Communication => {
+                        if let Some(mut server_instance) = server_instance_comm {
+                            server_instance.run_with_monitoring(sender_to_gui_clone);
+                        }
+                    },
+                    ServerType::Media => {
+                        if let Some(mut server_instance) = server_instance_media {
+                            server_instance.run_with_monitoring(sender_to_gui_clone);
+                        }
+                    },
+                    ServerType::Text => {
+                        if let Some(mut server_instance) = server_instance_text {
+                            server_instance.run_with_monitoring(sender_to_gui_clone);
+                        }
+                    }
+                    ServerType::Undefined => panic!("what?")
+                }
+            );
         }
+
+        //Comment: when you are running the run_with_monitoring use the tokio:spawn
     }
 
-    ///CREATING NETWORK
 
-    fn connect_nodes(&self, controller: &mut SimulationController, neighbours: HashMap<NodeId, Vec<NodeId>>) {
-        for (node_id, connected_node_ids) in neighbours.iter() {
-            for &connected_node_id in connected_node_ids {
+
+    ///CREATING NETWORK
+    ///
+    /// not needed function, you do it inside the create function.
+    fn connect_nodes(&mut self, topology: HashMap<NodeId, Vec<NodeId>>) {
+        // Cloning to avoid problems in borrowing
+        let cloned_topology = topology.clone();
+
+        // Create the channels
+        for (node_id, connected_nodes_ids) in cloned_topology.iter() {
+            for &connected_node_id in connected_nodes_ids {
 
                 // Retrieve the Sender channel based on node type
                 let node_type = self.get_type(node_id);
                 let sender = self.get_sender_for_node(connected_node_id).unwrap();
+
+                // Add the senders to the connected nodes
                 match node_type {
-                    Some(NodeType::Drone) => controller.add_sender(*node_id, NodeType::Drone ,connected_node_id, sender),
-                    Some(NodeType::Client) => controller.add_sender(*node_id, NodeType::Client ,connected_node_id, sender),
-                    Some(NodeType::Server) => controller.add_sender(*node_id, NodeType::Server , connected_node_id, sender),
-                    
+                    Some(NodeType::Drone) => self.simulation_controller.add_sender(*node_id, NodeType::Drone ,connected_node_id, sender),
+                    Some(NodeType::Client) => self.simulation_controller.add_sender(*node_id, NodeType::Client ,connected_node_id, sender),
+                    Some(NodeType::Server) => self.simulation_controller.add_sender(*node_id, NodeType::Server , connected_node_id, sender),
+
                     None => panic!("Sender channel not found for node {}!", *node_id),
                 };
             }
@@ -217,30 +511,32 @@ impl NetworkInit {
 
     }
 
+    ///no need to use the option when we are creating senders for every node in the functions of create_drones,...
+    ///but it's rather needed for the get method of the vectors...
     fn get_sender_for_node(&self, node_id: NodeId) -> Option<Sender<Packet>> {
-        if let Some(sender) = self.drone_sender_channels.get(&node_id) {
+        if let Some(sender) = self.drone_channels.get(&node_id) {
             return Some(sender.clone());
         }
-        if let Some(sender) = self.clients_sender_channels.get(&node_id) {
+        if let Some((sender, _)) = self.client_channels.get(&node_id) {
             return Some(sender.clone());
         }
-        if let Some(sender) = self.servers_sender_channels.get(&node_id) {
+        if let Some((sender, _)) = self.server_channels.get(&node_id) {
             return Some(sender.clone());
         }
         None // Sender not found in any HashMap
     }
 
     fn get_type(&self, node_id: &NodeId) -> Option<NodeType> {
-        if let Some(sender) = self.drone_sender_channels.get(node_id) {
+        if self.drone_channels.contains_key(node_id) {
             return Some(NodeType::Drone);
         }
-        if let Some(sender) = self.clients_sender_channels.get(node_id) {
+        if self.client_channels.contains_key(node_id) {
             return Some(NodeType::Client);
         }
-        if let Some(sender) = self.servers_sender_channels.get(node_id) {
+        if self.server_channels.contains_key(node_id) {
             return Some(NodeType::Server);
         }
-        None //Not found
+        None // Node type not found
     }
 }
 

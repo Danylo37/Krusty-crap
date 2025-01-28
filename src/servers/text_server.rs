@@ -1,28 +1,40 @@
 use crossbeam_channel::{select_biased, Receiver, Sender};
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
+use std::future::Future;
+use tokio::sync::mpsc;
+use tokio::select;
 use wg_2024::{
-    network::{NodeId, SourceRoutingHeader},
+    network::{NodeId},
     packet::{
-        Ack, FloodRequest, FloodResponse, Fragment, Nack, NackType, NodeType, Packet, PacketType,
+        Packet,
+        PacketType,
     },
 };
-use crate::general_use::{Message, Query, Response, ServerCommand, ServerEvent, ServerType};
-
+use crate::clients::client_chen::Serialize;
+use crate::general_use::{DataScope, DisplayDataTextServer, Query, Response, ServerCommand, ServerEvent, ServerType};
+use crate::ui_traits::{Monitoring};
 use super::server::TextServer as CharTrait;
 use super::server::Server as MainTrait;
 
-use super::content::TEXT;
-
+type FloodId = u64;
+type SessionId = u64;
 #[derive(Debug)]
 pub struct TextServer{
 
     //Basic data
     pub id: NodeId,
-    pub connected_drone_ids: Vec<NodeId>,
-    pub flood_ids: HashSet<u64>,
-    pub reassembling_messages: HashMap<u64, Vec<u8>>,
-    pub counter: (u64, u64),
+
+    //Fragment-related
+    pub reassembling_messages: HashMap<SessionId, Vec<u8>>,
+    pub sending_messages: HashMap<SessionId, (Vec<u8>, NodeId)>,
+
+    //Flood-related
+    pub clients: Vec<NodeId>,                                   // Available clients
+    pub topology: HashMap<NodeId, Vec<NodeId>>,             // Nodes and their neighbours
+    pub routes: HashMap<NodeId, Vec<NodeId>>,                   // Routes to the servers
+    pub flood_ids: Vec<FloodId>,
+    pub counter: (FloodId, SessionId),
 
     //Channels
     pub to_controller_event: Sender<ServerEvent>,
@@ -31,24 +43,28 @@ pub struct TextServer{
     pub packet_send: HashMap<NodeId, Sender<Packet>>,
 
     //Characteristic-Server fields
-    pub content: Vec<String>,
+    pub content: HashMap<String, String>,
 }
 
 impl TextServer{
     pub fn new(
         id: NodeId,
-        connected_drone_ids: Vec<NodeId>,
+        content: HashMap<String, String>,
         to_controller_event: Sender<ServerEvent>,
         from_controller_command: Receiver<ServerCommand>,
         packet_recv: Receiver<Packet>,
         packet_send: HashMap<NodeId, Sender<Packet>>,
     ) -> Self {
-        let content = Self::prepare_content();
         TextServer {
             id,
-            connected_drone_ids,
-            flood_ids: Default::default(),
+
             reassembling_messages: Default::default(),
+            sending_messages: Default::default(),
+
+            clients: Default::default(),                                   // Available clients
+            topology: Default::default(),
+            routes: Default::default(),
+            flood_ids: Default::default(),
             counter: (0, 0),
 
             to_controller_event,
@@ -56,51 +72,104 @@ impl TextServer{
             packet_recv,
             packet_send,
 
-            content: Vec::new(),
+            content,
         }
     }
-    fn prepare_content() -> Vec<String>{
-        let mut content = TEXT.to_vec();
+}
 
-        let len = content.len();
-        if len == 0 {
-            return Vec::new();
-        }else if len < 4 {
-            // If the Vec has less than 4 elements, remove one element if possible
-            content.pop();
-            return content.into_iter().map(|value| value.to_string()).collect::<Vec<String>>();
+
+impl Monitoring for TextServer {
+    fn send_display_data(&mut self, sender_to_gui: Sender<String>, data_scope: DataScope) {
+        let text_files_list = self.content.keys().cloned().collect();
+        let neighbors =  self.packet_send.keys().cloned().collect();
+        let display_data = DisplayDataTextServer {
+            node_id: self.id,
+            node_type: "Text Server".to_string(),
+            flood_id: self.flood_ids.last().cloned().unwrap_or(0),
+            connected_node_ids: neighbors,
+            routing_table: self.routes.clone(),
+            text_files: text_files_list,
+        };
+
+        self.to_controller_event.send(ServerEvent::TextServerData(self.id, display_data, data_scope)).expect("Failed to send text server data");
+    }
+    fn run_with_monitoring(
+        &mut self,
+        sender_to_gui: Sender<String>,
+    ) {
+        self.send_display_data(sender_to_gui.clone(), DataScope::UpdateAll);
+        loop {
+            select_biased! {
+                recv(self.get_from_controller_command()) -> command_res => {
+                    if let Ok(command) = command_res {
+                        match command {
+                            ServerCommand::UpdateMonitoringData => {
+                                self.send_display_data(sender_to_gui.clone(), DataScope::UpdateAll);
+                            }
+                            ServerCommand::AddSender(id, sender) => {
+                                self.get_packet_send().insert(id, sender);
+
+                            }
+                            ServerCommand::RemoveSender(id) => {
+                                self.get_packet_send().remove(&id);
+                            }
+                            ServerCommand::ShortcutPacket(packet) => {
+                                 match packet.pack_type {
+                                    PacketType::Nack(nack) => self.handle_nack(nack, packet.session_id),
+                                    PacketType::Ack(ack) => self.handle_ack(ack),
+                                    PacketType::MsgFragment(fragment) => self.handle_fragment(fragment, packet.routing_header ,packet.session_id),
+                                    PacketType::FloodRequest(flood_request) => self.handle_flood_request(flood_request, packet.session_id),
+                                    PacketType::FloodResponse(flood_response) => self.handle_flood_response(flood_response),
+                                }
+                            }
+                        }
+                        self.send_display_data(sender_to_gui.clone(), DataScope::UpdateSelf);
+                    }
+                },
+                recv(self.get_packet_recv()) -> packet_res => {
+                    if let Ok(packet) = packet_res {
+                        match packet.pack_type {
+                            PacketType::Nack(nack) => self.handle_nack(nack, packet.session_id),
+                            PacketType::Ack(ack) => self.handle_ack(ack),
+                            PacketType::MsgFragment(fragment) => self.handle_fragment(fragment, packet.routing_header ,packet.session_id),
+                            PacketType::FloodRequest(flood_request) => self.handle_flood_request(flood_request, packet.session_id),
+                            PacketType::FloodResponse(flood_response) => self.handle_flood_response(flood_response),
+                        }
+                        self.send_display_data(sender_to_gui.clone(), DataScope::UpdateSelf);
+                    }
+                },
+            }
         }
-
-        // Calculate the step size for removing elements
-        let step = len / 4;
-
-        // Retain only the elements that aren't in the removal step
-        content.into_iter()
-            .enumerate()
-            .filter(|(index, _)| (index + 1) % step != 0)
-            .map(|(_, value)| value.to_string())
-            .collect::<Vec<String>>()
     }
 }
 
 impl MainTrait for TextServer{
     fn get_id(&self) -> NodeId{ self.id }
-
     fn get_server_type(&self) -> ServerType{ ServerType::Text }
-    fn get_flood_id(&mut self) -> u64{
-        self.counter.0 += 1;
-        self.counter.0
-    }
+
     fn get_session_id(&mut self) -> u64{
         self.counter.1 += 1;
         self.counter.1
     }
-    fn get_from_controller_command(&mut self) -> &mut Receiver<ServerCommand>{ &mut self.from_controller_command }
 
+    fn get_flood_id(&mut self) -> u64{
+        self.counter.0 += 1;
+        self.counter.0
+    }
+
+    fn push_flood_id(&mut self, flood_id: FloodId){ self.flood_ids.push(flood_id); }
+    fn get_clients(&mut self) -> &mut Vec<NodeId>{ &mut self.clients }
+    fn get_topology(&mut self) -> &mut HashMap<NodeId, Vec<NodeId>>{ &mut self.topology }
+    fn get_routes(&mut self) -> &mut HashMap<NodeId, Vec<NodeId>>{ &mut self.routes }
+
+    fn get_from_controller_command(&mut self) -> &mut Receiver<ServerCommand>{ &mut self.from_controller_command }
     fn get_packet_recv(&mut self) -> &mut Receiver<Packet>{ &mut self.packet_recv }
     fn get_packet_send(&mut self) -> &mut HashMap<NodeId, Sender<Packet>>{ &mut self.packet_send }
     fn get_packet_send_not_mutable(&self) -> &HashMap<NodeId, Sender<Packet>>{ &self.packet_send }
     fn get_reassembling_messages(&mut self) -> &mut HashMap<u64, Vec<u8>>{ &mut self.reassembling_messages }
+    fn get_sending_messages(&mut self) ->  &mut HashMap<u64, (Vec<u8>, u8)>{ &mut self.sending_messages }
+    fn get_sending_messages_not_mutable(&self) -> &HashMap<u64, (Vec<u8>, u8)>{ &self.sending_messages }
+
 
     fn process_reassembled_message(&mut self, data: Vec<u8>, src_id: NodeId){
         match String::from_utf8(data.clone()) {
@@ -108,16 +177,15 @@ impl MainTrait for TextServer{
                 Ok(Query::AskType) => self.give_type_back(src_id),
 
                 Ok(Query::AskListFiles) => self.give_list_back(src_id),
-                Ok(Query::AskFile(file_id)) => self.give_file_back(src_id, file_id),
+                Ok(Query::AskFile(file_key)) => self.give_file_back(src_id, file_key),
 
                 Err(_) => {
                     panic!("Damn, not the right struct")
                 }
                 _ => {}
             },
-            Err(e) => println!("Dio porco, {:?}", e),
+            Err(e) => println!("Argh, {:?}", e),
         }
-        println!("process reassemble finished");
     }
 }
 
@@ -128,7 +196,7 @@ impl CharTrait for TextServer{
         let list_files = self.content.clone();
 
         //Creating data to send
-        let response = Response::ListFiles(list_files);
+        let response = Response::ListFiles(list_files.keys().cloned().collect::<Vec<String>>());
 
         //Serializing message to send
         let response_as_string = serde_json::to_string(&response).unwrap();
@@ -153,10 +221,10 @@ impl CharTrait for TextServer{
 
     }
 
-    fn give_file_back(&mut self, client_id: NodeId, file_id: u8) {
+    fn give_file_back(&mut self, client_id: NodeId, file_key: String) {
 
         //Get file
-        let file:&String = self.content.get(file_id as usize).unwrap();
+        let file:&String = self.content.get(&file_key).unwrap();
 
         //Creating data to send
         let response = Response::File(file.clone());

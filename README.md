@@ -15,7 +15,7 @@ https://github.com/Danylo37/krusty_drone.git
 We put here the **link** repos of the drones we bought:
 
 ## Rusty Drone
-https://github.com/matteo-dinoia/rusty-drones.git
+https://github.com/rusty-drone-2024/rusty-drone.git
 ## Rustable
 https://github.com/SmL-Boi/RustableDroneLib.git
 ## Bagel Bomber
@@ -29,7 +29,7 @@ https://github.com/Rustbusters/drone.git
 ## Rust-eze
 https://github.com/Rusteze-AP/drone.git
 ## SkyLink
-https://github.com/Paglia20/SkyLink.git
+https://github.com/Suge42/Skylink_drone.git
 ## Rolling Drones
 https://github.com/giorebecchi/RollingDrone.git
 ## Bobry w locie
