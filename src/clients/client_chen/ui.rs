@@ -54,7 +54,7 @@ impl Monitoring for ClientChen{
                         self.update_routing_checking_status();
 
                         // Update the network
-                        self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
+                        //self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
                     }
                 },
                 recv(self.communication_tools.packet_recv) -> packet_res => {
@@ -68,7 +68,7 @@ impl Monitoring for ClientChen{
                         self.update_routing_checking_status();
 
                         // Update the network
-                        self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
+                        //self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
                     }
                 },
             }

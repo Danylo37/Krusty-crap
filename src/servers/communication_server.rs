@@ -135,7 +135,7 @@ impl Monitoring for CommunicationServer {
                                 }
                             }
                         }
-                        self.send_display_data(sender_to_gui.clone(), DataScope::UpdateSelf);
+                        //self.send_display_data(sender_to_gui.clone(), DataScope::UpdateSelf);
                     }
                 },
                 recv(self.get_packet_recv()) -> packet_res => {
@@ -147,7 +147,7 @@ impl Monitoring for CommunicationServer {
                             PacketType::FloodRequest(flood_request) => self.handle_flood_request(flood_request, packet.session_id),
                             PacketType::FloodResponse(flood_response) => self.handle_flood_response(flood_response),
                         }
-                        self.send_display_data(sender_to_gui.clone(), DataScope::UpdateSelf);
+                        //self.send_display_data(sender_to_gui.clone(), DataScope::UpdateSelf);
                     }
                 },
             }
