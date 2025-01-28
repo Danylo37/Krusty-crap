@@ -13,6 +13,7 @@ use wg_2024::{
 };
 use crate::clients::client_chen::Serialize;
 use crate::general_use::{DataScope, DisplayDataTextServer, Query, Response, ServerCommand, ServerEvent, ServerType};
+use crate::general_use::DataScope::UpdateAll;
 use crate::ui_traits::{Monitoring};
 use super::server::TextServer as CharTrait;
 use super::server::Server as MainTrait;
@@ -108,7 +109,7 @@ impl Monitoring for TextServer {
                             }
                             ServerCommand::AddSender(id, sender) => {
                                 self.get_packet_send().insert(id, sender);
-                                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
+                                //self.send_display_data(sender_to_gui.clone(), UpdateAll);
 
                             }
                             ServerCommand::RemoveSender(id) => {
@@ -126,7 +127,6 @@ impl Monitoring for TextServer {
                                 self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
                             }
                         }
-                        //self.send_display_data(sender_to_gui.clone(), DataScope::UpdateSelf);
                     }
                 },
                 recv(self.get_packet_recv()) -> packet_res => {
@@ -138,7 +138,7 @@ impl Monitoring for TextServer {
                             PacketType::FloodRequest(flood_request) => self.handle_flood_request(flood_request, packet.session_id),
                             PacketType::FloodResponse(flood_response) => self.handle_flood_response(flood_response),
                         }
-                       //self.send_display_data(sender_to_gui.clone(), DataScope::UpdateSelf);
+                        self.send_display_data(sender_to_gui.clone(), UpdateAll);
                     }
                 },
             }

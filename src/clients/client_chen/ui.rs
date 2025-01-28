@@ -38,10 +38,10 @@ impl Monitoring for ClientChen{
         };
 
         self.communication_tools.controller_send.send(ClientEvent::WebClientData(self.metadata.node_id, display_data, data_scope)).expect("Sending client data failed");
+        eprintln!("Data sent with scope {:?}", data_scope);
     }
 
     fn run_with_monitoring(&mut self, sender_to_gui: Sender<String>) {
-        self.send_display_data(sender_to_gui.clone(), UpdateAll);
         loop {
             select_biased! {
                 recv(self.communication_tools.controller_recv) -> command_res => {
@@ -68,7 +68,7 @@ impl Monitoring for ClientChen{
                         self.update_routing_checking_status();
 
                         // Update the network
-                        self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
+                        //self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
                     }
                 },
             }

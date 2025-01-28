@@ -2,6 +2,7 @@ use crate::clients::client_chen::{ClientChen, CommandHandler, SpecificInfo};
 use crate::clients::client_chen::prelude::*;
 use crate::clients::client_chen::general_client_traits::*;
 use crate::general_use::{DataScope, ServerType};
+use crate::general_use::DataScope::UpdateAll;
 use crate::ui_traits::Monitoring;
 
 impl CommandHandler for ClientChen{
@@ -62,23 +63,28 @@ impl CommandHandler for ClientChen{
     fn handle_controller_command_with_monitoring(&mut self, command: ClientCommand, sender_to_gui: Sender<String>) {
         match command {
             ClientCommand::UpdateMonitoringData => {
-                eprintln!("I'm here sending data");
+                eprintln!("I'm here sending data with scope UpdateAll");
                 self.send_display_data(sender_to_gui.clone(), DataScope::UpdateAll);
-            }
+            },
+
             ClientCommand::AddSender(target_node_id, sender) => {
+                eprintln!("Received command to add sender");
                 self.communication_tools.packet_send.insert(target_node_id, sender);
-                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
-            }
+                //self.send_display_data(sender_to_gui.clone(), UpdateAll);
+            },
             ClientCommand::RemoveSender(target_node_id) => {
+                eprintln!("Received command to remove sender");
                 self.communication_tools.packet_send.remove(&target_node_id);
                 self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
-            }
+            },
 
             ClientCommand::StartFlooding => {
+                eprintln!("Received command to start flooding");
                 self.do_flooding();
                 self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
-            }
+            },
             ClientCommand::GetKnownServers => {
+                eprintln!("Received command to get the know servers");
                 // Get the registered servers before the closure
                 let registered_servers = self.get_registered_servers();
 
@@ -103,25 +109,28 @@ impl CommandHandler for ClientChen{
                     .collect();
                 self.send_events(ClientEvent::KnownServers(servers));
                 self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
-            }
+            },
 
             ClientCommand::AskTypeTo(server_id) => {
-
+                eprintln!("Received command to get the ask type to");
                 self.send_query(server_id, Query::AskType);
                 self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
-            }
+            },
             ClientCommand::RequestListFile(server_id) => {
+                eprintln!("Received command to request file list");
                 self.send_query(server_id, Query::AskListFiles);
                 self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
-            }
+            },
             ClientCommand::RequestText(server_id, file) => {
+                eprintln!("Received command to request text");
                 self.send_query(server_id, Query::AskFile(file));
                 self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
-            }
+            },
             ClientCommand::RequestMedia(server_id, media_ref) => {
+                eprintln!("Received command to request media");
                 self.send_query(server_id, Query::AskMedia(media_ref));
                 self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
-            }
+            },
             _=>{}
         }
     }

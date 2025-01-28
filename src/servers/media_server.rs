@@ -108,10 +108,12 @@ impl Monitoring for MediaServer {
                             }
                             ServerCommand::AddSender(id, sender) => {
                                 self.get_packet_send().insert(id, sender);
+                                //self.send_display_data(sender_to_gui.clone(), UpdateAll);
 
                             }
                             ServerCommand::RemoveSender(id) => {
                                 self.get_packet_send().remove(&id);
+                                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
                             }
                             ServerCommand::ShortcutPacket(packet) => {
                                  match packet.pack_type {
@@ -121,9 +123,9 @@ impl Monitoring for MediaServer {
                                     PacketType::FloodRequest(flood_request) => self.handle_flood_request(flood_request, packet.session_id),
                                     PacketType::FloodResponse(flood_response) => self.handle_flood_response(flood_response),
                                 }
+                                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
                             }
                         }
-                        //self.send_display_data(sender_to_gui.clone(), DataScope::UpdateSelf);
                     }
                 },
                 recv(self.get_packet_recv()) -> packet_res => {

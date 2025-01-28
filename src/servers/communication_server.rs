@@ -120,7 +120,7 @@ impl Monitoring for CommunicationServer {
                             }
                             ServerCommand::AddSender(id, sender) => {
                                 self.get_packet_send().insert(id, sender);
-                                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
+                                //self.send_display_data(sender_to_gui.clone(), UpdateAll);
                             }
                             ServerCommand::RemoveSender(id) => {
                                 self.get_packet_send().remove(&id);
@@ -137,7 +137,6 @@ impl Monitoring for CommunicationServer {
                                 self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
                             }
                         }
-                        //self.send_display_data(sender_to_gui.clone(), DataScope::UpdateSelf);
                     }
                 },
                 recv(self.get_packet_recv()) -> packet_res => {
