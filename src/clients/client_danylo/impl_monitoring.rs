@@ -36,13 +36,13 @@ impl Monitoring for ChatClientDanylo {
                 recv(self.controller_recv) -> command_res => {
                     if let Ok(command) = command_res {
                         self.handle_command_with_monitoring(command, sender_to_gui.clone());
-                        self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
+                        //self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
                     }
                 },
                 recv(self.packet_recv) -> packet_res => {
                     if let Ok(packet) = packet_res {
                         self.handle_packet(packet);
-                        self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
+                        //self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
                     }
                 },
             }
