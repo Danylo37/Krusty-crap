@@ -55,22 +55,22 @@ impl Monitoring for SimulationController {
                     }
                 },
                 recv(self.client_event_receiver) -> client_event => {
-                    eprintln!("Controller received client event");
                     if let Ok(event) = client_event {
+                        eprintln!("Controller received client event {:?}", event);
                         let mut conditional_data_scope = DataScope::UpdateAll;
                         match event{
                             ClientEvent::WebClientData(id, data, data_scope) => {
                                 match data_scope{
-                                    DataScope::UpdateAll =>{
+                                    DataScope::UpdateAll => {
                                         conditional_data_scope = DataScope::UpdateAll;
                                         self.web_clients_data.insert(id, data);
                                         self.updating_nodes.remove(&id);
-                                    }
+                                    },
                                     DataScope::UpdateSelf =>{
                                         conditional_data_scope = DataScope::UpdateSelf;
                                         self.web_clients_data.insert(id, data.clone());
                                         let json_string = serde_json::to_string(&data).unwrap();
-                                        eprintln!("Sent json data {:?}", json_string);
+                                        eprintln!("Sent json data {:?} with scope UpdateSelf", json_string);
                                         sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
                                     }
                                 }
@@ -87,7 +87,7 @@ impl Monitoring for SimulationController {
                                         conditional_data_scope = DataScope::UpdateSelf;
                                         self.chat_clients_data.insert(id, data.clone());
                                         let json_string = serde_json::to_string(&data).unwrap();
-                                        eprintln!("Sent json data {:?}", json_string);
+                                        eprintln!("Sent json data {:?} with scope UpdateSelf", json_string);
                                         sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
                                     }
                                 }
@@ -103,8 +103,8 @@ impl Monitoring for SimulationController {
                 },
 
                 recv(self.server_event_receiver) -> server_event => {
-                    eprintln!("Controller received server event");
                     if let Ok(event) = server_event {
+                        eprintln!("Controller received server event {:?}", event);
                         let mut conditional_data_scope = DataScope::UpdateAll;
                         match event{
                             ServerEvent::CommunicationServerData(id, data, data_scope) =>{
@@ -118,7 +118,7 @@ impl Monitoring for SimulationController {
                                         conditional_data_scope = DataScope::UpdateSelf;
                                         self.comm_servers_data.insert(id, data.clone());
                                         let json_string = serde_json::to_string(&data).unwrap();
-                                        eprintln!("Sent json data {:?}", json_string);
+                                        eprintln!("Sent json data {:?} with scope UpdateSelf", json_string);
                                         sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
                                     },
                                 }
@@ -135,7 +135,7 @@ impl Monitoring for SimulationController {
                                         conditional_data_scope = DataScope::UpdateSelf;
                                         self.text_servers_data.insert(id, data.clone());
                                         let json_string = serde_json::to_string(&data).unwrap();
-                                        eprintln!("Sent json data {:?}", json_string);
+                                        eprintln!("Sent json data {:?} with scope UpdateSelf", json_string);
                                         sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
                                     },
                                 }
@@ -152,7 +152,7 @@ impl Monitoring for SimulationController {
                                         conditional_data_scope = DataScope::UpdateSelf;
                                         self.media_servers_data.insert(id, data.clone());
                                         let json_string = serde_json::to_string(&data).unwrap();
-                                        eprintln!("Sent json data {:?}", json_string);
+                                        eprintln!("Sent json data {:?} with scope UpdateSelf", json_string);
                                         sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
                                     },
                                 }
@@ -160,6 +160,7 @@ impl Monitoring for SimulationController {
                             },
                             _=> {},
                         }
+
                         if self.updating_nodes.is_empty() && conditional_data_scope == DataScope::UpdateAll {
                             self.send_display_data(sender_to_gui.clone(), DataScope::UpdateAll);
                             self.updating_nodes = edge_nodes.clone();

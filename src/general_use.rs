@@ -134,7 +134,7 @@ pub enum ServerEvent {
     MediaServerData(InitiatorId, DisplayDataMediaServer, DataScope),
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub enum DataScope{
     UpdateAll,
     UpdateSelf,

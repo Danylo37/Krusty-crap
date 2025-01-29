@@ -5,6 +5,7 @@ use std::collections::{HashMap, HashSet};
 use crossbeam_channel::Sender;
 use log::{debug, info};
 use wg_2024::network::NodeId;
+use crate::general_use::DataScope::UpdateAll;
 use super::{ChatClientDanylo, ChatHistory};
 
 
@@ -36,13 +37,13 @@ impl Monitoring for ChatClientDanylo {
                 recv(self.controller_recv) -> command_res => {
                     if let Ok(command) = command_res {
                         self.handle_command_with_monitoring(command, sender_to_gui.clone());
-                        self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
+                        //self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
                     }
                 },
                 recv(self.packet_recv) -> packet_res => {
                     if let Ok(packet) = packet_res {
                         self.handle_packet(packet);
-                        self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
+                        //self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
                     }
                 },
             }
@@ -52,7 +53,7 @@ impl Monitoring for ChatClientDanylo {
 
 impl ChatClientDanylo{
     pub(crate) fn handle_command_with_monitoring(&mut self, command: ClientCommand, sender_to_gui: Sender<String>) {
-        debug!("Client {}: Handling command: {:?}", self.id, command);
+        eprintln!("Client {}: Handling command: {:?}", self.id, command);
 
         match command {
             ClientCommand::UpdateMonitoringData => {
@@ -61,33 +62,42 @@ impl ChatClientDanylo{
             ClientCommand::AddSender(id, sender) => {
                 self.packet_send.insert(id, sender);
                 info!("Client {}: Added sender for node {}", self.id, id);
+                //self.send_display_data(sender_to_gui.clone(), UpdateAll);
             }
             ClientCommand::RemoveSender(id) => {
                 self.packet_send.remove(&id);
                 self.update_topology_and_routes(id);
                 info!("Client {}: Removed sender for node {}", self.id, id);
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             ClientCommand::ShortcutPacket(packet) => {
                 info!("Client {}: Shortcut packet received from SC: {:?}", self.id, packet);
                 self.handle_packet(packet);
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             ClientCommand::GetKnownServers => {
-                self.handle_get_known_servers()
+                self.handle_get_known_servers();
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             ClientCommand::StartFlooding => {
-                self.discovery()
+                self.discovery();
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             ClientCommand::AskTypeTo(server_id) => {
-                self.request_server_type(server_id)
+                self.request_server_type(server_id);
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             ClientCommand::SendMessageTo(to, message) => {
-                self.send_message_to(to, message)
+                self.send_message_to(to, message);
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             ClientCommand::RegisterToServer(server_id) => {
-                self.request_to_register(server_id)
+                self.request_to_register(server_id);
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             ClientCommand::AskListClients(server_id) => {
-                self.request_clients_list(server_id)
+                self.request_clients_list(server_id);
+                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             _ => {}
         }
