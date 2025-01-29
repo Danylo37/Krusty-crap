@@ -1,6 +1,5 @@
 use crate::clients::client_chen::ClientChen;
-use crate::general_use::{FileRef, MediaRef};
-use crate::ui_traits::Monitoring;
+use crate::general_use::{MediaRef};
 
 pub trait WebBrowserClientTrait {
     fn handle_list_file(&mut self, list_file: Vec<String>);

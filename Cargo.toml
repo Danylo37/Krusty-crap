@@ -13,25 +13,27 @@ edition = "2021"
 #path = "src/websocket"
 
 [dependencies]
+#libraries
 wg_2024 = { git = "https://github.com/WGL-2024/WGL_repo_2024.git", features = ["serialize", "debug"] }
 crossbeam-channel = "0.5.13"
 toml = "0.8.19"
 rand = "0.8.5"
+
+#serialization
+base64 = "0.22.1"
 serde_json = "1.0.133"
 serde = { version = "1.0.215", features = ["derive"] }
+ctrlc = "3.4.5"
+
+#websocket
+rouille = "3.6.2"
+tungstenite = "0.26.0"
+
+#logging
 log = "0.4.22"
 env_logger = "0.11.6"
-base64 = "0.22.1"
-eframe = "0.30.0"
-warp = "0.3"
-tokio = { version = "1.42.0", features = ["full"] }
-futures-util = "0.3.31"
-tokio-tungstenite = { version = "0.21.0", features = ["native-tls"] }
-tungstenite = "0.26.0"
-rmp-serde = "1.3.0"  # MessagePack serialization
-ctrlc = "3.4.5"
-rouille = "3.6.2"
 
+#drones
 krusty_drone = { git = "https://github.com/Danylo37/krusty_drone.git"}
 rustable-drone = {git = "https://github.com/SmL-Boi/RustableDroneLib.git"}
 bagel_bomber = {git = "https://github.com/daw-dev/bagel-bomber.git"}
