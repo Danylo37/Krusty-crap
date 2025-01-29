@@ -131,20 +131,17 @@ impl ChatClientDanylo {
 
         match command {
             ClientCommand::AddSender(id, sender) => {
-                self.packet_send.insert(id, sender);
-                info!("Client {}: Added sender for node {}", self.id, id);
+                self.add_sender(id, sender);
             }
             ClientCommand::RemoveSender(id) => {
-                self.packet_send.remove(&id);
-                self.update_topology_and_routes(id);
-                info!("Client {}: Removed sender for node {}", self.id, id);
+                self.remove_sender(id);
             }
             ClientCommand::ShortcutPacket(packet) => {
                 info!("Client {}: Shortcut packet received from SC: {:?}", self.id, packet);
                 self.handle_packet(packet);
             }
             ClientCommand::GetKnownServers => {
-                self.handle_get_known_servers()
+                self.send_known_servers()
             }
             ClientCommand::StartFlooding => {
                 self.discovery()
@@ -167,7 +164,7 @@ impl ChatClientDanylo {
 
     /// ###### Handles the 'GetKnownServers' command.
     /// Sends the list of known servers to the simulation controller.
-    pub(super) fn handle_get_known_servers(&mut self) {
+    pub(super) fn send_known_servers(&mut self) {
         let servers: Vec<(ServerId, ServerType, bool)> = self
             .servers
             .iter()
@@ -178,6 +175,17 @@ impl ChatClientDanylo {
             .collect();
 
         self.send_event(ClientEvent::KnownServers(servers));
+    }
+
+    pub(super) fn add_sender(&mut self, id: NodeId, sender: Sender<Packet>) {
+        self.packet_send.insert(id, sender);
+        info!("Client {}: Added sender for node {}", self.id, id);
+    }
+
+    pub(super) fn remove_sender(&mut self, id: NodeId) {
+        self.packet_send.remove(&id);
+        self.update_topology_and_routes(id);
+        info!("Client {}: Removed sender for node {}", self.id, id);
     }
 
     /// ###### Handles the acknowledgment (ACK) for a given session and fragment.

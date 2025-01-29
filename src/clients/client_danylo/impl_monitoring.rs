@@ -25,7 +25,7 @@ impl Monitoring for ChatClientDanylo {
         };
 
         self.controller_send.send(ClientEvent::ChatClientData(self.id, display_data, data_scope)).expect("Failed to send chat client data");
-        info!("Sending chat client dat");
+        info!("Client {}: Sending chat client data", self.id);  // todo
     }
     fn run_with_monitoring(
         &mut self,
@@ -61,14 +61,11 @@ impl ChatClientDanylo{
                 self.send_display_data(sender_to_gui.clone(), DataScope::UpdateAll);
             },
             ClientCommand::AddSender(id, sender) => {
-                self.packet_send.insert(id, sender);
-                info!("Client {}: Added sender for node {}", self.id, id);
+                self.add_sender(id, sender);
                 //self.send_display_data(sender_to_gui.clone(), UpdateAll);
             }
             ClientCommand::RemoveSender(id) => {
-                self.packet_send.remove(&id);
-                self.update_topology_and_routes(id);
-                info!("Client {}: Removed sender for node {}", self.id, id);
+                self.remove_sender(id);
                 self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             ClientCommand::ShortcutPacket(packet) => {
@@ -77,7 +74,7 @@ impl ChatClientDanylo{
                 self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             ClientCommand::GetKnownServers => {
-                self.handle_get_known_servers();
+                self.send_known_servers();
                 self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             }
             ClientCommand::StartFlooding => {
