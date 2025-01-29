@@ -225,18 +225,6 @@ impl ChatClientDanylo {
         }
     }
 
-    /// ###### Updates the message route and resends the fragment.
-    fn update_message_route_and_resend(&mut self, fragment_index: FragmentIndex, session_id: SessionId) {
-        match self.update_message_route(&session_id) {
-            Ok(_) => {
-                self.resend_fragment(fragment_index, session_id);
-            }
-            Err(err) => {
-                error!("Client {}: Impossible to resend fragment: {}", self.id, err);
-            }
-        }
-    }
-
     /// ###### Updates the network topology and routes.
     /// Removes the node that caused the error from the topology and routes.
     /// Finds new routes for the servers that need them.
@@ -272,23 +260,8 @@ impl ChatClientDanylo {
                     info!("Client {}: Found new route to the server {}: {:?}", self.id, server_id, path);
                 }
             } else {
-                warn!("Client {}: No route found to the server {}", self.id, server_id);
+                error!("Client {}: No route found to the server {}", self.id, server_id);
             }
-        }
-    }
-
-    /// ###### Updates the route for the message with the specified session ID.
-    /// If a new route is found, it updates the message with the new route.
-    /// If no route is found, it returns an error message.
-    fn update_message_route(&mut self, session_id: &SessionId) -> Result<(), String> {
-        let message = self.messages_to_send.get_mut(session_id).unwrap();
-        let dest_id = message.get_route().last().unwrap();
-
-        if let Some(new_route) = self.routes.get(dest_id) {
-            message.update_route(new_route.clone());
-            Ok(())
-        } else {
-            Err(format!("No routes to the server {}", dest_id))
         }
     }
 
@@ -328,6 +301,33 @@ impl ChatClientDanylo {
             }
         }
         None    // Return None if no path to the server is found.
+    }
+
+    /// ###### Updates the message route and resends the fragment.
+    fn update_message_route_and_resend(&mut self, fragment_index: FragmentIndex, session_id: SessionId) {
+        match self.update_message_route(&session_id) {
+            Ok(_) => {
+                self.resend_fragment(fragment_index, session_id);
+            }
+            Err(err) => {
+                error!("Client {}: Impossible to resend fragment: {}", self.id, err);
+            }
+        }
+    }
+
+    /// ###### Updates the route for the message with the specified session ID.
+    /// If a new route is found, it updates the message with the new route.
+    /// If no route is found, it returns an error message.
+    fn update_message_route(&mut self, session_id: &SessionId) -> Result<(), String> {
+        let message = self.messages_to_send.get_mut(session_id).unwrap();
+        let dest_id = message.get_route().last().unwrap();
+
+        if let Some(new_route) = self.routes.get(dest_id) {
+            message.update_route(new_route.clone());
+            Ok(())
+        } else {
+            Err(format!("No routes to the server {}", dest_id))
+        }
     }
 
     /// ###### Resends the fragment for the specified session.
