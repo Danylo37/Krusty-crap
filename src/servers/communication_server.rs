@@ -15,7 +15,7 @@ use wg_2024::{
         PacketType,
     },
 };
-use crate::general_use::DataScope::UpdateAll;
+use crate::general_use::DataScope::{UpdateAll, UpdateSelf};
 use super::server::CommunicationServer as CharTrait;
 use super::server::Server as MainTrait;
 

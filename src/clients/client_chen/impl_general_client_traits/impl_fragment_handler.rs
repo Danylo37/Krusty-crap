@@ -81,16 +81,16 @@ impl FragmentsHandler for ClientChen {
                                 if let Some(id) = initiator_id {
                                     self.process_message(id, message);
                                 } else {
-                                    eprintln!("Initiator ID not found for session: {:?}", session_id);
+                                    warn!("Initiator ID not found for session: {:?}", session_id);
                                 }
                             } else {
-                                eprintln!(
+                                warn!(
                                     "Failed to reassemble fragments for session: {:?}",
                                     session_id
                                 );
                             }
                         } else {
-                            eprintln!("No fragments found for session: {:?}", session_id);
+                            warn!("No fragments found for session: {:?}", session_id);
                         }
                     }
                 }
@@ -127,7 +127,7 @@ impl FragmentsHandler for ClientChen {
                 self.handle_media(media);
             }
             Response::Err(error) => {
-                eprintln!("Error received: {:?}", error);
+                warn!("Error received: {:?}", error);
             }
         }
     }

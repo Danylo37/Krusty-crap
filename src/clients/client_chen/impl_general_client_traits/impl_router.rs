@@ -88,7 +88,7 @@ impl Router for ClientChen {
             if let Some((_, destination_type)) = traces.last() {
                 updates.push((destination_id, *destination_type, traces.clone()));
             } else {
-                eprintln!("No traces found for destination: {:?}", destination_id);
+                warn!("No traces found for destination: {:?}", destination_id);
             }
         }
 
@@ -103,7 +103,7 @@ impl Router for ClientChen {
                 }
                 _ => {
                     // Handle other cases (e.g., NodeType::Drone)
-                    eprintln!("Unhandled node type: {:?}", destination_type);
+                    warn!("Unhandled node type: {:?}", destination_type);
                 }
             }
         }

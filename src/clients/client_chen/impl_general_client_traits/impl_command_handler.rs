@@ -63,28 +63,28 @@ impl CommandHandler for ClientChen{
     fn handle_controller_command_with_monitoring(&mut self, command: ClientCommand, sender_to_gui: Sender<String>) {
         match command {
             ClientCommand::UpdateMonitoringData => {
-                debug!("I'm here sending data with scope UpdateAll");
+                //debug!("I'm here sending data with scope UpdateAll");
                 self.send_display_data(sender_to_gui.clone(), DataScope::UpdateAll);
             },
 
             ClientCommand::AddSender(target_node_id, sender) => {
-                debug!("Received command to add sender");
+                //debug!("Received command to add sender");
                 self.communication_tools.packet_send.insert(target_node_id, sender);
                 self.send_display_data(sender_to_gui.clone(), UpdateSelf);
             },
             ClientCommand::RemoveSender(target_node_id) => {
-                debug!("Received command to remove sender");
+                //debug!("Received command to remove sender");
                 self.communication_tools.packet_send.remove(&target_node_id);
                 self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             },
 
             ClientCommand::StartFlooding => {
-                debug!("Received command to start flooding");
+                //debug!("Received command to start flooding");
                 self.do_flooding();
                 self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             },
             ClientCommand::GetKnownServers => {
-                debug!("Received command to get the know servers");
+                //debug!("Received command to get the know servers");
                 // Get the registered servers before the closure
                 let registered_servers = self.get_registered_servers();
 
@@ -112,22 +112,22 @@ impl CommandHandler for ClientChen{
             },
 
             ClientCommand::AskTypeTo(server_id) => {
-                debug!("Received command to get the ask type to");
+                //debug!("Received command to get the ask type to");
                 self.send_query(server_id, Query::AskType);
                 self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             },
             ClientCommand::RequestListFile(server_id) => {
-                debug!("Received command to request file list");
+                //debug!("Received command to request file list");
                 self.send_query(server_id, Query::AskListFiles);
                 self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             },
             ClientCommand::RequestText(server_id, file) => {
-                debug!("Received command to request text");
+                //debug!("Received command to request text");
                 self.send_query(server_id, Query::AskFile(file));
                 self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             },
             ClientCommand::RequestMedia(server_id, media_ref) => {
-                debug!("Received command to request media");
+                //debug!("Received command to request media");
                 self.send_query(server_id, Query::AskMedia(media_ref));
                 self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             },

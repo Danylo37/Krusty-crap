@@ -46,7 +46,8 @@ fn main() {
         });
     });
 
-    /*// UI thread
+    // UI thread
+    /*
     let ui_thread = thread::spawn(move || {
         ui::start_ui(my_net.simulation_controller);
     });*/
