@@ -52,3 +52,16 @@ fn main() {
         thread::sleep(Duration::from_secs(1));
     }
 }
+/*
+fn main() {
+    let (tx, rx) = unbounded();
+    let (sender_from_ws, receiver_from_ws) = unbounded();
+
+    // Initialize the network
+    let mut my_net = network_initializer::NetworkInitializer::new(tx.clone(), receiver_from_ws);
+    my_net.initialize_from_file("input.toml");
+    // Spawn UI thread
+    eprintln!("UI thread is running");
+    ui::start_ui(my_net.simulation_controller);
+
+}*
