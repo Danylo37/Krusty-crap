@@ -1,11 +1,12 @@
-mod network_initializer;
+pub mod network_initializer;
 mod servers;
 mod simulation_controller;
 mod general_use;
-mod ui;
+pub mod ui;
 mod clients;
 pub mod ui_traits;
 mod websocket;
+mod terminal_ui;
 
 extern crate rouille;
 
@@ -13,8 +14,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
-use crossbeam_channel::{unbounded, Sender};
-use log::info;
+use crossbeam_channel::{unbounded};
 use crate::ui_traits::Monitoring;
 
 // Modified main function
@@ -22,18 +22,21 @@ fn main() {
     // Initialize the logger
     env_logger::init();
 
+    // Create channels for communication
     let (tx, rx) = unbounded();
     let (sender_from_ws, receiver_from_ws) = unbounded();
 
+    // Run the simulation controller
     thread::spawn(move || {
+        // Initialize the network
         let mut my_net = network_initializer::NetworkInitializer::new(tx.clone(), receiver_from_ws);
         my_net.initialize_from_file("input.toml");
-
+        // Clone the shared simulation controller
         let mut simulation_controller = my_net.simulation_controller;
         eprintln!("Simulation Controller is running");
         simulation_controller.run_with_monitoring(tx.clone());
-
     });
+
 
     // Start WebSocket server
     websocket::start_websocket_server(rx, sender_from_ws);
@@ -45,13 +48,6 @@ fn main() {
             rouille::match_assets(&request, "static")
         });
     });
-
-    // UI thread
-    /*
-    let ui_thread = thread::spawn(move || {
-        ui::start_ui(my_net.simulation_controller);
-    });*/
-
 
     // Keep main thread alive
     loop {
