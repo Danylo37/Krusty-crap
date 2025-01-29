@@ -1,7 +1,7 @@
 //I am a god
 
 use crossbeam_channel::{select_biased, Receiver, Sender};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use log::info;
 use wg_2024::{
     network::{NodeId, SourceRoutingHeader},
@@ -22,7 +22,7 @@ pub trait Server{
 
     fn push_flood_id(&mut self, flood_id: FloodId);
     fn get_clients(&mut self) -> &mut Vec<NodeId>;
-    fn get_topology(&mut self) -> &mut HashMap<NodeId, Vec<NodeId>>;
+    fn get_topology(&mut self) -> &mut HashMap<NodeId, HashSet<NodeId>>;
     fn get_routes(&mut self) -> &mut HashMap<NodeId, Vec<NodeId>>;
 
     fn get_from_controller_command(&mut self) -> &mut Receiver<ServerCommand>;
@@ -153,15 +153,13 @@ pub trait Server{
             // Add the connection between the current and next node in both directions.
             self.get_topology()
                 .entry(current)
-                .or_insert_with(Vec::new)
-                .push(next);
-            info!("Added connection from {} to {}", current, next);
+                .or_insert_with(HashSet::new)
+                .insert(next);
 
             self.get_topology()
                 .entry(next)
-                .or_insert_with(Vec::new)
-                .push(current);
-            info!("Added connection from {} to {}", next, current);
+                .or_insert_with(HashSet::new)
+                .insert(current);
         }
     }
 

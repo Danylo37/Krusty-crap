@@ -1,22 +1,18 @@
+use super::server::Server as MainTrait;
+use super::server::TextServer as CharTrait;
+use crate::general_use::DataScope::UpdateAll;
+use crate::general_use::{DataScope, DisplayDataTextServer, Query, Response, ServerCommand, ServerEvent, ServerType};
+use crate::ui_traits::Monitoring;
 use crossbeam_channel::{select_biased, Receiver, Sender};
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
-use std::future::Future;
-use tokio::sync::mpsc;
-use tokio::select;
 use wg_2024::{
-    network::{NodeId},
+    network::NodeId,
     packet::{
         Packet,
         PacketType,
     },
 };
-use crate::clients::client_chen::Serialize;
-use crate::general_use::{DataScope, DisplayDataTextServer, Query, Response, ServerCommand, ServerEvent, ServerType};
-use crate::general_use::DataScope::UpdateAll;
-use crate::ui_traits::{Monitoring};
-use super::server::TextServer as CharTrait;
-use super::server::Server as MainTrait;
 
 type FloodId = u64;
 type SessionId = u64;
@@ -32,7 +28,7 @@ pub struct TextServer{
 
     //Flood-related
     pub clients: Vec<NodeId>,                                   // Available clients
-    pub topology: HashMap<NodeId, Vec<NodeId>>,             // Nodes and their neighbours
+    pub topology: HashMap<NodeId, HashSet<NodeId>>,             // Nodes and their neighbours
     pub routes: HashMap<NodeId, Vec<NodeId>>,                   // Routes to the servers
     pub flood_ids: Vec<FloodId>,
     pub counter: (FloodId, SessionId),
@@ -162,7 +158,7 @@ impl MainTrait for TextServer{
 
     fn push_flood_id(&mut self, flood_id: FloodId){ self.flood_ids.push(flood_id); }
     fn get_clients(&mut self) -> &mut Vec<NodeId>{ &mut self.clients }
-    fn get_topology(&mut self) -> &mut HashMap<NodeId, Vec<NodeId>>{ &mut self.topology }
+    fn get_topology(&mut self) -> &mut HashMap<NodeId, HashSet<NodeId>>{ &mut self.topology }
     fn get_routes(&mut self) -> &mut HashMap<NodeId, Vec<NodeId>>{ &mut self.routes }
 
     fn get_from_controller_command(&mut self) -> &mut Receiver<ServerCommand>{ &mut self.from_controller_command }
