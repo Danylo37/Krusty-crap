@@ -110,6 +110,7 @@ impl Monitoring for TextServer {
                             }
                             ServerCommand::RemoveSender(id) => {
                                 self.get_packet_send().remove(&id);
+                                self.update_topology_and_routes(id);
                                 self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
                             }
                             ServerCommand::ShortcutPacket(packet) => {
