@@ -12,6 +12,7 @@ use wg_2024::{
         PacketType,
     },
 };
+use crate::general_use::DataScope::UpdateSelf;
 
 type FloodId = u64;
 type SessionId = u64;
@@ -102,7 +103,7 @@ impl Monitoring for MediaServer {
                             }
                             ServerCommand::AddSender(id, sender) => {
                                 self.get_packet_send().insert(id, sender);
-                                //self.send_display_data(sender_to_gui.clone(), UpdateAll);
+                                self.send_display_data(sender_to_gui.clone(), UpdateSelf);
 
                             }
                             ServerCommand::RemoveSender(id) => {

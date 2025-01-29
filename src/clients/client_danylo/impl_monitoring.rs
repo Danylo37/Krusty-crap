@@ -5,7 +5,7 @@ use std::collections::{HashMap, HashSet};
 use crossbeam_channel::Sender;
 use log::{debug, info};
 use wg_2024::network::NodeId;
-use crate::general_use::DataScope::UpdateAll;
+use crate::general_use::DataScope::{UpdateAll, UpdateSelf};
 use super::{ChatClientDanylo, ChatHistory};
 
 
@@ -62,7 +62,7 @@ impl ChatClientDanylo{
             },
             ClientCommand::AddSender(id, sender) => {
                 self.add_sender(id, sender);
-                //self.send_display_data(sender_to_gui.clone(), UpdateAll);
+                self.send_display_data(sender_to_gui.clone(), UpdateSelf);
             }
             ClientCommand::RemoveSender(id) => {
                 self.remove_sender(id);

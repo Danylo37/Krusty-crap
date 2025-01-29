@@ -3,11 +3,10 @@ use std::{
     collections::HashMap,
     env, fs, thread,
 };
-use tokio::sync::Mutex;
-use std::sync::Arc;
 
 use crossbeam_channel::*;
 use rand::prelude::*;
+
 //Wg libraries
 use wg_2024::{
     config::{Client, Config, Drone, Server},
@@ -22,7 +21,6 @@ use crate::{
     clients::{
         client::Client as TraitClient,
         client_chen::ClientChen,
-        client_chen::web_browser_client_traits::WebBrowserClientTrait,
         client_danylo::ChatClientDanylo,
     },
     general_use::{ClientId, ClientCommand, ClientEvent, ServerEvent, ClientType, ServerType, DroneId, UsingTimes},
@@ -39,7 +37,6 @@ use rustbusters_drone::RustBustersDrone;
 use rusteze_drone::RustezeDrone;
 use fungi_drone::FungiDrone;
 use bagel_bomber::BagelBomber;
-use eframe::egui::util::hash;
 use skylink::SkyLinkDrone;
 use RF_drone::RustAndFurious;
 //use bobry_w_locie::drone::BoberDrone;
@@ -86,13 +83,13 @@ impl DroneBrand {
 
 pub struct NetworkInitializer {
     pub(crate) simulation_controller: SimulationController,
-    drone_channels: HashMap<NodeId, Sender<Packet>>,
-    client_channels: HashMap<NodeId, (Sender<Packet>, ClientType)>,
-    server_channels: HashMap<NodeId, (Sender<Packet>, ServerType)>,
-    drone_brand_usage: HashMap<DroneBrand, UsingTimes>,
-    client_type_usage: HashMap<ClientType, UsingTimes>,
-    sender_to_gui: Sender<String>,
-    command_senders: HashMap<NodeId, Sender<DroneCommand>>, // Add this field
+    pub drone_channels: HashMap<NodeId, Sender<Packet>>,
+    pub client_channels: HashMap<NodeId, (Sender<Packet>, ClientType)>,
+    pub server_channels: HashMap<NodeId, (Sender<Packet>, ServerType)>,
+    pub drone_brand_usage: HashMap<DroneBrand, UsingTimes>,
+    pub client_type_usage: HashMap<ClientType, UsingTimes>,
+    pub sender_to_gui: Sender<String>,
+    pub command_senders: HashMap<NodeId, Sender<DroneCommand>>, // Add this field
     //sender_to_gui: mpsc::Sender<Vec<u8>> for message packet
 
 }
