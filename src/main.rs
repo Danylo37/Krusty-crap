@@ -1,17 +1,15 @@
 pub mod network_initializer;
-mod servers;
-mod simulation_controller;
-mod general_use;
+pub mod servers;
+pub mod simulation_controller;
+pub mod general_use;
 pub mod ui;
-mod clients;
+pub mod clients;
 pub mod ui_traits;
-mod websocket;
-mod terminal_ui;
+pub mod websocket;
+pub mod terminal_ui;
 
 extern crate rouille;
 
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 use crossbeam_channel::{unbounded};
