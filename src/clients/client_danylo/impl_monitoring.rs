@@ -25,6 +25,7 @@ impl Monitoring for ChatClientDanylo {
         };
 
         self.controller_send.send(ClientEvent::ChatClientData(self.id, display_data, data_scope)).expect("Failed to send chat client data");
+        info!("Sending chat client dat");
     }
     fn run_with_monitoring(
         &mut self,
@@ -53,7 +54,7 @@ impl Monitoring for ChatClientDanylo {
 
 impl ChatClientDanylo{
     pub(crate) fn handle_command_with_monitoring(&mut self, command: ClientCommand, sender_to_gui: Sender<String>) {
-        eprintln!("Client {}: Handling command: {:?}", self.id, command);
+        info!("Client {}: Handling command: {:?}", self.id, command);
 
         match command {
             ClientCommand::UpdateMonitoringData => {
