@@ -15,7 +15,7 @@ use wg_2024::{
         PacketType,
     },
 };
-
+use crate::general_use::DataScope::UpdateAll;
 use super::server::CommunicationServer as CharTrait;
 use super::server::Server as MainTrait;
 
@@ -110,7 +110,7 @@ impl Monitoring for CommunicationServer {
                             }
                             ServerCommand::AddSender(id, sender) => {
                                 self.get_packet_send().insert(id, sender);
-                                //self.send_display_data(sender_to_gui.clone(), UpdateAll);
+                                self.send_display_data(sender_to_gui.clone(), UpdateSelf);
                             }
                             ServerCommand::RemoveSender(id) => {
                                 self.get_packet_send().remove(&id);

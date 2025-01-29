@@ -63,7 +63,7 @@ impl ChatClientDanylo{
             ClientCommand::AddSender(id, sender) => {
                 self.packet_send.insert(id, sender);
                 info!("Client {}: Added sender for node {}", self.id, id);
-                //self.send_display_data(sender_to_gui.clone(), UpdateAll);
+                self.send_display_data(sender_to_gui.clone(), UpdateSelf);
             }
             ClientCommand::RemoveSender(id) => {
                 self.packet_send.remove(&id);

@@ -3,6 +3,7 @@ use crate::ui_traits::Monitoring;
 use crate::clients::client_chen::{ClientChen, CommandHandler, FragmentsHandler, PacketsReceiver, Router, Sending};
 use std::collections::{HashMap};
 use crossbeam_channel::{Sender, select_biased};
+use log::log;
 use crate::general_use::{DataScope, DisplayDataWebBrowser};
 use crate::general_use::DataScope::UpdateAll;
 
@@ -38,7 +39,7 @@ impl Monitoring for ClientChen{
         };
 
         self.communication_tools.controller_send.send(ClientEvent::WebClientData(self.metadata.node_id, display_data, data_scope)).expect("Sending client data failed");
-        eprintln!("Data sent with scope {:?}", data_scope);
+        info!("Data sent with scope {:?}", data_scope);
     }
 
     fn run_with_monitoring(&mut self, sender_to_gui: Sender<String>) {

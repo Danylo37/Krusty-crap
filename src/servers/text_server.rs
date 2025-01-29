@@ -1,6 +1,6 @@
 use super::server::Server as MainTrait;
 use super::server::TextServer as CharTrait;
-use crate::general_use::DataScope::UpdateAll;
+use crate::general_use::DataScope::{UpdateAll, UpdateSelf};
 use crate::general_use::{DataScope, DisplayDataTextServer, Query, Response, ServerCommand, ServerEvent, ServerType};
 use crate::ui_traits::Monitoring;
 use crossbeam_channel::{select_biased, Receiver, Sender};
@@ -105,7 +105,7 @@ impl Monitoring for TextServer {
                             }
                             ServerCommand::AddSender(id, sender) => {
                                 self.get_packet_send().insert(id, sender);
-                                //self.send_display_data(sender_to_gui.clone(), UpdateAll);
+                                self.send_display_data(sender_to_gui.clone(), UpdateSelf);
 
                             }
                             ServerCommand::RemoveSender(id) => {

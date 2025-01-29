@@ -2,7 +2,7 @@ use crate::clients::client_chen::{ClientChen, CommandHandler, SpecificInfo};
 use crate::clients::client_chen::prelude::*;
 use crate::clients::client_chen::general_client_traits::*;
 use crate::general_use::{DataScope, ServerType};
-use crate::general_use::DataScope::UpdateAll;
+use crate::general_use::DataScope::{UpdateAll, UpdateSelf};
 use crate::ui_traits::Monitoring;
 
 impl CommandHandler for ClientChen{
@@ -70,7 +70,7 @@ impl CommandHandler for ClientChen{
             ClientCommand::AddSender(target_node_id, sender) => {
                 debug!("Received command to add sender");
                 self.communication_tools.packet_send.insert(target_node_id, sender);
-                //self.send_display_data(sender_to_gui.clone(), UpdateAll);
+                self.send_display_data(sender_to_gui.clone(), UpdateSelf);
             },
             ClientCommand::RemoveSender(target_node_id) => {
                 debug!("Received command to remove sender");
