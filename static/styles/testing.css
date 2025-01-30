@@ -42,7 +42,6 @@ html, body {
 .search-bar:focus-within {
     background-color: #FFF;
     box-shadow: 0 1px 1px 0 rgba(65,69,73,0.3), 0 1px 3px 1px rgba(65,69,73,0.15);
-    border: 1px solid transparent;
 }
 
 .search-icon {
@@ -107,7 +106,7 @@ html, body {
     box-sizing: border-box;
     display: flex;
     height: 100%;
-    padding: 0px 5px 20px 5px;
+    padding: 0 5px 20px 5px;
 }
 
 /* SIDEBAR - Placeholder for future content */
