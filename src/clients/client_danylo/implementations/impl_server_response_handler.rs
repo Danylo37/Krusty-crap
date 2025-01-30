@@ -6,7 +6,7 @@ impl ServerResponseHandler for ChatClientDanylo {
     /// ###### Handles the server response.
     /// Processes the server response based on its type and takes appropriate actions.
     fn handle_server_response(&mut self, response: Option<Response>, server_id: ServerId) {
-        debug!("Client {}: Handling server response for server {}: {:?}", self.id, server_id, response);
+        debug!("Client {}: Handling response from server {}: {:?}", self.id, server_id, response);
 
         if let Some(response) = response {
             match response {
@@ -30,8 +30,8 @@ impl ServerResponseHandler for ChatClientDanylo {
     }
 
     /// ###### Handles the server type response.
-    /// Updates the server type in the `servers` map and sets the registration status if the server is of type `Communication`
-    /// and marks the response as received.
+    /// Updates the server type in the `servers` map and
+    /// sets the registration status if the server is of type `Communication`.
     fn handle_server_type(&mut self, server_id: ServerId, server_type: ServerType) {
         info!("Client {}: Server type received successfully.", self.id);
 
@@ -45,7 +45,7 @@ impl ServerResponseHandler for ChatClientDanylo {
     }
 
     /// ###### Handles the client registration response.
-    /// Updates the registration status for the specified server and marks the response as received.
+    /// Updates the registration status for the specified server.
     fn handle_client_registered(&mut self, server_id: ServerId) {
         info!("Client {}: Client registered successfully.", self.id);
 
@@ -58,7 +58,9 @@ impl ServerResponseHandler for ChatClientDanylo {
         info!("Client {}: List of clients received successfully.", self.id);
 
         // Remove self id from the clients list if it exists
-        clients.retain(|&client_id| client_id != self.id);
+        if clients.contains(&self.id) {
+            clients.retain(|&client_id| client_id != self.id);
+        }
 
         self.clients.insert(server_id, clients);
     }

@@ -12,8 +12,6 @@ use super::{CommandHandler, ChatClientDanylo, PacketHandler, Senders, GeneratorI
 impl CommandHandler for ChatClientDanylo {
     /// ###### Handles incoming commands.
     fn handle_command(&mut self, command: ClientCommand) {
-        debug!("Client {}: Handling command: {:?}", self.id, command);
-
         match command {
             ClientCommand::AddSender(id, sender) => {
                 self.add_sender(id, sender);
@@ -108,8 +106,8 @@ impl CommandHandler for ChatClientDanylo {
 
         // Attempt to send the flood request to all neighbors.
         for sender in &self.packet_send {
-            if let Err(_) = sender.1.send(packet.clone()) {
-                error!("Client {}: Failed to send FloodRequest to the drone {}.", self.id, sender.0);
+            if let Err(err) = sender.1.send(packet.clone()) {
+                error!("Client {}: Failed to send FloodRequest to the drone {}: {}", self.id, sender.0, err);
             } else {
                 info!("Client {}: FloodRequest sent to the drone with id {}.", self.id, sender.0);
 
@@ -119,10 +117,9 @@ impl CommandHandler for ChatClientDanylo {
         }
     }
 
-    /// ###### Requests the type of specified server.
-    /// Sends a query to the server and waits for a response.
+    /// ###### Requests the server type for a specified server.
     fn request_server_type(&mut self, server_id: ServerId) {
-        info!("Client {}: Requesting server type for server {}", self.id, server_id);
+        debug!("Client {}: Requesting server type for server {}", self.id, server_id);
 
         let result = self.create_and_send_message(Query::AskType, server_id);
 
@@ -142,8 +139,9 @@ impl CommandHandler for ChatClientDanylo {
         }
     }
 
-    /// ###### Sends a message to a specified client via a specified server.
-    /// Sends the message and waits for a response.
+    /// ###### Sends a message to a specified client.
+    /// Sends a message to the server that the client is connected to,
+    /// which then forwards the message to the specified client.
     fn send_message_to(&mut self, to: ClientId, message: Message) {
         let option_server_id = self.clients.iter()
             .find(|(_, clients)| clients.contains(&to))
@@ -157,7 +155,7 @@ impl CommandHandler for ChatClientDanylo {
             }
         };
 
-        info!("Client {}: Sending message to client {} via server {}", self.id, to, server_id);
+        debug!("Client {}: Sending message to client {} via server {}", self.id, to, server_id);
 
         let result = self.create_and_send_message(Query::SendMessageTo(to, message.clone()), server_id);
 
@@ -180,16 +178,15 @@ impl CommandHandler for ChatClientDanylo {
     }
 
     /// ###### Requests to register the client on a specified server.
-    /// Sends a registration query to the server and waits for a response.
     fn request_to_register(&mut self, server_id: ServerId) {
         if let Some(is_registered) = self.is_registered.get(&server_id) {
             if *is_registered {
-                info!("Client {}: Already registered on server {}", self.id, server_id);
+                warn!("Client {}: Already registered on server {}", self.id, server_id);
                 return;
             }
         }
 
-        info!("Client {}: Requesting to register on server {}", self.id, server_id);
+        debug!("Client {}: Requesting to register on server {}", self.id, server_id);
 
         let result = self.create_and_send_message(Query::RegisterClient(self.id), server_id);
 
@@ -210,9 +207,8 @@ impl CommandHandler for ChatClientDanylo {
     }
 
     /// ###### Requests the list of clients from a specified server.
-    /// Sends a query to the server and waits for a response.
     fn request_clients_list(&mut self, server_id: ServerId) {
-        info!("Client {}: Requesting clients list from server {}", self.id, server_id);
+        debug!("Client {}: Requesting clients list from server {}", self.id, server_id);
 
         let result = self.create_and_send_message(Query::AskListClients, server_id);
 

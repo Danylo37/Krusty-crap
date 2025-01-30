@@ -12,8 +12,6 @@ use super::{PacketHandler, ChatClientDanylo, Senders, ServerResponseHandler, Rea
 impl PacketHandler for ChatClientDanylo {
     /// ###### Handles incoming packets and delegates them to the appropriate handler based on the packet type.
     fn handle_packet(&mut self, packet: Packet) {
-        debug!("Client {}: Handling packet: {:?}", self.id, packet);
-
         match packet.pack_type.clone() {
             PacketType::Ack(ack) => self.handle_ack(ack.fragment_index, packet.session_id),
             PacketType::Nack(nack) => self.handle_nack(nack, packet.session_id),
@@ -57,7 +55,7 @@ impl PacketHandler for ChatClientDanylo {
     /// ###### Handles the negative acknowledgment (NACK) for a given session.
     /// Processes the NACK for a specific session and takes appropriate action based on the NACK type.
     fn handle_nack(&mut self, nack: Nack, session_id: SessionId) {
-        warn!("Client {}: Handling NACK for session {}: {:?}", self.id, session_id, nack);
+        debug!("Client {}: Handling NACK for session {}: {:?}", self.id, session_id, nack);
 
         match nack.nack_type {
             NackType::ErrorInRouting(id) => {
@@ -84,7 +82,7 @@ impl PacketHandler for ChatClientDanylo {
             neighbors.remove(&error_node);
         }
         self.topology.remove(&error_node);
-        info!("Client {}: Removed node {} from the topology", self.id, error_node);
+        debug!("Client {}: Removed node {} from the topology", self.id, error_node);
 
         // Replace the paths that contain the node that caused the error with an empty vector.
         for route in self.routes.values_mut() {
@@ -92,7 +90,7 @@ impl PacketHandler for ChatClientDanylo {
                 *route = Vec::new();
             }
         }
-        info!("Client {}: Routes with node {} cleared", self.id, error_node);
+        debug!("Client {}: Routes with node {} cleared", self.id, error_node);
 
         // Collect server IDs that need new routes.
         let servers_to_update: Vec<ServerId> = self
@@ -107,7 +105,7 @@ impl PacketHandler for ChatClientDanylo {
             if let Some(new_path) = self.find_route_to(server_id) {
                 if let Some(path) = self.routes.get_mut(&server_id) {
                     *path = new_path;
-                    info!("Client {}: Found new route to the server {}: {:?}", self.id, server_id, path);
+                    debug!("Client {}: Found new route to the server {}: {:?}", self.id, server_id, path);
                 }
             } else {
                 error!("Client {}: No route found to the server {}", self.id, server_id);
@@ -153,7 +151,7 @@ impl PacketHandler for ChatClientDanylo {
         None    // Return None if no path to the server is found.
     }
 
-    /// ###### Updates the message route and resends the fragment.
+    /// ###### Updates the message route and resends the fragment if possible.
     fn update_message_route_and_resend(&mut self, fragment_index: FragmentIndex, session_id: SessionId) {
         match self.update_message_route(&session_id) {
             Ok(_) => {
@@ -180,7 +178,7 @@ impl PacketHandler for ChatClientDanylo {
         }
     }
 
-    /// ###### Handles a received message fragment.
+    /// ###### Handles received message fragment.
     /// Adds the fragment to the collection for the session and checks if it is the last fragment.
     /// If it is the last fragment, reassembles the message and processes the server response.
     fn handle_fragment(&mut self, fragment: Fragment, session_id: SessionId, server_id: ServerId) {
@@ -220,8 +218,7 @@ impl PacketHandler for ChatClientDanylo {
     /// ###### Handles the flood response by updating routes and topology.
     ///
     /// This function processes the received `FloodResponse` by updating the routes and servers
-    /// based on the path trace provided in the response. It also updates the network topology
-    /// with the new path information and updates the time of the last response.
+    /// based on the path trace provided in the response.
     fn handle_flood_response(&mut self, flood_response: FloodResponse) {
         debug!("Client {}: Handling flood response: {:?}", self.id, flood_response);
 
@@ -249,7 +246,7 @@ impl PacketHandler for ChatClientDanylo {
                 .or_insert_with(HashSet::new)
                 .insert(current);
         }
-        debug!("Client {}: Updated topology with path: {:?}", self.id, path);
+        info!("Client {}: Updated topology with path: {:?}", self.id, path);
     }
 
     /// ###### Updates the routes and servers based on the provided path.

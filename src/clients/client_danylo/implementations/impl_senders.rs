@@ -30,22 +30,22 @@ impl Senders for ChatClientDanylo {
         packet.routing_header.increase_hop_index();
 
         debug!("Client {}: Sending packet to next hop: {:?}", self.id, packet);
+
         // Attempt to send the packet to the next hop.
-        if sender.send(packet.clone()).is_err() {
-            return Err("Error sending packet to next hop.".to_string());
-        } else {
-            info!("Client {}: Packet sent to next hop: {}", self.id, next_hop_id);
+        match sender.send(packet.clone()) {
+            Ok(_) => {
+                // Send the 'PacketSent' event to the simulation controller
+                self.send_event(ClientEvent::PacketSent(packet));
+                Ok(())
+            }
+            Err(err) => {
+                Err(format!("Failed to send packet to next hop: {}", err))
+            }
         }
-
-        // Send the 'PacketSent' event to the simulation controller
-        self.send_event(ClientEvent::PacketSent(packet));
-
-        Ok(())
     }
 
     /// ###### Sends an acknowledgment (ACK) for a received fragment.
     /// Creates an ACK packet and sends it to the next hop.
-    /// Logs the success or failure of the send operation.
     fn send_ack(&mut self, fragment_index: FragmentIndex, session_id: SessionId, mut routing_header: SourceRoutingHeader) {
         // Reverse the routing header and reset the hop index.
         routing_header.reverse();
@@ -65,7 +65,6 @@ impl Senders for ChatClientDanylo {
     }
 
     /// ###### Sends an event to the simulation controller.
-    /// Logs the success or failure of the send operation.
     fn send_event(&self, event: ClientEvent) {
         let result = self.controller_send.send(event.clone());
         let event_name = match event {
@@ -98,7 +97,7 @@ impl Senders for ChatClientDanylo {
 
     /// ###### Resends queries that were waiting for the route to the server.
     /// Iterates over the queries to resend and sends them to the corresponding servers.
-    /// If the server is not in the routing table, the query is not resent.
+    /// If the server does not have a route, the query is not resent.
     /// If the query is successfully sent, it is removed from the queue.
     fn resend_queries(&mut self) {
         let queries = self.queries_to_resend.clone();

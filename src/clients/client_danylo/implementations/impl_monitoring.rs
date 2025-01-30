@@ -36,12 +36,14 @@ impl Monitoring for ChatClientDanylo {
             crossbeam_channel::select_biased! {
                 recv(self.controller_recv) -> command_res => {
                     if let Ok(command) = command_res {
+                        info!("Client {}: Received command: {:?}", self.id, command);
                         self.handle_command_with_monitoring(command, sender_to_gui.clone());
                         //self.send_display_data(sender_to_gui.clone(), UpdateSelf);
                     }
                 },
                 recv(self.packet_recv) -> packet_res => {
                     if let Ok(packet) = packet_res {
+                        info!("Client {}: Received packet: {:?}", self.id, packet);
                         self.handle_packet(packet);
                         //self.send_display_data(sender_to_gui.clone(), UpdateSelf);
                     }
@@ -52,9 +54,7 @@ impl Monitoring for ChatClientDanylo {
 }
 
 impl ChatClientDanylo{
-    pub(crate) fn handle_command_with_monitoring(&mut self, command: ClientCommand, sender_to_gui: Sender<String>) {
-        info!("Client {}: Handling command: {:?}", self.id, command);
-
+    fn handle_command_with_monitoring(&mut self, command: ClientCommand, sender_to_gui: Sender<String>) {
         match command {
             ClientCommand::UpdateMonitoringData => {
                 self.send_display_data(sender_to_gui.clone(), UpdateAll);

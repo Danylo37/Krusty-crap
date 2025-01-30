@@ -87,11 +87,13 @@ impl Client for ChatClientDanylo {
             select_biased! {
                 recv(self.controller_recv) -> command_res => {
                     if let Ok(command) = command_res {
+                        info!("Client {}: Received command: {:?}", self.id, command);
                         self.handle_command(command);
                     }
                 },
                 recv(self.packet_recv) -> packet_res => {
                     if let Ok(packet) = packet_res {
+                        info!("Client {}: Received packet: {:?}", self.id, packet);
                         self.handle_packet(packet);
                     }
                 },
