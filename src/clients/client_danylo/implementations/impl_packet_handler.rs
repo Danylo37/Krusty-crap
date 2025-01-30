@@ -1,5 +1,5 @@
 use std::collections::{HashSet, VecDeque};
-use log::{debug, error, info, warn};
+use log::{debug, error, info};
 
 use wg_2024::{
     packet::{Fragment, Nack, NackType, Packet, PacketType, FloodRequest, NodeType, FloodResponse},

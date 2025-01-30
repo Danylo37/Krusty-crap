@@ -5,9 +5,8 @@ use serde::{Deserialize, Serialize};
 
 use wg_2024::{
     network::NodeId,
-    packet::Packet,
+    packet::{Packet, NodeType},
 };
-use crate::clients::client_chen::NodeType;
 
 pub type Message = String;
 pub type MediaRef = String;
