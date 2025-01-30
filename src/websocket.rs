@@ -24,6 +24,9 @@ pub enum DroneCommandWs {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ClientCommandWs {
     UpdateMonitoringData,
+
+    //Now just to test Web Client
+    GetKnownServers,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

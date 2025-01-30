@@ -14,9 +14,10 @@ use std::thread;
 use std::time::Duration;
 use crossbeam_channel::{unbounded};
 use crate::ui_traits::Monitoring;
+use crate::clients::client_chen::functionality_test;
 
 // Modified main function
-fn main() {
+/*fn main() {
     // Initialize the logger
     env_logger::init();
 
@@ -51,7 +52,7 @@ fn main() {
     loop {
         thread::sleep(Duration::from_secs(1));
     }
-}
+}*/
 /*
 fn main() {
     let (tx, rx) = unbounded();
@@ -61,7 +62,32 @@ fn main() {
     let mut my_net = network_initializer::NetworkInitializer::new(tx.clone(), receiver_from_ws);
     my_net.initialize_from_file("input.toml");
     // Spawn UI thread
-    eprintln!("UI thread is running");
-    ui::start_ui(my_net.simulation_controller);
+    thread::spawn(move || {
+        eprintln!("UI thread is running");
+        ui::start_ui(my_net.simulation_controller);
+    });
 
-}*
+    loop {
+        thread::sleep(Duration::from_secs(1));
+    }
+
+}
+*/
+fn main() {
+    let (tx, rx) = unbounded();
+    let (sender_from_ws, receiver_from_ws) = unbounded();
+
+    // Initialize the network
+    let mut my_net = network_initializer::NetworkInitializer::new(tx.clone(), receiver_from_ws);
+    my_net.initialize_from_file("input.toml");
+    // Spawn UI thread
+    thread::spawn(move || {
+        eprintln!("Doing functionality test for Web Client");
+        functionality_test::start_testing(my_net.simulation_controller);
+    });
+
+    loop {
+        thread::sleep(Duration::from_secs(1));
+    }
+
+}

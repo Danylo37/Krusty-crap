@@ -51,19 +51,32 @@ impl FloodingPacketsHandler for ClientChen {
     /// When you receive a flood response, you need first to update the topology with the elements of the path_traces
     /// everyone's connected_node_ids (using the hashset's methods).
     fn handle_flood_response(&mut self, packet: Packet, response: &FloodResponse) {
-        if response.flood_id != self.status.flood_id{
+        // Debugging: Print the received path trace
+        eprintln!("Received flood response with the path: {:?}", response.path_trace);
+
+        // Check if path_trace is empty
+        if response.path_trace.is_empty() {
+            eprintln!("ERROR: path_trace is empty!");
             return;
         }
-        // Insert the packet into the input_packet_disk with session_id as key
-        // For output_buffer
+
+        // Ensure the flood_id matches
+        if response.flood_id != self.status.flood_id {
+            return;
+        }
+
+        // Insert the packet into the output_buffer
         self.storage.output_buffer
             .entry(packet.session_id)
             .or_insert_with(HashMap::new)
             .insert(0, packet);
 
-        self.storage.irresolute_path_traces.insert(response.path_trace.last().unwrap().0 , response.path_trace.clone());
+        // Safely insert into irresolute_path_traces
+        if let Some((last_node, _)) = response.path_trace.last().copied() {
+            self.storage.irresolute_path_traces.insert(last_node, response.path_trace.clone());
+        }
 
-        // Update the network topology and connect nodes in the path trace
+        // Update the network topology
         let mut path_iter = response.path_trace.iter().peekable();
         let mut previous_node: Option<NodeId> = None;
 
@@ -71,7 +84,7 @@ impl FloodingPacketsHandler for ClientChen {
             // Peek the next node in the path
             let next_node = path_iter.peek().map(|&(next_id, _)| next_id);
 
-            // Get an entry for the node_id, initializing if it doesn't exist
+            // Ensure entry exists for the node
             let entry = self.network_info.topology.entry(node_id).or_insert_with(|| {
                 match node_type {
                     NodeType::Server => NodeInfo {
@@ -91,54 +104,60 @@ impl FloodingPacketsHandler for ClientChen {
                         node_id,
                         specific_info: SpecificInfo::DroneInfo(DroneInformation {
                             connected_nodes_ids: HashSet::new(),
-                            //drone_brand: DroneBrand::Undefined,
                         }),
                     },
                 }
             });
 
-            // Update the connected_nodes_ids with previous and next node
-            if let SpecificInfo::ServerInfo(server_info) = &mut entry.specific_info {
-                if let Some(prev) = previous_node {
-                    server_info.connected_nodes_ids.insert(prev);
+            // Safely update connected_nodes_ids
+            match &mut entry.specific_info {
+                SpecificInfo::ServerInfo(server_info) => {
+                    if let Some(prev) = previous_node {
+                        server_info.connected_nodes_ids.insert(prev);
+                    }
+                    if let Some(&next) = next_node {
+                        server_info.connected_nodes_ids.insert(next);
+                    }
                 }
-                if let Some(&next) = next_node {
-                    server_info.connected_nodes_ids.insert(next);
+                SpecificInfo::ClientInfo(client_info) => {
+                    if let Some(prev) = previous_node {
+                        client_info.connected_nodes_ids.insert(prev);
+                    }
+                    if let Some(&next) = next_node {
+                        client_info.connected_nodes_ids.insert(next);
+                    }
                 }
-            } else if let SpecificInfo::ClientInfo(client_info) = &mut entry.specific_info {
-                if let Some(prev) = previous_node {
-                    client_info.connected_nodes_ids.insert(prev);
-                }
-                if let Some(&next) = next_node {
-                    client_info.connected_nodes_ids.insert(next);
-                }
-            } else if let SpecificInfo::DroneInfo(drone_info) = &mut entry.specific_info {
-                if let Some(prev) = previous_node {
-                    drone_info.connected_nodes_ids.insert(prev);
-                }
-                if let Some(&next) = next_node {
-                    drone_info.connected_nodes_ids.insert(next);
+                SpecificInfo::DroneInfo(drone_info) => {
+                    if let Some(prev) = previous_node {
+                        drone_info.connected_nodes_ids.insert(prev);
+                    }
+                    if let Some(&next) = next_node {
+                        drone_info.connected_nodes_ids.insert(next);
+                    }
                 }
             }
-            // Update the previous node
+
+            // Update previous_node safely
             previous_node = Some(node_id);
         }
-        ///update the routing table
-        if let Some((destination_id, destination_type)) = response.path_trace.last().cloned() {
-            // Ignore drones or mismatched flood IDs
+
+        // Update routing table
+        if let Some((destination_id, destination_type)) = response.path_trace.last().copied() {
             if destination_type == NodeType::Drone || response.flood_id != self.status.flood_id {
                 return;
             }
-            // Update the routing table and communicable nodes
+
+            // Use match to call the correct update function
             match destination_type {
                 NodeType::Server => {
-                    self.update_routing_for_server(destination_id, response.clone().path_trace);
+                    self.update_routing_for_server(destination_id, response.path_trace.clone());
                 }
                 NodeType::Client => {
-                    self.update_routing_for_client(destination_id, response.clone().path_trace);
+                    self.update_routing_for_client(destination_id, response.path_trace.clone());
                 }
                 _ => {}
             }
         }
     }
+
 }
