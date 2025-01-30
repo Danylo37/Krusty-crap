@@ -3,6 +3,8 @@
 <head>
 
     <link rel="stylesheet" href="styles/testing.css">
+    <link rel="icon" href="content_objects/image_icon_pc.png" type="image/png"></link>
+
     <title>Testing</title>
 
 </head>
@@ -27,9 +29,22 @@
 
     <!-- Body -->
     <div id="body-content-ui">
-        <div id="side-bar-content-ui"></div>
+        <div id="side-bar-content-ui" style="display:none"></div>
 
         <div id="content-container-content-ui">
+            <!-- SERVER SELECTOR -->
+            <div id="server-selector">
+                <span id="current-server">Server1</span>
+
+                <div class="server-nav">
+                    <img src="content_objects/up_arrow.png" alt="Up" class="server-arrow" onclick="navigateServer(-1)">
+                    <img src="content_objects/down_arrow.png" alt="Down" class="server-arrow" onclick="navigateServer(1)">
+                </div>
+            </div>
+
+
+
+
             <!-- File List -->
             <table class="file-list">
                 <thead>
@@ -57,6 +72,23 @@
                 </tr>
                 </tbody>
             </table>
+        </div>
+
+
+    </div>
+
+
+    <!-- Pop-up file -->
+    <div id="file-popup" class="popup-overlay" onclick="closePopup()">
+        <div class="popup-content" onclick="event.stopPropagation();">
+            <!-- Close Button -->
+            <button class="close-button" onclick="closePopup()">X</button>
+
+            <!-- File Title -->
+            <h2 id="popup-title"></h2>
+
+            <!-- File Content -->
+            <div id="popup-file-content"></div>
         </div>
     </div>
 </div>
