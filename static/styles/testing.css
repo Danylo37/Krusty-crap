@@ -1,0 +1,146 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100vh; /* Ensure the body fits within the viewport */
+}
+
+#content-ui{
+    background-color: #F8FAFD;
+    display:flex;
+    flex-direction: column;
+    height:100%;
+}
+
+/* CONTENT UI - HEADER */
+#header-content-ui {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+}
+
+.drive-logo {
+    height: 40px;
+}
+
+/* SEARCH BAR */
+.search-bar {
+    display: flex;
+    align-items: center;
+    background-color: #E9EEF6;
+    border-radius: 24px;
+    padding: 10px 15px;
+    width:60%;
+}
+
+.search-bar:focus-within {
+    background-color: #FFF;
+    box-shadow: 0 1px 1px 0 rgba(65,69,73,0.3), 0 1px 3px 1px rgba(65,69,73,0.15);
+    border: 1px solid transparent;
+}
+
+.search-icon {
+    width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.search-input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 14px;
+    width: 100%;
+}
+
+.filter-icon {
+    width: 30px;
+    height: 30px;
+    padding: 0 6px;
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+.search-icon:hover, .filter-icon:hover {
+    opacity: 0.7;
+    transform: scale(1.1);
+}
+
+
+/* CONTENT UI - BODY */
+#body-content-ui {
+    box-sizing: border-box;
+    display: flex;
+    height: 100%;
+    padding: 5px 0 20px 20px;
+}
+
+/* SIDEBAR - Placeholder for future content */
+#side-bar-content-ui {
+    flex: 1;
+    background-color: transparent;
+}
+
+/* MAIN CONTENT CONTAINER */
+#content-container-content-ui {
+    box-sizing: border-box;
+    flex: 4;
+    background: #FFFFFF;
+    border-radius: 1rem;
+    margin: 0 20px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow-y:scroll;
+}
+
+#content-container-content-ui::-webkit-scrollbar {
+    width: 10px;
+}
+#content-container-content-ui::-webkit-scrollbar-track {
+    background: #FFFFFF;
+    border-radius: 10px;
+}
+#content-container-content-ui::-webkit-scrollbar-thumb {
+    background: #BCC1C8;
+    border-radius: 10px;
+    border: 2px solid #FFFFFF;
+}
+#content-container-content-ui::-webkit-scrollbar-thumb:hover {
+    background: #A5ACB5;
+}
+
+.file-list thead tr:hover {
+    background-color: transparent !important;
+}
+
+.file-list {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.file-list th, .file-list td {
+    padding: 10px;
+    text-align: left;
+}
+
+.file-list th {
+    font-weight: bold;
+    border-bottom: 2px solid #ccc;
+}
+
+.file-list tr {
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.file-list tr:hover {
+    background-color: #f5f5f5;
+}
+
+/* LOGOUT BUTTON */
+.log_out_button {
+    width: 40px;
+    cursor: pointer;
+}
