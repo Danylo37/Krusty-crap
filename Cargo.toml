@@ -4,14 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 
-[[bin]]
-name = "ui"
-path = "src/terminal_ui.rs"
-
-[[bin]]
-name = "networkapp"
-path = "src/main.rs"
-
 [dependencies]
 #libraries
 wg_2024 = { git = "https://github.com/WGL-2024/WGL_repo_2024.git", features = ["serialize", "debug"] }

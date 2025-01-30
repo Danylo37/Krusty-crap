@@ -16,6 +16,7 @@ pub type ServerId = NodeId;
 pub type ClientId = NodeId;
 pub type DroneId = NodeId;
 pub type InitiatorId = NodeId;
+pub type DestinationId = NodeId;
 pub type SessionId = u64;
 pub type FloodId = u64;
 pub type FragmentIndex = u64;
@@ -160,6 +161,10 @@ pub enum ClientCommand {
     GetKnownServers,
     RegisterToServer(ServerId),
     AskListClients(ServerId),
+
+
+    //commands for testing
+    RequestRoutes(DestinationId),
 }
 
 
@@ -171,6 +176,7 @@ pub enum ClientEvent {
 
     PacketSent(Packet),
     KnownServers(Vec<(NodeId, ServerType, bool)>),
+
 }
 
 //Queries (Client -> Server)

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <link rel="stylesheet" href="styles/testing.css">
+    <title>Testing</title>
+
+</head>
+
+<body>
+
+<!-- CONTENT APPLICATION -->
+<div id="content-ui" style="position: relative;">
+    <!-- Header -->
+    <div id="header-content-ui">
+        <img src="content_objects/google_drive.png" alt="Google Drive" class="drive-logo">
+
+        <div class="search-bar">
+            <img src="content_objects/search_icon.png" alt="Search Icon" class="search-icon" onclick="searchGoogleDrive()">
+            <input type="text" class="search-input" placeholder="Search" onkeypress="handleSearchKeyPress(event)">
+            <img src="content_objects/filter_icon_png.png" alt="Filter Icon" class="filter-icon" onclick="filterGoogleDrive()">
+        </div>
+
+        <!-- Logout Button -->
+        <img src="content_objects/logout_icon.png" alt="Log Out" class="log_out_button" onclick="logOut()">
+    </div>
+
+    <!-- Body -->
+    <div id="body-content-ui">
+        <div id="side-bar-content-ui"></div>
+
+        <div id="content-container-content-ui">
+            <!-- File List -->
+            <table class="file-list">
+                <thead>
+                <tr>
+                    <th>File Name</th>
+                    <th style="text-align:right; ">Owner</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>Document1.pdf</td>
+                    <td style="text-align:right;">Server1</td>
+                </tr>
+                <tr>
+                    <td>Image.png</td>
+                    <td style="text-align:right;">Server1</td>
+                </tr>
+                <tr>
+                    <td>Presentation.pptx</td>
+                    <td style="text-align:right;">Server1</td>
+                </tr>
+                <tr>
+                    <td>Spreadsheet.xlsx</td>
+                    <td style="text-align:right;">Server1</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="js/testing.js"></script>
+
+</body>

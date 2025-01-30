@@ -56,7 +56,18 @@ impl CommandHandler for ClientChen{
             ClientCommand::RequestMedia(server_id, media_ref) => {
                 self.send_query(server_id, Query::AskMedia(media_ref));
             }
+            //testing command
+            ClientCommand::RequestRoutes(destination_id) => {
+                if let Some(routes) = self.communication.routing_table.get(&destination_id) {
+                    eprintln!("The routes from {} to {} are: \n\
+                     {:?}", self.metadata.node_id, destination_id, routes);
+                }
+            }
             _=>{}
+
+            ClientCommand::StartFlooding => {
+                self.do_flooding();
+            }
         }
     }
 
@@ -131,6 +142,15 @@ impl CommandHandler for ClientChen{
                 self.send_query(server_id, Query::AskMedia(media_ref));
                 self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
             },
+            ClientCommand::RequestRoutes(destination_id) => {
+                if let Some(routes) = self.communication.routing_table.get(&destination_id) {
+                    eprintln!("The routes from {} to {} are: \n\
+                     {:?}", self.metadata.node_id, destination_id, routes);
+                }
+            }
+            ClientCommand::StartFlooding => {
+                self.do_flooding();
+            }
             _=>{}
         }
     }
