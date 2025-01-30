@@ -33,40 +33,29 @@ impl Router for ClientChen {
 
     fn update_routing_for_server(&mut self, destination_id: NodeId, path_trace: Vec<(NodeId, NodeType)>) {
         //ask some necessary queries to the server, to get the communicable clients as early as possible.
-        self.storage.irresolute_path_traces.remove(&destination_id);
+        // useful for the chat clients
+        // self.storage.irresolute_path_traces.remove(&destination_id);
         let hops = self.get_hops_from_path_trace(path_trace);
+
+        //this will be done from the controller.
         self.send_query(destination_id, Query::AskType);
-        self.send_query(destination_id, Query::AskListClients);   //for this query the content server will eventually not drop a response.
         self.communication.routing_table
             .entry(destination_id)
             .or_insert_with(HashMap::new)
-            .insert(hops, 0);   //why using times is 0, because we do the flooding when all the routing table is cleared.
+            .insert(hops, 0);   //using times is 0, because we do the flooding when all the routing table is cleared.
+        info!("Successfully updated routing table for server {}", destination_id);
+        info!("The routing table is: {:?}", self.communication.routing_table);
     }
-
-    //this needs to be done also in the free time when the registration to the server is successfully done,
-    //so you check the flood_responses in the input_packet_disk.
-    /// Protocol for update routing for the clients:
-    /// 1. do the flooding as always and obviously in the first flooding the servers will not be registered.
-    /// therefore we can not send anything to clients even having gotten the flood responses.
-    /// 2. critical moment is when you receive the acceptance of the registered client, and you want
-    /// to send some messages to the clients, then you try to send the packet, and put into the
-    /// buffer, if there are no routes the status of the packet will be not sent because of no routes
-    /// so we need to check to the flood response (of current flood id) from the client, if
-    /// it is inside the input packet disk then we will filter those routes and update the valid
-    /// routes in the routing table, otherwise we need to wait for the flood response to arrive.  (IMPLEMENTED)
-    ///
-    /// Alternative protocol: just need the routes to the servers and don't update routing for the client
-    /// such that in order to send a packet to a client, you send a query to a server
-    /// which the client is registered to:
-    /// SendPacketTo(client_id, packet), and the server will process the packet
-    /// and send it to the client.
-    /// (drawback: this alternative you need to send to the server
-    /// instead of sending to the client directly)                     (STILL TO IMPLEMENT)
-    ///
-    /// (advantage: you don't need to memorize that much of routing)
     fn update_routing_for_client(&mut self, destination_id: NodeId, path_trace: Vec<(NodeId, NodeType)>) {
         let hops = self.get_hops_from_path_trace(path_trace.clone());
-        //update the routes only if the routes are valid
+        self.communication.routing_table
+            .entry(destination_id)
+            .or_insert_with(HashMap::new)
+            .insert(hops, 0);   //using times is 0, because we do the flooding when all the routing table is cleared.
+        info!("Successfully updated routing table for client {}", destination_id);
+        info!("The routing table is: {:?}", self.communication.routing_table);
+        //this is maybe for the chat clients but right now it is not use ful
+        /*
         if self.check_if_exists_registered_communication_server_intermediary_in_route(hops) {
             //if exists a registered communication server that it is an intermediary between two clients then it will be ok
             self.storage.irresolute_path_traces.remove(&destination_id);
@@ -77,13 +66,14 @@ impl Router for ClientChen {
                 .insert(hops, 0);
         } else {
             //the path_trace is still irresolute, that's a clever way
-        }
+        }*/
     }
 
+
+    //only for chat clients
+    /*
     fn update_routing_checking_status(&mut self) {
         let mut updates = Vec::new();
-
-        // Collect the updates needed
         for (&destination_id, traces) in &self.storage.irresolute_path_traces {
             if let Some((_, destination_type)) = traces.last() {
                 updates.push((destination_id, *destination_type, traces.clone()));
@@ -108,7 +98,7 @@ impl Router for ClientChen {
             }
         }
     }
-
+*/
     ///auxiliary function
     fn check_if_exists_registered_communication_server_intermediary_in_route(&mut self, route: Vec<NodeId>) -> bool {
         for &server_id in self.communication.registered_communication_servers.keys() {

@@ -69,6 +69,7 @@ pub(crate) fn start_testing(mut controller: SimulationController) {
                 if let Some((cmd_tx, _)) = controller.command_senders_clients.get(chosen_client) {
                     let sender = cmd_tx.clone();
                     sender.send(ClientCommand::StartFlooding).unwrap();
+                    eprintln!("Flooding command sent to the client");
                 }
             }
             2 => {

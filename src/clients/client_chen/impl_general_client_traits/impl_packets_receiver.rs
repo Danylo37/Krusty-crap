@@ -21,7 +21,7 @@ impl PacketsReceiver for ClientChen {
                 self.handle_fragment(packet_clone, &fragment);
                 fragment_index = fragment.fragment_index;
             },
-            PacketType::FloodRequest(flood_request) => self.handle_flood_request(packet_clone, &flood_request),
+            PacketType::FloodRequest(mut flood_request) => self.handle_flood_request(packet_clone, &mut flood_request),
             PacketType::FloodResponse(flood_response) => self.handle_flood_response(packet_clone, &flood_response),
         }
 

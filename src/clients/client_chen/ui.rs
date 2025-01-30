@@ -52,7 +52,7 @@ impl Monitoring for ClientChen{
                         // Things to do after handling the command
                         self.handle_fragments_in_buffer_with_checking_status();
                         self.send_packets_in_buffer_with_checking_status();
-                        self.update_routing_checking_status();
+                        //self.update_routing_checking_status();
 
                         // Update the network
                         //self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
@@ -66,7 +66,7 @@ impl Monitoring for ClientChen{
                         // Things to do after handling the packets
                         self.handle_fragments_in_buffer_with_checking_status();
                         self.send_packets_in_buffer_with_checking_status();
-                        self.update_routing_checking_status();
+                        //self.update_routing_checking_status();
 
                         // Update the network
                         //self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);

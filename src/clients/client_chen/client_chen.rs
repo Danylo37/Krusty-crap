@@ -12,7 +12,7 @@ use crate::clients::Client as TraitClient;
 
 use crate::clients::client_chen::prelude::*;
 use crate::clients::client_chen::{CommandHandler, FragmentsHandler, PacketsReceiver, Router, Sending};
-use crate::general_use::MediaRef;
+use crate::general_use::{ClientType, MediaRef};
 
 #[derive(Clone)]
 pub(crate) struct ClientChen {
@@ -46,6 +46,7 @@ impl TraitClient for ClientChen {
             metadata: NodeMetadata {
                 node_id: id,
                 node_type: NodeType::Client,
+                client_type: ClientType::Web,
             },
 
             // Status
@@ -72,7 +73,7 @@ impl TraitClient for ClientChen {
 
             // Storage
             storage: NodeStorage {
-                irresolute_path_traces: HashMap::new(),
+                //irresolute_path_traces: HashMap::new(),
                 fragment_assembling_buffer: HashMap::new(),
                 output_buffer: HashMap::new(),
                 input_packet_disk: HashMap::new(),   //if at the end of the implementation still doesn't need then delete
@@ -101,18 +102,20 @@ impl TraitClient for ClientChen {
                 recv(self.communication_tools.controller_recv) -> command_res => {
                     if let Ok(command) = command_res {
                         self.handle_controller_command(command);
+
+                        // Things to do after handling the command
+                        self.handle_fragments_in_buffer_with_checking_status();
+                        self.send_packets_in_buffer_with_checking_status();
                     }
                 },
                 recv(self.communication_tools.packet_recv) -> packet_res => {
                     if let Ok(packet) = packet_res {
                         self.handle_received_packet(packet);
+                        // Things to do after handling the command
+                        self.handle_fragments_in_buffer_with_checking_status();
+                        self.send_packets_in_buffer_with_checking_status();
                     }
                 },
-                default(std::time::Duration::from_millis(10)) => {
-                    self.handle_fragments_in_buffer_with_checking_status();
-                    self.send_packets_in_buffer_with_checking_status();
-                    self.update_routing_checking_status();
-                 },
             }
         }
     }
@@ -129,6 +132,7 @@ impl ClientChen{
 pub(crate) struct NodeMetadata {
     pub(crate) node_id: NodeId,
     pub(crate) node_type: NodeType,
+    pub(crate) client_type: ClientType,
 }
 
 // Status of the client
@@ -159,7 +163,9 @@ pub(crate) struct CommunicationTools {
 // Storage-related data
 #[derive(Clone)]
 pub struct NodeStorage {
-    pub(crate) irresolute_path_traces: HashMap<NodeId, Vec<(NodeId, NodeType)>>,   //Temporary storage for the path_traces that are received, but we didn't know how to process them
+    //for the chat client maybe better just do a map for every client destination, a communicable or not communicable state
+    //pub(crate) irresolute_path_traces: HashMap<NodeId, Vec<(NodeId, NodeType)>>,   //Temporary storage for the path_traces that are received, but we didn't know how to process them
+
     pub(crate) fragment_assembling_buffer: HashMap<SessionId, HashMap<FragmentIndex, Packet>>, // Temporary storage for recombining fragments
     pub(crate) output_buffer: HashMap<SessionId, HashMap<FragmentIndex, Packet>>,              // Buffer for outgoing messages
     pub(crate) input_packet_disk: HashMap<SessionId, HashMap<FragmentIndex, Packet>>,          // Storage for received packets

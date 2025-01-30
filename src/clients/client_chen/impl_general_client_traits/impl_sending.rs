@@ -39,7 +39,7 @@ impl Sending for ClientChen {
         if let Some(next_hop) = packet.routing_header.next_hop() {
             self.send_packet_to_connected_node(next_hop, packet);
         } else {
-            warn!("No next hop available for packet: {:?}", packet);
+            panic!("No next hop available for packet: {:?}", packet);
         }
     }
 
@@ -58,8 +58,9 @@ impl Sending for ClientChen {
         }
     }
 
-    fn send_packet_to_connected_node(&mut self, target_node_id: NodeId, packet: Packet) {
+    fn send_packet_to_connected_node(&mut self, target_node_id: NodeId, mut packet: Packet) {
         // Update routing metrics
+        //eprintln!("We are sending the flood response to {}", target_node_id);
         if let Some(destination) = packet.routing_header.destination() {
             if let Some(routes) = self.communication.routing_table.get_mut(&destination) {
                 routes.entry(packet.clone().routing_header.hops)
@@ -83,13 +84,14 @@ impl Sending for ClientChen {
             .or_default()
             .insert(fragment_index, packet.clone());
 
+        packet.routing_header.increase_hop_index();
         // Attempt to send packet
         match self.communication_tools.packet_send.get_mut(&target_node_id) {
             Some(sender) if self.communication.connected_nodes_ids.contains(&target_node_id) => {
                 match sender.send(packet.clone()) {
                     Ok(_) => {
-                        debug!("Successfully sent packet to {}", target_node_id);
-                        self.update_packet_status(session_id, fragment_index, PacketStatus::InProgress)
+                        info!("Successfully sent packet to {}", target_node_id);
+                        self.update_packet_status(session_id, fragment_index, PacketStatus::InProgress);
                     },
                     Err(e) => {
                         error!("Failed to send to {}: {}", target_node_id, e);

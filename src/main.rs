@@ -6,13 +6,13 @@ pub mod ui;
 pub mod clients;
 pub mod ui_traits;
 pub mod websocket;
-pub mod terminal_ui;
 
 extern crate rouille;
 
 use std::thread;
 use std::time::Duration;
 use crossbeam_channel::{unbounded};
+use log::info;
 use crate::ui_traits::Monitoring;
 use crate::clients::client_chen::functionality_test;
 
@@ -74,6 +74,9 @@ fn main() {
 }
 */
 fn main() {
+    // Initialize the logger
+    env_logger::init();
+
     let (tx, rx) = unbounded();
     let (sender_from_ws, receiver_from_ws) = unbounded();
 
@@ -82,7 +85,7 @@ fn main() {
     my_net.initialize_from_file("input.toml");
     // Spawn UI thread
     thread::spawn(move || {
-        eprintln!("Doing functionality test for Web Client");
+        info!("Doing functionality test for Web Client");
         functionality_test::start_testing(my_net.simulation_controller);
     });
 

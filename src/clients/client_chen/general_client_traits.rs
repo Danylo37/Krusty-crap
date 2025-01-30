@@ -25,7 +25,8 @@ pub trait Router{
     fn do_flooding(&mut self);
     fn update_routing_for_server(&mut self, destination_id: NodeId, path_trace: Vec<(NodeId,NodeType)>);
     fn update_routing_for_client(&mut self, destination_id: NodeId, path_trace: Vec<(NodeId,NodeType)>);
-    fn update_routing_checking_status(&mut self);
+
+    //fn update_routing_checking_status(&mut self);
     ///auxiliary function
     fn check_if_exists_registered_communication_server_intermediary_in_route(&mut self, route: Vec<NodeId>) -> bool;
     fn check_if_exists_route_contains_server(&mut self, server_id: ServerId, destination_id: ClientId) -> bool;
@@ -75,7 +76,7 @@ pub trait PacketResponseHandler:PacketsReceiver{   //Ack Nack
 
 
 pub trait FloodingPacketsHandler:PacketsReceiver{  //flood request/response
-    fn handle_flood_request(&mut self, packet: Packet, request: &FloodRequest);
+    fn handle_flood_request(&mut self, packet: Packet, request: &mut FloodRequest);
     fn handle_flood_response(&mut self, packet: Packet, response: &FloodResponse);
 
 }
