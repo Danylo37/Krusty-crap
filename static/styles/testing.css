@@ -4,6 +4,12 @@ html, body {
     height: 100vh; /* Ensure the body fits within the viewport */
 }
 
+
+
+
+
+
+
 #content-ui{
     background-color: #F8FAFD;
     display:flex;
@@ -16,7 +22,7 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 20px;
+    padding: 20px 20px;
 }
 
 .drive-logo {
@@ -68,13 +74,40 @@ html, body {
     transform: scale(1.1);
 }
 
+/* LOGOUT BUTTON */
+.log_out_button {
+    width: 40px;
+    cursor: pointer;
+}
 
-/* CONTENT UI - BODY */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+ BODY CONTENT
+
+*/
+
 #body-content-ui {
     box-sizing: border-box;
     display: flex;
     height: 100%;
-    padding: 5px 0 20px 20px;
+    padding: 0px 5px 20px 5px;
 }
 
 /* SIDEBAR - Placeholder for future content */
@@ -111,6 +144,47 @@ html, body {
     background: #A5ACB5;
 }
 
+
+
+
+
+
+
+/*
+
+    LIST FILES + SERVER SELECTOR
+
+*/
+
+
+#server-selector {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    font-size: 30px;
+    font-weight: bold;
+}
+
+/* SERVER NAVIGATION ARROWS */
+.server-nav {
+    display: flex;
+    gap: 10px;
+}
+
+.server-arrow {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.server-arrow:hover {
+    transform: scale(1.2);
+}
+
+
+/* FILE LISTS */
 .file-list thead tr:hover {
     background-color: transparent !important;
 }
@@ -139,8 +213,76 @@ html, body {
     background-color: #f5f5f5;
 }
 
-/* LOGOUT BUTTON */
-.log_out_button {
-    width: 40px;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+    POP-UP FILE
+
+ */
+
+/* POPUP OVERLAY */
+.popup-overlay {
+    display: none; /* Initially Hidden */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8); /* Dark transparent background */
+    z-index: 1000; /* Make sure it's on top */
+    justify-content: center;
+    align-items: center;
+}
+
+/* POPUP CONTENT */
+.popup-content {
+    background: white;
+    width: 80%;
+    max-width: 600px;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* CLOSE BUTTON */
+.close-button {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: gray;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 5px 10px 4px 10px;
+    border-radius: 5px;
+}
+
+/* FILE CONTENT */
+#popup-file-content {
+    margin-top: 15px;
+    text-align: left;
+    font-size: 14px;
+    white-space: pre-wrap; /* Preserve formatting */
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Make File Rows Clickable */
+.file-list tr {
     cursor: pointer;
 }
