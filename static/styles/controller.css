@@ -283,10 +283,27 @@
 
 /* Section containers */
 .section {
+    overflow: scroll;
     height:100%;
     padding: 20px;
     display: none;
     animation: slide-in 0.5s ease-out;
+}
+
+#section::-webkit-scrollbar {
+    width: 10px;
+}
+#section::-webkit-scrollbar-track {
+    background: #FFFFFF;
+    border-radius: 10px;
+}
+#section::-webkit-scrollbar-thumb {
+    background: #BCC1C8;
+    border-radius: 10px;
+    border: 2px solid #FFFFFF;
+}
+#section::-webkit-scrollbar-thumb:hover {
+    background: #A5ACB5;
 }
 
 /* Filters on the right */
