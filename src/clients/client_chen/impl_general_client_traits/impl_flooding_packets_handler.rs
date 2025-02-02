@@ -45,7 +45,7 @@ impl FloodingPacketsHandler for ClientChen {
     /// everyone's connected_node_ids (using the hashset's methods).
     fn handle_flood_response(&mut self, packet: Packet, response: &FloodResponse) {
         // Debugging: Print the received path trace
-        info!("{:?} Client {} has received flood response with the path: {:?}", self.metadata.client_type ,self.metadata.node_id , response.path_trace);
+        println!("HAVE RECEIVED FLOOD RESPONSE WITH THE PATH: {:?}", response.path_trace);
 
         // Check if path_trace is empty
         if response.path_trace.is_empty() {
@@ -73,12 +73,11 @@ impl FloodingPacketsHandler for ClientChen {
         let mut path_iter = response.path_trace.iter().peekable(); //we make the vector peekable
         let mut previous_node: Option<NodeId> = None;
 
-        info!("Updating the topology from the flood response with the path {:?} ", response.path_trace);
+        //info!("Updating the topology from the flood response with the path {:?} ", response.path_trace);
         // counter for debug
         while let Some(&(node_id, node_type)) = path_iter.next() {
-            // Peek the next node in the path_trace (use the item without consuming it)
-            info!("Updating topology for node {}", node_id);
             let next_node = path_iter.peek().map(|&(next_id, _)| next_id);
+            /*info!("Updating topology for node {}", node_id);
             if let Some(prev) = previous_node{
                 info!("Its previous node is {}", prev);
             } else{
@@ -89,7 +88,7 @@ impl FloodingPacketsHandler for ClientChen {
                 info!("Its next node is {}", next);
             } else{
                 info!("Its next node is None");
-            }
+            }*/
 
             // Ensure entry exists for the node, so create a raw one when it is not created for the node
             let entry = self.network_info.topology.entry(node_id).or_insert_with(|| {

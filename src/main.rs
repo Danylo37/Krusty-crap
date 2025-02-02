@@ -75,7 +75,7 @@ fn main() {
 */
 fn main() {
     // Initialize the logger
-    env_logger::init();
+    //env_logger::init();
 
     let (tx, rx) = unbounded();
     let (sender_from_ws, receiver_from_ws) = unbounded();

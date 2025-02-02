@@ -65,9 +65,6 @@ impl CommandHandler for ClientChen{
             }
             _=>{}
 
-            ClientCommand::StartFlooding => {
-                self.do_flooding();
-            }
         }
     }
 
@@ -147,9 +144,6 @@ impl CommandHandler for ClientChen{
                     eprintln!("The routes from {} to {} are: \n\
                      {:?}", self.metadata.node_id, destination_id, routes);
                 }
-            }
-            ClientCommand::StartFlooding => {
-                self.do_flooding();
             }
             _=>{}
         }
