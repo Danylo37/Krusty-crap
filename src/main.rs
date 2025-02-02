@@ -17,7 +17,7 @@ use crate::ui_traits::Monitoring;
 use crate::clients::client_chen::functionality_test;
 
 // Modified main function
-/*fn main() {
+fn main() {
     // Initialize the logger
     env_logger::init();
 
@@ -52,7 +52,7 @@ use crate::clients::client_chen::functionality_test;
     loop {
         thread::sleep(Duration::from_secs(1));
     }
-}*/
+}
 /*
 fn main() {
     let (tx, rx) = unbounded();
@@ -71,11 +71,11 @@ fn main() {
         thread::sleep(Duration::from_secs(1));
     }
 
-}
-*/
-fn main() {
+}*/
+
+/*fn main() {
     // Initialize the logger
-    env_logger::init();
+    //env_logger::init();
 
     let (tx, rx) = unbounded();
     let (sender_from_ws, receiver_from_ws) = unbounded();
@@ -93,4 +93,4 @@ fn main() {
         thread::sleep(Duration::from_secs(1));
     }
 
-}
+}*/
