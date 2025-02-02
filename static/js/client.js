@@ -5,57 +5,97 @@
     USER VIEW
     -> WHATSAPP: SEND MESSAGE, CREATING AND SWITCHING BETWEEN CHATS
 
- */
+*/
 
-function openChat(chatName) {
-    // Update the chat header with the selected chat name
+function openChat(chatName, clientId) {
+    // Update the chat header with the selected chat name.
     document.getElementById('chat-header').textContent = chatName;
 
-    // Update the chat messages area with a new background and placeholder messages
-    const chatMessages = document.getElementById('chat-messages');
-    chatMessages.innerHTML = `
-                <div class="message received">Welcome to ${chatName}!</div>
-                <div class="message sent">Hi there!</div>
-            `;
+    // Remove the update dot from the clicked chat item and mark it as active.
+    const chatItem = document.querySelector(`.chat-item[data-id="${clientId}"]`);
+    if (chatItem) {
+        const chatMessages = document.getElementById('chat-messages');
+        chatMessages.style.background = 'url("content_objects/whatsapp_bg.jpg")';
+        chatMessages.style.backgroundSize = 'cover';
+        chatMessages.style.backgroundPosition = 'center';
 
-    chatMessages.style.background = 'url("whatsapp_bg.jpg")';
-    chatMessages.style.backgroundSize = 'cover';
-    chatMessages.style.backgroundPosition = 'center';
+        // Hide the update dot.
+        const updateDot = chatItem.querySelector('.update-dot');
+        if (updateDot) {
+            updateDot.style.display = 'none';
+        }
+        // Remove 'active' class from any other chat items.
+        document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
+        // Mark this chat as active.
+        chatItem.classList.add('active');
 
-    // Highlight the active chat in the sidebar
-    const chatItems = document.querySelectorAll('.chat-item');
-    chatItems.forEach((item) => item.classList.remove('active')); // Remove active class from all
-    const selectedChat = [...chatItems].find((item) => item.textContent === chatName);
-    if (selectedChat) selectedChat.classList.add('active');
+        // Check if there is stored chat history for this chat item.
+        if (chatItem.dataset.history) {
+            const history = JSON.parse(chatItem.dataset.history);
+            updateChatWindow(history);
+        } else {
+            // Optionally display a placeholder if no history exists.
+            chatMessages.innerHTML = `<div style="text-align:center; padding:20px;">No messages yet.</div>`;
+        }
+    }
 }
 
 
 
 // Phonebooks STORED
 const phonebooks = {
-    "Server1": ["Mom", "Dad", "Sibling"],
-    "Server2": ["Alice", "Bob", "Charlie"],
-    "Server3": ["Manager", "Colleague A", "Colleague B"],
+    "0" : ["0", "2", "5"],
+    "1" : ["1", "3", "4"],
+    "2" : ["7", "10", "15"],
 };
 
 
 function createNewChat() {
     const chatPopup = document.getElementById('chat-popup');
     const receiverList = document.getElementById('receiver-list');
-    receiverList.innerHTML = ''; // Clear existing content
 
     const listBoxes = [];
 
     // Create list boxes dynamically for each server
-    Object.keys(phonebooks).forEach((serverName) => {
+    Object.keys(phonebooks).forEach((serverId) => {
+
+        if (document.getElementById(`server-container-${serverId}`)) {
+            // Container already exists, so skip creating a new one.
+            return;
+        }
+
         // Server container
         const serverContainer = document.createElement('div');
-        serverContainer.style = "margin-bottom: 15px; text-align: left;";
+        serverContainer.id = `server-container-${serverId}`;
+        serverContainer.style = "margin-bottom: 15px;";
+
+
+        //Container name + search
+        const labelContainer = document.createElement('div');
+        labelContainer.style = "display:flex; align-items: center; justify-content: space-between; margin-bottom: 5px;";
 
         // Server label
         const serverLabel = document.createElement('label');
-        serverLabel.textContent = `${serverName}: `;
+        serverLabel.textContent = `Phonebook id: ${serverId}: `;
         serverLabel.style = "font-weight: bold;";
+        labelContainer.appendChild(serverLabel);
+        
+
+        // Create an image element for search.png and insert it next to the label
+        const searchImg = document.createElement('img');
+        searchImg.src = "content_objects/reload.png"; // Adjust path if needed
+        searchImg.alt = "Search";
+        searchImg.className = "comm-ui-reload-button";
+        searchImg.id = `reload-${serverId}`;
+        searchImg.onclick = function(event) {
+            this.style.animation = "spin 1s linear infinite";
+            askListRegisteredClientsToServer(serverId);
+        };
+        labelContainer.appendChild(searchImg);
+
+        //adding both to flex div
+        serverContainer.appendChild(labelContainer);
+
 
         // Server list box
         const listBox = document.createElement('select');
@@ -68,31 +108,37 @@ function createNewChat() {
         defaultOption.textContent = 'Not Choosed';
         listBox.appendChild(defaultOption);
 
-        // Populate options with receivers
-        phonebooks[serverName].forEach((receiver) => {
+        // Gather existing chats (assuming each chat item’s text is the receiver id)
+        const existingChats = Array.from(document.getElementById('chat-list').children)
+            .map(item => item.dataset.id);
+
+        // Populate options with receivers that do not already have a chat
+        phonebooks[serverId].forEach((receiver) => {
+            if (existingChats.includes(receiver)) {
+                // Skip if a chat with this receiver already exists
+                return;
+            }
             const option = document.createElement('option');
             option.value = receiver;
             option.textContent = receiver;
             listBox.appendChild(option);
         });
 
-        // Add change event to handle exclusivity
+        // Add change event to handle exclusivity among list boxes
         listBox.addEventListener('change', () => {
             listBoxes.forEach((box) => {
                 if (box !== listBox) {
                     box.value = ''; // Reset others
-                    box.disabled = listBox.value !== ''; // Disable if another is chosen
                 }
             });
         });
 
         listBoxes.push(listBox);
 
-        // Append label and list box to the server container
-        serverContainer.appendChild(serverLabel);
+        // Append the list box to the server container
         serverContainer.appendChild(listBox);
 
-        // Append server container to the receiver list
+        // Append the server container to the receiver list
         receiverList.appendChild(serverContainer);
     });
 
@@ -103,7 +149,7 @@ function confirmSelection() {
     const listBoxes = document.querySelectorAll('.server-list-box');
     let selectedReceiver = '';
 
-    // Get the selected receiver
+    // Get the selected receiver (if any) from the list boxes
     listBoxes.forEach((box) => {
         if (box.value) {
             selectedReceiver = box.value;
@@ -115,31 +161,64 @@ function confirmSelection() {
         return;
     }
 
-    console.log(`Selected Receiver: ${selectedReceiver}`);
+    // Create a new chat item in the chat list (sidebar)
+    const chatList = document.getElementById('chat-list');
+    const chatItem = document.createElement('div');
+    chatItem.className = 'chat-item';
+    chatItem.dataset.id = selectedReceiver; // assign the data-id attribute
 
-    // Show blank page
-    const clientView = document.getElementById('client-view');
-    clientView.innerHTML = `
-                <div style="height: 100vh; display: flex; justify-content: center; align-items: center;">
-                    <h1>Loading...</h1>
-                </div>
-            `;
-    clientView.style.display = 'flex';
+    // Include both the chat name and the update dot
+    chatItem.innerHTML = `<span class="chat-name">${selectedReceiver}</span>
+                          <span class="update-dot" style="display: none;"></span>`;
 
-    // Update chats before showing the WhatsApp UI
-    updateChats();
+    // Set the onclick handler to open the chat and remove the notification dot
+    chatItem.onclick = () => {
+        openChat(selectedReceiver, selectedReceiver);
+        // Remove the update dot when the chat is selected:
+        const dot = chatItem.querySelector('.update-dot');
+        if (dot) dot.style.display = 'none';
+    };
 
-    // Simulate loading (You can replace this with actual logic to show the WhatsApp UI)
-    setTimeout(() => {
-        clientView.innerHTML = ''; // Clear the blank page
-        document.getElementById('communication-ui').style.display = 'flex'; // Show WhatsApp UI
-    }, 1000);
+    chatList.appendChild(chatItem);
+
+    // Optionally, open the new chat immediately
+    openChat(selectedReceiver, selectedReceiver);
+
+    // Close the chat pop-up
+    closeChatPopup();
 }
 
 function closeChatPopup() {
     const chatPopup = document.getElementById('chat-popup');
     chatPopup.style.display = 'none'; // Hide the popup
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+    Requesting and Updating
+
+ */
+
+
+// Requesting
+function askListRegisteredClientsToServer(whichServer){
+    // CHen function to retrieve List registered clients
+}
+
 
 function sendMessage() {
     const messageInput = document.getElementById('message-input');
@@ -163,3 +242,259 @@ function sendMessage() {
     }
 }
 
+
+// UPDATING
+
+function updateReceivers(serverId, listReceivers){
+    phonebooks[serverId] = listReceivers;
+
+    if (document.getElementById(`reload-${serverId}`)) {
+        document.getElementById(`reload-${serverId}`).style.animation = "";
+    }
+}
+
+function updateChats(clientId, ChatHistory) {
+    // Find the chat item with data-id equal to clientId.
+    const chatItem = document.querySelector(`.chat-item[data-id="${clientId}"]`);
+    if (!chatItem) {
+        // If there is no chat item for this clientId, do nothing.
+        return;
+    }
+    // Get the currently stored history from a custom data attribute (if any).
+    let currentHistory = chatItem.dataset.history ? JSON.parse(chatItem.dataset.history) : [];
+    // Get the new history from ChatHistory for this client.
+    let newHistory = ChatHistory[clientId] || [];
+
+    // Compare histories using JSON.stringify (for simple equality)
+    if (JSON.stringify(currentHistory) !== JSON.stringify(newHistory)) {
+        // Save the new history in the element's dataset.
+        chatItem.dataset.history = JSON.stringify(newHistory);
+
+        // Check if this chat item is active (has class "active").
+        if (chatItem.classList.contains('active')) {
+            // If active, update the chat window immediately.
+            updateChatWindow(newHistory);
+        } else {
+            // If not active, show the update dot.
+            const updateDot = chatItem.querySelector('.update-dot');
+            if (updateDot) {
+                updateDot.style.display = 'inline-block';
+            }
+        }
+    }
+}
+
+function updateChatWindow(history) {
+    const chatMessages = document.getElementById('chat-messages');
+    chatMessages.innerHTML = ""; // Clear current messages
+
+    history.forEach(msg => {
+        const messageDiv = document.createElement('div');
+        // Choose the class based on who the speaker is.
+        messageDiv.className = (msg.Speaker === "Me") ? "message sent" : "message received";
+        messageDiv.textContent = msg.Message;
+        chatMessages.appendChild(messageDiv);
+    });
+    // Scroll to the bottom of the chat messages container.
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+    USER VIEW
+    -> CONTENT APP: General for now
+
+*/
+
+
+// SERVER DATA STRUCTURE (Each server has its own files)
+const servers = [
+    {
+        name: "Server1",
+        files: {
+            "Document1.pdf": "This is the content of Document1.pdf...",
+            "Image.png": "This file is an image, preview not available.",
+            "Presentation.pptx": "Presentation about our latest project...",
+            "Spreadsheet.xlsx": "Spreadsheet data showing company profits..."
+        }
+    },
+    {
+        name: "Server2",
+        files: {
+            "Report.docx": "Annual financial report...",
+            "Photo.jpg": "Vacation photo...",
+            "Notes.txt": "Meeting notes..."
+        }
+    },
+    {
+        name: "Server3",
+        files: {
+            "Music.mp3": "Favorite song...",
+            "Video.mp4": "A short movie...",
+            "Slides.pptx": "Presentation for class..."
+        }
+    }
+];
+
+
+// TRACK CURRENT SERVER INDEX
+let currentServerIndex = 0;
+
+// FUNCTION TO NAVIGATE SERVERS
+function navigateServer(direction) {
+    currentServerIndex += direction;
+
+    // Ensure index stays within bounds
+    if (currentServerIndex < 0) {
+        currentServerIndex = servers.length - 1; // Loop to last server
+    } else if (currentServerIndex >= servers.length) {
+        currentServerIndex = 0; // Loop to first server
+    }
+
+    // Update UI
+    updateServerDisplay();
+}
+
+function reloadFilesServer(whichServer) {
+    // Call the empty function
+    askListFilesServer(whichServer);
+
+    // Show the loading overlay pop-up
+    const loadingPopup = document.getElementById("loading-popup");
+    loadingPopup.style.display = "flex";
+
+}
+
+function askListFilesServer(whichServer){
+    //Chen put function with simulation Controller
+}
+
+
+// FUNCTION TO UPDATE UI WHEN SWITCHING SERVERS
+function updateServerDisplay() {
+    const currentServer = servers[currentServerIndex];
+
+    // Update Server Name
+    document.getElementById("current-server").textContent = currentServer.name;
+
+    // Update File List
+    updateFileList(currentServer.files);
+}
+
+
+// FUNCTION TO OPEN POP-UP WITH FILE CONTENT
+function openPopup(fileName) {
+    const popup = document.getElementById("file-popup");
+    const popupTitle = document.getElementById("file-popup-title");
+    const popupFileContent = document.getElementById("file-popup-file-content");
+
+    // Get the current server and file content as before…
+    const currentServer = servers[currentServerIndex];
+    const fileContent = currentServer.files[fileName] || "No content available.";
+
+    popupTitle.textContent = fileName;
+    popupFileContent.textContent = fileContent;
+
+    popup.style.display = "flex";
+}
+
+// Close the Pop-Up
+function closePopup() {
+    document.getElementById("file-popup").style.display = "none";
+}
+
+
+// INITIALIZE UI WITH FIRST SERVER
+document.addEventListener("DOMContentLoaded", updateServerDisplay);
+
+
+
+// FUNCTION TO UPDATE FILE LIST BASED ON SERVER
+function updateFileList(files) {
+    const fileListTable = document.querySelector(".file-list tbody");
+    fileListTable.innerHTML = ""; // Clear existing content
+
+    // Populate new file list
+    for (const [fileName, fileContent] of Object.entries(files)) {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${fileName}</td>
+            <td style="text-align:right;">${servers[currentServerIndex].name}</td>
+        `;
+        row.addEventListener("click", () => openPopup(fileName, fileContent));
+        fileListTable.appendChild(row);
+    }
+}
+
+
+
+
+function populate_files_and_images(){
+
+}
+
+
+
+
+
+// Attach Click Event to Each File Row
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".file-list tr").forEach(row => {
+        row.addEventListener("click", function () {
+            const fileName = this.cells[0].textContent.trim(); // Get file name from row
+            openPopup(fileName);
+        });
+    });
+});
+
+
+
+
+
+function searchGoogleDrive() {
+    const searchInput = document.querySelector('.search-input').value.trim();
+    if (searchInput) {
+        alert(`Searching for: ${searchInput}`);
+        // You can replace this with an actual search function
+    }
+}
+
+function handleSearchKeyPress(event) {
+    if (event.key === "Enter") {
+        searchGoogleDrive();
+    }
+}
+
+function filterGoogleDrive() {
+    alert("Filter function clicked! (Placeholder for filtering logic)");
+    // You can replace this with an actual filter function
+}
+
+function logOut() {
+    alert("Logging out...");
+    window.location.reload(); // Simulating logout by refreshing
+}
