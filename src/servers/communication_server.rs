@@ -1,8 +1,7 @@
 use crossbeam_channel::{select_biased, Receiver, Sender};
 use std::{
     collections::{HashMap, HashSet},
-    fmt::Debug
-    ,
+    fmt::Debug,
 };
 use log::info;
 use crate::general_use::{DataScope, DisplayDataCommunicationServer, Message, Query, Response, ServerCommand, ServerEvent, ServerType};
@@ -182,7 +181,7 @@ impl MainTrait for CommunicationServer{
 
                 Ok(Query::RegisterClient(node_id)) => self.add_client(node_id),
                 Ok(Query::AskListClients) => self.give_list_back(src_id),
-                Ok(Query::SendMessageTo(node_id, message)) => self.forward_message_to(node_id, message),
+                Ok(Query::SendMessage(message)) => self.forward_message_to(message),
                 Err(_) => {
                     panic!("Damn, not the right struct")
                 }
@@ -253,10 +252,10 @@ impl CharTrait for CommunicationServer {
 
     }
 
-    fn forward_message_to(&mut self, destination_id: NodeId, message: Message) {
+    fn forward_message_to(&mut self, message: Message) {
 
         //Creating data to send
-        let response = Response::MessageFrom(destination_id, message);
+        let response = Response::MessageReceived(message.clone());
 
         //Serializing message to send
         let response_as_string = serde_json::to_string(&response).unwrap();
@@ -270,7 +269,7 @@ impl CharTrait for CommunicationServer {
         }
 
         //Generating header
-        let route: Vec<NodeId> = self.find_path_to(destination_id);
+        let route: Vec<NodeId> = self.find_path_to(message.get_recipient());
         let header = Self::create_source_routing(route);
 
         // Generating fragment

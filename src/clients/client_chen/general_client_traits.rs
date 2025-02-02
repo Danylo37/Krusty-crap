@@ -97,7 +97,6 @@ pub trait FragmentsHandler:PacketsReceiver{ //message fragments
        INSTEAD!!!! YOU CAN CREATE A MESSAGE ENUM THAT INCLUDES THE RESPONSE FROM THE SERVER BUT ALSO
        THE MESSAGE THAT THE SERVER SENDS TO THE CLIENTS.
      */
-    fn register_client(&mut self, initiator_id: NodeId);
 
     ///principal methods
     fn reassemble_fragments_in_buffer(&mut self, session_id: SessionId) -> Result<Response, String>;
@@ -110,15 +109,10 @@ pub trait CommandHandler{
 }
 
 pub trait ServerQuery{
-    fn register_to_server(&mut self, server_id: ServerId);
-    fn unregister_from_server(&mut self, server_id: ServerId);
     fn ask_server_type(&mut self, server_id: ServerId);
-    fn ask_list_clients(&mut self, server_id: ServerId);
-    fn send_message_to_client(&mut self, server_id: ServerId, client_id: ClientId, message: Message);
     fn ask_list_files(&mut self, server_id: ServerId);  //all the files that a server has, so not a specific file_ref (or file_index)
     fn ask_file(&mut self, server_id: ServerId, file_ref: String);
     fn ask_media(&mut self, server_id: ServerId, media_ref: String);  //string is the reference found in the files
-
 }
 
 
