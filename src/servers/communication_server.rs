@@ -4,7 +4,7 @@ use std::{
     fmt::Debug
     ,
 };
-
+use log::info;
 use crate::general_use::{DataScope, DisplayDataCommunicationServer, Message, Query, Response, ServerCommand, ServerEvent, ServerType};
 //UI
 use crate::ui_traits::Monitoring;
@@ -57,6 +57,7 @@ impl CommunicationServer{
         packet_recv: Receiver<Packet>,
         packet_send: HashMap<NodeId, Sender<Packet>>,
     ) -> Self {
+        info!("Starting Communication server with ID: {}", id);
         CommunicationServer {
             id,
 
@@ -278,4 +279,3 @@ impl CharTrait for CommunicationServer {
         self.send_fragments(session_id, n_fragments,response_in_vec_bytes, header);
     }
 }
-
