@@ -174,7 +174,7 @@ impl NetworkInitializer {
         }
 
         // Pause to ensure that discovery processes are finished
-        thread::sleep(Duration::from_millis(100));
+        thread::sleep(Duration::from_millis(200));
 
         // Initiate discovery process for all clients
         for (_, (sender, _)) in self.simulation_controller.command_senders_clients.iter(){
@@ -182,7 +182,7 @@ impl NetworkInitializer {
         }
 
         // Pause to ensure that discovery processes are finished
-        thread::sleep(Duration::from_millis(100));
+        thread::sleep(Duration::from_millis(200));
     }
 
     ///DRONES GENERATION
