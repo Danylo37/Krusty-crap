@@ -1,9 +1,9 @@
 use crossbeam_channel::{select_biased, Receiver, Sender};
 use std::{
-    collections::{HashMap, HashSet, VecDeque},
+    collections::{HashMap, HashSet},
     fmt::Debug,
 };
-use log::{info, warn};
+use log::info;
 use crate::general_use::{DataScope, DisplayDataCommunicationServer, Message, Query, Response, ServerCommand, ServerEvent, ServerType};
 //UI
 use crate::ui_traits::Monitoring;
@@ -46,9 +46,6 @@ pub struct CommunicationServer{
 
     //Characteristic-Server fields
     pub list_users: Vec<NodeId>,
-
-    //Queries to process after finding routes to clients
-    pub queries_to_process: VecDeque<(NodeId, Query)>,
 }
 
 impl CommunicationServer{
@@ -78,8 +75,6 @@ impl CommunicationServer{
             packet_send,
 
             list_users: Vec::new(),
-
-            queries_to_process: VecDeque::new(),
         }
     }
 }
@@ -112,6 +107,9 @@ impl Monitoring for CommunicationServer {
                         match command {
                             ServerCommand::UpdateMonitoringData => {
                                 self.send_display_data(sender_to_gui.clone(), DataScope::UpdateAll);
+                            }
+                            ServerCommand::StartFlooding => {
+                                self.discover();
                             }
                             ServerCommand::AddSender(id, sender) => {
                                 self.get_packet_send().insert(id, sender);
@@ -176,12 +174,6 @@ impl MainTrait for CommunicationServer{
     fn get_packet_send_not_mutable(&self) -> &HashMap<NodeId, Sender<Packet>>{ &self.packet_send }
     fn get_reassembling_messages(&mut self) -> &mut HashMap<u64, Vec<u8>>{ &mut self.reassembling_messages }
     fn process_query(&mut self, query: Query, src_id: NodeId) {
-        // Check if the topology is empty and start the discovery process if it is.
-        if self.topology.is_empty() {
-            self.save_query_to_process(src_id, query);
-            return;
-        }
-
         match query {
             Query::AskType => self.give_type_back(src_id),
 
@@ -194,8 +186,6 @@ impl MainTrait for CommunicationServer{
     fn get_sending_messages(&mut self) ->  &mut HashMap<u64, (Vec<u8>, u8)>{ &mut self.sending_messages }
 
     fn get_sending_messages_not_mutable(&self) -> &HashMap<u64, (Vec<u8>, u8)>{ &self.sending_messages }
-
-    fn get_queries_to_process(&mut self) -> &mut VecDeque<(NodeId, Query)>{ &mut self.queries_to_process }
 }
 
 impl CharTrait for CommunicationServer {

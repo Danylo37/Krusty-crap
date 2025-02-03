@@ -51,7 +51,6 @@ pub(super) trait Senders {
     fn send_ack(&mut self, fragment_index: FragmentIndex, session_id: SessionId, routing_header: SourceRoutingHeader);
     fn send_event(&self, event: ClientEvent);
     fn resend_fragment(&mut self, fragment_index: FragmentIndex, session_id: SessionId);
-    fn resend_queries(&mut self);
 }
 
 pub(super) trait GeneratorId {

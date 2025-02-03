@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 
 use crossbeam_channel::{select_biased, Receiver, Sender};
 use log::info;
@@ -10,7 +10,7 @@ use wg_2024::{
 
 use crate::{
     general_use::{
-        ClientCommand, ClientEvent, Query, ServerType, ClientId, ServerId, SessionId, FloodId, ChatHistory
+        ClientCommand, ClientEvent, ServerType, ClientId, ServerId, SessionId, FloodId, ChatHistory
     },
     clients::Client
 };
@@ -44,7 +44,6 @@ pub struct ChatClientDanylo {
     // Message queues
     pub(super) messages_to_send: HashMap<SessionId, MessageFragments>,       // Queue of messages to be sent for different sessions
     pub(super) fragments_to_reassemble: HashMap<SessionId, Vec<Fragment>>,   // Queue of fragments to be reassembled for different sessions
-    pub(super) queries_to_resend: VecDeque<(ServerId, Query)>,               // Queue of queries to resend
 
     // Chats
     pub(super) chats: HashMap<ClientId, ChatHistory>,                        // Chat histories with other clients
@@ -76,7 +75,6 @@ impl Client for ChatClientDanylo {
             routes: HashMap::new(),
             messages_to_send: HashMap::new(),
             fragments_to_reassemble: HashMap::new(),
-            queries_to_resend: VecDeque::new(),
             chats: HashMap::new(),
         }
     }

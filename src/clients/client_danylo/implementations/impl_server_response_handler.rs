@@ -39,6 +39,9 @@ impl ServerResponseHandler for ChatClientDanylo {
         // Insert the server type into the servers map.
         self.servers.insert(server_id, server_type);
 
+        // Insert an empty vector of clients for the server.
+        self.clients.insert(server_id, Vec::new());
+
         // If the server is of type Communication, set the registration status to false
         // and send request to register.
         if !self.is_registered.contains_key(&server_id) && server_type == ServerType::Communication {

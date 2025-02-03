@@ -6,7 +6,7 @@ use wg_2024::{
 };
 
 use crate::general_use::{ClientEvent, FragmentIndex, SessionId};
-use super::{Senders, ChatClientDanylo, CommandHandler};
+use super::{Senders, ChatClientDanylo};
 
 impl Senders for ChatClientDanylo {
     /// ###### Sends the packet to the next hop in the route.
@@ -92,32 +92,6 @@ impl Senders for ChatClientDanylo {
                 info!("Client {}: Resent fragment {} for session {}", self.id, fragment_index, session_id),
             Err(err) =>
                 error!("Client {}: Failed to resend fragment {} for session {}: {}", self.id, fragment_index, session_id, err),
-        }
-    }
-
-    /// ###### Resends queries that were waiting for the route to the server.
-    /// Iterates over the queries to resend and sends them to the corresponding servers.
-    /// If the server does not have a route, the query is not resent.
-    /// If the query is successfully sent, it is removed from the queue.
-    fn resend_queries(&mut self) {
-        let queries = self.queries_to_resend.clone();
-
-        for (server_id, query) in queries {
-
-            if !self.routes.contains_key(&server_id) {
-                return;
-            }
-
-            match self.create_and_send_message(query.clone(), server_id) {
-                Ok(_) => {
-                    info!("Client {}: Query {:?} resent successfully", self.id, query);
-                    self.queries_to_resend.pop_front();
-                }
-                Err(err) => {
-                    error!("Client {}: Failed to resend query {:?}: {}",
-                        self.id, query, err);
-                }
-            };
         }
     }
 }

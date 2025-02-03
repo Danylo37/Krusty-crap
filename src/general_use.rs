@@ -144,6 +144,7 @@ pub enum ServerCommand {
     //for monitoring
     UpdateMonitoringData,
 
+    StartFlooding,
     RemoveSender(NodeId),
     AddSender(NodeId, Sender<Packet>),
     ShortcutPacket(Packet),

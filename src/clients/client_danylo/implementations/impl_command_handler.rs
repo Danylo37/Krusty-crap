@@ -237,15 +237,6 @@ impl CommandHandler for ChatClientDanylo {
     fn create_and_send_message(&mut self, query: Query, server_id: ServerId) -> Result<(), String> {
         debug!("Client {}: Creating and sending message to server {}: {:?}", self.id, server_id, query);
 
-        // Check if the topology is empty and start the discovery process if it is.
-        if self.topology.is_empty() {
-            if self.queries_to_resend.is_empty() {
-                self.discovery();
-            }
-            self.queries_to_resend.push_back((server_id, query));
-            return Err("Topology is empty. Discovery started and the query will be resent".to_string());
-        }
-
         // Find a route to the server or use the cached route if available.
         let hops = if let Some(route) = self.routes.get(&server_id) {
             route.clone()

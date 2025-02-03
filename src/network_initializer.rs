@@ -2,8 +2,8 @@
 use std::{
     collections::HashMap,
     env, fs, thread,
+    time::Duration
 };
-
 use crossbeam_channel::*;
 use rand::prelude::*;
 
@@ -39,6 +39,7 @@ use fungi_drone::FungiDrone;
 use bagel_bomber::BagelBomber;
 use skylink::SkyLinkDrone;
 use RF_drone::RustAndFurious;
+use crate::general_use::ServerCommand;
 //use bobry_w_locie::drone::BoberDrone;
 
 
@@ -166,6 +167,22 @@ impl NetworkInitializer {
 
         //Connecting the network
         self.connect_nodes(topology);
+
+        // Initiate discovery process for all servers
+        for (_, (sender, _)) in self.simulation_controller.command_senders_servers.iter(){
+            sender.send(ServerCommand::StartFlooding).unwrap();
+        }
+
+        // Pause to ensure that discovery processes are finished
+        thread::sleep(Duration::from_millis(100));
+
+        // Initiate discovery process for all clients
+        for (_, (sender, _)) in self.simulation_controller.command_senders_clients.iter(){
+            sender.send(ClientCommand::StartFlooding).unwrap();
+        }
+
+        // Pause to ensure that discovery processes are finished
+        thread::sleep(Duration::from_millis(100));
     }
 
     ///DRONES GENERATION

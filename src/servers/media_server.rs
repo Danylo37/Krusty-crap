@@ -3,7 +3,7 @@ use super::server::Server as MainTrait;
 use crate::general_use::{DataScope, DisplayDataMediaServer, Query, Response, ServerCommand, ServerEvent, ServerType};
 use crate::ui_traits::Monitoring;
 use crossbeam_channel::{select_biased, Receiver, Sender};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use wg_2024::{
     network::NodeId,
@@ -41,9 +41,6 @@ pub struct MediaServer{
 
     //Characteristic-Server fields
     pub media: HashMap<String, String>,
-
-    //Queries to process
-    pub queries_to_process: VecDeque<(NodeId, Query)>,
 }
 
 impl MediaServer {
@@ -73,8 +70,6 @@ impl MediaServer {
             packet_send,
 
             media,
-
-            queries_to_process: VecDeque::new(),
         }
     }
 }
@@ -106,10 +101,12 @@ impl Monitoring for MediaServer {
                             ServerCommand::UpdateMonitoringData => {
                                 self.send_display_data(sender_to_gui.clone(), DataScope::UpdateAll);
                             }
+                            ServerCommand::StartFlooding => {
+                                self.discover();
+                            }
                             ServerCommand::AddSender(id, sender) => {
                                 self.get_packet_send().insert(id, sender);
                                 self.send_display_data(sender_to_gui.clone(), UpdateSelf);
-
                             }
                             ServerCommand::RemoveSender(id) => {
                                 self.get_packet_send().remove(&id);
@@ -172,12 +169,6 @@ impl MainTrait for MediaServer{
     fn get_packet_send_not_mutable(&self) -> &HashMap<NodeId, Sender<Packet>>{ &self.packet_send }
     fn get_reassembling_messages(&mut self) -> &mut HashMap<u64, Vec<u8>>{ &mut self.reassembling_messages }
     fn process_query(&mut self, query: Query, src_id: NodeId) {
-        // Check if the topology is empty, save query and start the discovery process if it is.
-        if self.topology.is_empty() {
-            self.save_query_to_process(src_id, query);
-            return;
-        }
-
         match query {
             Query::AskType => self.give_type_back(src_id),
 
@@ -188,8 +179,6 @@ impl MainTrait for MediaServer{
     fn get_sending_messages(&mut self) ->  &mut HashMap<u64, (Vec<u8>, u8)>{ &mut self.sending_messages }
 
     fn get_sending_messages_not_mutable(&self) -> &HashMap<u64, (Vec<u8>, u8)>{ &self.sending_messages }
-
-    fn get_queries_to_process(&mut self) -> &mut VecDeque<(NodeId, Query)>{ &mut self.queries_to_process }
 }
 
 impl CharTrait for MediaServer{

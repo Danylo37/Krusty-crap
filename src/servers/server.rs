@@ -2,7 +2,7 @@
 
 use crossbeam_channel::{select_biased, Receiver, Sender};
 use std::collections::{HashMap, HashSet, VecDeque};
-use log::{debug, error, info, warn};
+use log::{debug, error, info};
 use wg_2024::{
     network::{NodeId, SourceRoutingHeader},
     packet::{
@@ -34,8 +34,6 @@ pub trait Server{
     fn process_query(&mut self, query: Query, src_id: NodeId);
     fn get_sending_messages(&mut self) -> &mut HashMap<u64, (Vec<u8>, u8)>;
     fn get_sending_messages_not_mutable(&self) -> &HashMap<u64, (Vec<u8>, u8)>;
-
-    fn get_queries_to_process(&mut self) -> &mut VecDeque<(NodeId, Query)>;
 
     fn run(&mut self) {
         info!("Running {} server with ID: {}", self.get_server_type(), self.get_id());
@@ -149,26 +147,7 @@ pub trait Server{
                     path.iter().map(|entry| entry.0.clone()).collect(),
                 );
                 info!("Server {}: Updated route to client {}: {:?}", self.get_id(), id, path);
-
-                // Resend responses that were waiting for the route to the client.
-                if !self.get_queries_to_process().is_empty() && self.get_queries_to_process().front().unwrap().0 == *id {
-                    self.reprocess_query();
-                }
             }
-        }
-    }
-
-    fn reprocess_query(&mut self) {
-        let queries = self.get_queries_to_process().clone();
-
-        for (client_id, response) in queries {
-
-            if !self.get_routes().contains_key(&client_id) {
-                return;
-            }
-
-            self.process_query(response, client_id);
-            self.get_queries_to_process().pop_front();
         }
     }
 
@@ -345,16 +324,6 @@ pub trait Server{
             },
             Err(e) => println!("Argh, {:?}", e),
         }
-    }
-
-    fn save_query_to_process(&mut self, src_id: NodeId, query: Query) {
-        if self.get_queries_to_process().is_empty() {
-            self.discover();
-        }
-        warn!("Server {}: Error sending response to query {:?}: topology is empty. \
-                Discovery started and the response will be resent", self.get_id(), query);
-        self.get_queries_to_process().push_back((src_id, query));
-        return;
     }
 
     fn send_fragments(&mut self, session_id: u64, n_fragments: usize, response_in_vec_bytes: &[u8], header: SourceRoutingHeader) {

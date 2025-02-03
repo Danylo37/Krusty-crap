@@ -275,11 +275,6 @@ impl PacketHandler for ChatClientDanylo {
                     path.iter().map(|entry| entry.0.clone()).collect(),
                 );
                 info!("Client {}: Updated route to server {}: {:?}", self.id, id, path);
-
-                // Resend queries that were waiting for the route to the server.
-                if !self.queries_to_resend.is_empty() && self.queries_to_resend.front().unwrap().0 == *id {
-                    self.resend_queries();
-                }
             }
         }
     }
