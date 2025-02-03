@@ -379,9 +379,9 @@ function navigateServer(direction) {
     updateServerDisplay();
 }
 
-function reloadFilesServer(whichServer) {
+function reloadFilesServer(whichClient, whichServer) {
     // Call the empty function
-    askListFilesServer(whichServer);
+    askListFilesServer(whichClient, whichServer);
 
     // Show the loading overlay pop-up
     const loadingPopup = document.getElementById("loading-popup");
@@ -389,8 +389,16 @@ function reloadFilesServer(whichServer) {
 
 }
 
-function askListFilesServer(whichServer){
-    //Chen put function with simulation Controller
+function askListFilesServer(whichClient, whichServer) {
+    // Chen put function with simulation Controller
+    if (ws.readyState === WebSocket.OPEN) {
+        // Construct the message with the actual values of whichClient and whichServer
+        const message = `WsAskFileList(${whichClient}, ${whichServer})`;
+        ws.send(JSON.stringify(message));
+        console.log('Sent:', message);
+    } else {
+        console.error('WebSocket is not open. Unable to send update command.');
+    }
 }
 
 

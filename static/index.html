@@ -559,8 +559,8 @@
 
 
     // Create a WebSocket connection to the Rust server
-    const wsHost = window.location.hostname || 'localhost';
-    const ws = new WebSocket('ws://localhost:8080');
+    const wsHost = window.location.host;
+    const ws = new WebSocket(`ws://${wsHost}:8080`);
 
     // Nodes-tracker
     let data = {};

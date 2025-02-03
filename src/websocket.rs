@@ -52,7 +52,7 @@ pub fn start_websocket_server(rx: Receiver<String>, cmd_tx: Sender<WsCommand>) {
 
                     thread::spawn(move || {
                         let mut websocket = accept(stream).unwrap();
-                        info!("Client connected: {}", addr);
+                        println!("Client connected: {}", addr);
 
                         // Set WebSocket to non-blocking mode
                         websocket.get_mut().set_nonblocking(true).unwrap();
