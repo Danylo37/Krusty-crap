@@ -6,6 +6,7 @@ pub mod ui;
 pub mod clients;
 pub mod ui_traits;
 pub mod websocket;
+mod initialization_file_checker;
 
 extern crate rouille;
 

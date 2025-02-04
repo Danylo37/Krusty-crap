@@ -25,7 +25,8 @@ use crate::{
     },
     general_use::{ClientId, ClientCommand, ClientEvent, ServerEvent, ClientType, ServerType, DroneId, UsingTimes},
     servers::{content, communication_server::CommunicationServer, text_server::TextServer, media_server::MediaServer, server::Server as ServerTrait},
-    simulation_controller::SimulationController
+    simulation_controller::SimulationController,
+    initialization_file_checker::InitializationFileChecker,
 };
 
 
@@ -139,6 +140,12 @@ impl NetworkInitializer {
         // Read and parse the configuration file
         let config_data = fs::read_to_string(config_path).expect("Unable to read config file");
         let config: Config = toml::from_str(&config_data).expect("Failed to parse TOML config");
+
+        // Check the configuration file for errors
+        match InitializationFileChecker::new(&config).check() {
+            Ok(_) => println!("Configuration is valid."),
+            Err(e) => eprintln!("Validation error: {}", e),
+        }
 
         // Build the network topology
         let mut topology = HashMap::new();
