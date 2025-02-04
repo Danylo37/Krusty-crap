@@ -1,7 +1,9 @@
 use crate::clients::client_chen::{ClientChen, SpecificInfo};
 use crate::clients::client_chen::general_client_traits::*;
 use crate::clients::client_chen::prelude::*;
-impl CommunicationTools for ClientChen{
+use crate::clients::client_chen::SpecificInfo::ServerInfo;
+
+impl CommunicationTrait for ClientChen{
     fn get_discovered_servers_from_topology(&mut self) -> HashSet<ServerId> {
         self.network_info.topology.iter()
             .filter_map(|(&node_id, node_info)| {
@@ -24,4 +26,21 @@ impl CommunicationTools for ClientChen{
             })
             .collect()
     }
+
+    fn get_content_servers_from_topology(&mut self) -> HashSet<ServerId> {
+        self.network_info.topology.iter()
+            .filter_map(|(&node_id, node_info)| {
+                if let SpecificInfo::ServerInfo(server_info) = &node_info.specific_info {
+                    if matches!(server_info.server_type, ServerType::Media | ServerType::Text) {
+                        Some(node_id)
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+
 }

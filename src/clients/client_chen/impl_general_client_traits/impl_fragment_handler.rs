@@ -3,6 +3,9 @@ use crate::clients::client_chen::{ClientChen, FragmentsHandler, PacketCreator, P
 use crate::clients::client_chen::prelude::*;
 use crate::clients::client_chen::general_client_traits::*;
 use crate::clients::client_chen::web_browser_client_traits::WebBrowserClientTrait;
+use crate::general_use::ClientEvent::WebClientData;
+use crate::general_use::DataScope;
+use crate::ui_traits::Monitoring;
 
 impl FragmentsHandler for ClientChen {
     fn handle_fragment(&mut self, msg_packet: Packet, fragment: &Fragment) {
@@ -69,7 +72,7 @@ impl FragmentsHandler for ClientChen {
                             .get(&session_id)
                             .and_then(|fragments| fragments.values().next())
                         {
-                            let initiator_id = first_packet.routing_header.destination();
+                            let initiator_id = first_packet.routing_header.source();
 
                             // Reassemble fragments and process the message
                             if let Ok(message) = self.reassemble_fragments_in_buffer(session_id) {
@@ -100,6 +103,7 @@ impl FragmentsHandler for ClientChen {
             Response::ServerType(server_type) => {
                 self.update_topology_entry_for_server(initiator_id, server_type);
                 println!("The type of the server is {:?}", server_type);
+                self.send_display_data_simplified(DataScope::UpdateSelf);
             },
             Response::ListFiles(list_file)  => {
                 self.handle_list_file(list_file);
