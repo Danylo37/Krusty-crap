@@ -64,7 +64,7 @@
             padding-right: 20px;
         }
 
-        .popup-content {
+        .main-popup-content {
             background: white;
             padding: 30px;
             text-align: center;
@@ -75,19 +75,19 @@
             max-height: 70%;
         }
 
-        .popup-content::-webkit-scrollbar {
+        .main-popup-content::-webkit-scrollbar {
             width: 10px;
         }
-        .popup-content::-webkit-scrollbar-track {
+        .main-popup-content::-webkit-scrollbar-track {
             background: #FFFFFF;
             border-radius: 10px;
         }
-        .popup-content::-webkit-scrollbar-thumb {
+        .main-popup-content::-webkit-scrollbar-thumb {
             background: #BCC1C8;
             border-radius: 10px;
             border: 2px solid #FFFFFF;
         }
-        .popup-content::-webkit-scrollbar-thumb:hover {
+        .main-popup-content::-webkit-scrollbar-thumb:hover {
             background: #A5ACB5;
         }
 
@@ -289,7 +289,7 @@
 <!-- CHOOSING ROLE -->
 
 <div id="role-popup" class="popup">
-    <div class="popup-content">
+    <div class="main-popup-content">
         <h1 id="popup-title">Select Your Role</h1>
         <div class="container-roles" id="role-selection">
             <div class="role" onclick="selectRole('controller')">
@@ -457,7 +457,7 @@
                 <!-- SERVER SELECTOR -->
                 <div id="server-selector">
                     <div style="display:flex">
-                        <span id="current-server">Server1</span>
+                        <span id="current-server"></span>
 
                         <div class="server-nav">
                             <img src="content_objects/up_arrow.png" alt="Up" class="server-arrow" onclick="navigateServer(-1)">
@@ -473,37 +473,13 @@
 
                 <!-- File List -->
                 <table class="file-list">
-                    <thead>
-                    <tr>
-                        <th>File Name</th>
-                        <th style="text-align:right; ">Owner</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td>Document1.pdf</td>
-                        <td style="text-align:right;">Server1</td>
-                    </tr>
-                    <tr>
-                        <td>Image.png</td>
-                        <td style="text-align:right;">Server1</td>
-                    </tr>
-                    <tr>
-                        <td>Presentation.pptx</td>
-                        <td style="text-align:right;">Server1</td>
-                    </tr>
-                    <tr>
-                        <td>Spreadsheet.xlsx</td>
-                        <td style="text-align:right;">Server1</td>
-                    </tr>
-                    </tbody>
                 </table>
 
                 <!-- Loading Pop-up Overlay for Reload -->
                 <div id="loading-popup" class="file-loading-overlay" style="display: none;">
                     <div class="file-loading-content">
                         <img src="content_objects/reload.png" alt="Loading..." class="file-loading-gif">
-                        <p>Retrieving files... you are free to use the other pages meanwhile (b^_^)</p>
+                        <p>Retrieving files... Take a coffee meanwhile (b^_^)</p>
                     </div>
                 </div>
 
@@ -559,7 +535,7 @@
 
 
     // Create a WebSocket connection to the Rust server
-    const wsHost = window.location.host;
+    const wsHost = window.location.host || 'localhost';;
     const ws = new WebSocket(`ws://${wsHost}:8080`);
 
     // Nodes-tracker
@@ -573,6 +549,7 @@
         "web_client"
     ];
     let current_role_chosen = roles_vector[0];
+    let currentClientId = null; // Global variable
 
     // Container for all panels
     const monitoringContainer = document.getElementById("monitoring-container");
@@ -616,7 +593,7 @@
         } else if (role === 'client') {
             // Update the pop-up for client selection
             popupTitle.textContent = 'Select a Client';
-            document.querySelector('.popup-content').style.overflowY = 'scroll';
+            document.querySelector('.main-popup-content').style.overflowY = 'scroll';
             roleSelection.style.display = 'none';
             clientSelection.style.display = 'flex';
 
@@ -674,6 +651,7 @@
     }
 
     function chooseClient(nodeId) {
+        currentClientId = nodeId;
         console.log(`Client chosen: Node ${nodeId}`);
 
         // Find the panel corresponding to the selected nodeId
@@ -713,7 +691,8 @@
             communicationUI.style.display = 'flex';
             contentUI.style.display = 'none';
 
-            populateChatListForClient(nodeId);
+            populateChatListForClient();
+            populateChatReceiversForClient();
         } else {
             //Set role & change Icon
             current_role_chosen = roles_vector[3];
@@ -721,6 +700,8 @@
 
             communicationUI.style.display = 'none';
             contentUI.style.display = 'flex';
+
+            populateContentServersForClient()
         }
 
         // Transition to the client view
@@ -729,11 +710,11 @@
 
     }
 
-    function populateChatListForClient(clientId) {
+    function populateChatListForClient() {
         // Find the panel in the clients-container for this clientId.
-        const panel = document.querySelector(`.panel[data-node-id="${clientId}"]`);
+        const panel = document.querySelector(`.panel[data-node-id="${currentClientId}"]`);
         if (!panel) {
-            console.error("No panel found for client", clientId);
+            console.error("No panel found for client", currentClientId);
             return;
         }
 
@@ -766,6 +747,66 @@
 
             chatList.appendChild(chatItem);
         }
+    }
+
+    function populateChatReceiversForClient() {
+        // Find the panel for the current client.
+        const panel = document.querySelector(`.panel[data-node-id="${currentClientId}"]`);
+        if (!panel) {
+            console.error("No panel found for client", currentClientId);
+            return;
+        }
+
+        // Try to parse the available_clients field; if it doesn't exist, use an empty array.
+        let availableClients = [];
+        if (panel.dataset.hash_list_receivers) {
+            try {
+                availableClients = JSON.parse(panel.dataset.hash_list_receivers);
+            } catch (e) {
+                console.error("Error parsing hash_list_receivers:", e);
+            }
+        }
+
+        //populate phonebooks
+        phonebooks[currentClientId] = availableClients;
+
+        console.log(availableClients)
+        // Get the container where the receivers will be listed.
+        const receiverListContainer = document.getElementById('receiver-list');
+
+        // If there are no available clients, display a message.
+        if (!availableClients || availableClients.length === 0) {
+            receiverListContainer.innerHTML = `<div style="text-align: center; color: red;">No available clients</div>`;
+        }
+    }
+
+    function populateContentServersForClient(){
+        // Find the panel for the current client.
+        const panel = document.querySelector(`.panel[data-node-id="${currentClientId}"]`);
+        if (!panel) {
+            console.error("No panel found for client", currentClientId);
+            return;
+        }
+
+        // Try to parse the available_clients field; if it doesn't exist, use an empty array.
+        let available_servers = [];
+        if (panel.dataset.content_servers) {
+            try {
+                available_servers = JSON.parse(panel.dataset.content_servers);
+                console.log(available_servers)
+            } catch (e) {
+                console.error("Error parsing available_servers:", e);
+            }
+        }
+
+        for (const serverId of available_servers) {
+            file_lists[serverId] = {
+                "name" : `Server Id: ${serverId}`,
+                "files" : {},
+            }
+        }
+
+        document.getElementById("current-server").innerHTML = `Server Id: ${available_servers[0]}`
     }
 
     function logOut() {
@@ -867,8 +908,11 @@
                     break;
 
                 case "web_client":
-                    console.log("Handling updates for web_client...");
-                    updateFiles();
+                    if (parsedData.id === currentClientId){
+
+                        updateFileList(parsedData.curr_received_file_list);
+                        //updateFileContent();
+                    }
                     break;
 
                 default:
@@ -973,7 +1017,6 @@
             const panel = document.createElement("div");
             panel.className = "panel";
             panel.dataset.nodeId = nodeId;
-            console.log(nodeType)
             panel.dataset.nodeType = nodeType;
 
             // Title with node_id and node_type
@@ -985,7 +1028,7 @@
             const fieldsContainer = document.createElement("div");
             Object.entries(fields).forEach(([key, value]) => {
                 const field = document.createElement("p");
-                field.textContent = `${key}: ${value}`;
+                field.textContent = `${key}: ${JSON.stringify(value)}`;
                 fieldsContainer.appendChild(field);
             });
             panel.appendChild(fieldsContainer);
@@ -996,12 +1039,16 @@
         // Add panels for web_clients_data
         Object.entries(data.web_clients_data).forEach(([nodeId, fields]) => {
             const panel = createPanel(nodeId, "Web Client", fields);
+            console.log(JSON.stringify(fields.registered_content_servers));
+            panel.dataset.content_servers = JSON.stringify(fields.registered_content_servers);
             clientsContainer.appendChild(panel);
         });
 
         // Add panels for chat_clients_data
         Object.entries(data.chat_clients_data).forEach(([nodeId, fields]) => {
             const panel = createPanel(nodeId, "Chat Client", fields);
+            panel.dataset.history = JSON.stringify(fields.chats);
+            panel.dataset.hash_list_receivers = JSON.stringify(fields.available_clients)
             clientsContainer.appendChild(panel);
         });
 
