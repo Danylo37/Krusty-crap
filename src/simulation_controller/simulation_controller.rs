@@ -14,6 +14,7 @@ use wg_2024::{
 use crate::general_use::{ClientCommand, ClientEvent, ServerCommand, ServerEvent, ServerType, ClientType, ServerId, Query, DisplayDataWebBrowser, DisplayDataCommunicationServer, DisplayDataMediaServer, DisplayDataChatClient, DisplayDataTextServer, DisplayDataDrone};
 use crate::network_initializer::DroneBrand;
 use crate::websocket::WsCommand;
+use std::collections::hash_map::Entry;
 
 pub struct SimulationState {
     pub nodes: HashMap<NodeId, NodeType>,
@@ -236,20 +237,6 @@ impl SimulationController {
             connected_nodes.clone(),
             pdr,
         );
-        use std::collections::hash_map::Entry;
-        match self.drones_data.entry(drone_id){
-            Entry::Occupied(mut entry) => {
-                let display_data_drone = entry.get_mut();
-                display_data_drone.connected_nodes_ids = connected_nodes.keys().cloned().collect();
-            },
-            Entry::Vacant(entry) => {
-                entry.insert(DisplayDataDrone{
-                    drone_brand: DroneBrand::Undefined,
-                    connected_nodes_ids: connected_nodes.keys().cloned().collect(),
-                    pdr,
-                });
-            }
-        }
         Ok(drone)
     }
 
@@ -449,8 +436,17 @@ impl SimulationController {
         match node_type {
             NodeType::Drone => {
                 if let Some(command_sender) = self.command_senders_drones.get(&node_id) {
+
                     if let Err(e) = command_sender.send(DroneCommand::AddSender(connected_node_id, sender)) {
                         warn!("Failed to send AddSender command to drone {}: {:?}", node_id, e);
+                    } else{
+                        match self.drones_data.entry(node_id){
+                            Entry::Occupied(mut entry) => {
+                                let display_data_drone = entry.get_mut();
+                                display_data_drone.connected_nodes_ids = self.command_senders_drones.keys().cloned().collect();
+                            },
+                            _=> {}
+                        }
                     }
                 } else {
                     warn!("Drone {} not found in controller", node_id);

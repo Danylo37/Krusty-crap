@@ -1071,10 +1071,16 @@
         });
 
         // Add panels for drones
+        Object.entries(data.drones_data).forEach(([nodeId, fields]) => {
+            const panel = createPanel(nodeId, "Drone", fields);
+            dronesContainer.appendChild(panel);
+        });
+
+        /*
         data.drones.forEach((nodeId) => {
             const panel = createPanel(nodeId, "Drone", {});
             dronesContainer.appendChild(panel);
-        });
+        });*/
 
         console.log("Monitoring sections updated!");
     }

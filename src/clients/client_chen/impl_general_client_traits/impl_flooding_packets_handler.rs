@@ -30,7 +30,7 @@ impl FloodingPacketsHandler for ClientChen {
     /// everyone's connected_node_ids (using the hashset's methods).
     fn handle_flood_response(&mut self, _packet: Packet, response: &FloodResponse) {
         // Debugging: Print the received path trace
-        println!("{:?} Client {} has received flood response with the path: {:?}", self.metadata.client_type ,self.metadata.node_id , response.path_trace);
+        //println!("{:?} Client {} has received flood response with the path: {:?}", self.metadata.client_type ,self.metadata.node_id , response.path_trace);
         // Check if path_trace is empty
         if response.path_trace.is_empty() {
             info!("ERROR: path_trace is empty!");

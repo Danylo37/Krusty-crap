@@ -78,6 +78,7 @@ pub struct DisplayDataSimulationController{
 
 #[derive(Debug, Clone, Serialize)]
 pub struct DisplayDataDrone{
+    pub(crate) node_id: NodeId,
     pub(crate) drone_brand: DroneBrand,
     pub(crate) connected_nodes_ids: Vec<NodeId>,
     pub(crate) pdr: f32,
