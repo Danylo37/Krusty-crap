@@ -44,9 +44,6 @@ function openChat(chatName, clientId) {
 
 // Phonebooks STORED
 const phonebooks = {
-    "0" : ["0", "2", "5"],
-    "1" : ["1", "3", "4"],
-    "2" : ["7", "10", "15"],
 };
 
 
@@ -89,7 +86,7 @@ function createNewChat() {
         searchImg.id = `reload-${serverId}`;
         searchImg.onclick = function(event) {
             this.style.animation = "spin 1s linear infinite";
-            askListRegisteredClientsToServer(serverId);
+            askListRegisteredClientsToServer(currentClientId , serverId);
         };
         labelContainer.appendChild(searchImg);
 
@@ -215,7 +212,7 @@ function closeChatPopup() {
 
 
 // Requesting
-function askListRegisteredClientsToServer(whichServer){
+function askListRegisteredClientsToServer(whichClient, whichServer){
     // CHen function to retrieve List registered clients
 }
 
@@ -225,31 +222,59 @@ function sendMessage() {
     const chatMessages = document.getElementById('chat-messages');
     const messageText = messageInput.value.trim();
 
-    if (messageText) {
-        // Add the sent message to the chat window
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'message sent';
-        messageDiv.style = 'margin-bottom: 10px; background-color: #007bff; padding: 10px; border-radius: 10px; max-width: 60%; color: white; align-self: flex-end;';
-        messageDiv.textContent = messageText;
+    if (!messageText) {
+        alert("Insert something in input");
+        return
+    } // Do nothing if message is empty
 
-        chatMessages.appendChild(messageDiv);
+    // Create the sent message element and add it to the chat window.
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message sent';
+    //messageDiv.style = 'margin-bottom: 10px; background-color: #007bff; padding: 10px; border-radius: 10px; max-width: 60%; color: white; align-self: flex-end;';
+    messageDiv.textContent = messageText;
+    chatMessages.appendChild(messageDiv);
 
-        // Scroll to the bottom of the chat window
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+    // Scroll to the bottom of the chat window
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 
-        // Clear the input field
-        messageInput.value = '';
+    // Clear the input field
+    messageInput.value = '';
+
+    // Update the history of the active chat.
+    const activeChatItem = document.querySelector('.chat-item.active');
+    if (activeChatItem) {
+        // Read the current history or start with an empty array.
+        let history = [];
+        if (activeChatItem.dataset.history) {
+            try {
+                history = JSON.parse(activeChatItem.dataset.history);
+            } catch (e) {
+                console.error("Error parsing chat history:", e);
+                history = [];
+            }
+        }
+        // Add the new message to the history.
+        history.push({Speaker: "Me", Message: messageText});
+        // Save the updated history back as a JSON string.
+        activeChatItem.dataset.history = JSON.stringify(history);
+
+        sendMessageController(currentClientId, activeChatItem.dataset.id);
     }
+}
+function sendMessageController(senderClientId, receiverClientId){
+    //Chen sending message controller
 }
 
 
 // UPDATING
 
-function updateReceivers(serverId, listReceivers){
-    phonebooks[serverId] = listReceivers;
+function updateChatReceivers(HashListReceivers){
+    for ([serverId, listReceivers] of Object.entries(HashListReceivers)) {
+        phonebooks[serverId] = listReceivers;
 
-    if (document.getElementById(`reload-${serverId}`)) {
-        document.getElementById(`reload-${serverId}`).style.animation = "";
+        if (document.getElementById(`reload-${serverId}`)) {
+            document.getElementById(`reload-${serverId}`).style.animation = "";
+        }
     }
 }
 
@@ -332,7 +357,8 @@ function updateChatWindow(history) {
 
 
 // SERVER DATA STRUCTURE (Each server has its own files)
-const servers = [
+const file_lists = [
+    /*
     {
         name: "Server1",
         files: {
@@ -357,7 +383,7 @@ const servers = [
             "Video.mp4": "A short movie...",
             "Slides.pptx": "Presentation for class..."
         }
-    }
+    }*/
 ];
 
 
@@ -370,8 +396,8 @@ function navigateServer(direction) {
 
     // Ensure index stays within bounds
     if (currentServerIndex < 0) {
-        currentServerIndex = servers.length - 1; // Loop to last server
-    } else if (currentServerIndex >= servers.length) {
+        currentServerIndex = file_lists.length - 1; // Loop to last server
+    } else if (currentServerIndex >= file_lists.length) {
         currentServerIndex = 0; // Loop to first server
     }
 
@@ -379,9 +405,9 @@ function navigateServer(direction) {
     updateServerDisplay();
 }
 
-function reloadFilesServer(whichClient, whichServer) {
+function reloadFilesServer(whichServer) {
     // Call the empty function
-    askListFilesServer(whichClient, whichServer);
+    askListFilesServer(currentClientId, whichServer);
 
     // Show the loading overlay pop-up
     const loadingPopup = document.getElementById("loading-popup");
@@ -404,7 +430,7 @@ function askListFilesServer(whichClient, whichServer) {
 
 // FUNCTION TO UPDATE UI WHEN SWITCHING SERVERS
 function updateServerDisplay() {
-    const currentServer = servers[currentServerIndex];
+    const currentServer = file_lists[currentServerIndex];
 
     // Update Server Name
     document.getElementById("current-server").textContent = currentServer.name;
@@ -421,7 +447,7 @@ function openPopup(fileName) {
     const popupFileContent = document.getElementById("file-popup-file-content");
 
     // Get the current server and file content as before…
-    const currentServer = servers[currentServerIndex];
+    const currentServer = file_lists[currentServerIndex];
     const fileContent = currentServer.files[fileName] || "No content available.";
 
     popupTitle.textContent = fileName;
@@ -451,19 +477,27 @@ function updateFileList(files) {
         const row = document.createElement("tr");
         row.innerHTML = `
             <td>${fileName}</td>
-            <td style="text-align:right;">${servers[currentServerIndex].name}</td>
+            <td style="text-align:right;">${file_lists[currentServerIndex].name}</td>
         `;
         row.addEventListener("click", () => openPopup(fileName, fileContent));
         fileListTable.appendChild(row);
+    }
+
+    file_lists[currentClientId]["files"] = files;
+
+    // Stop loading container
+    const loadingPopup = document.getElementById("loading-popup");
+    if(loadingPopup.style.display === "flex"){
+        loadingPopup.style.display = "none";
     }
 }
 
 
 
 
-function populate_files_and_images(){
 
-}
+
+
 
 
 
