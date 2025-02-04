@@ -68,6 +68,7 @@
 }
 
 .popup-content {
+    overflow-y:scroll;
     background: white;
     padding: 20px;
     border-radius: 10px;
