@@ -52,33 +52,33 @@ use crate::websocket::WsCommand;
 //Drone Enum + iterator over it
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
 pub enum DroneBrand {
-    KrustyDrone,
-    //RustyDrone,
-    //Rustable,
-    //BagelBomber,
-    //RustAndFurious,
-    //Fungi,
-    //RustBusters,
-    //RustEze,
-    //SkyLink,
-    //RollingDrones,
-    // BobryWLucie,
+    //KrustyDrone,
+    RustyDrone,
+    Rustable,
+    BagelBomber,
+    RustAndFurious,
+    Fungi,
+    RustBusters,
+    RustEze,
+    SkyLink,
+    RollingDrones,
+    //BobryWLucie,
 }
 
 impl DroneBrand {
     // Returns an iterator over all variants of DroneBrand
     pub fn iter() -> impl Iterator<Item = DroneBrand> {
         [
-            DroneBrand::KrustyDrone
-            //DroneBrand::RustyDrone,
-            //DroneBrand::Rustable,
-            //DroneBrand::BagelBomber,
-            //DroneBrand::RustAndFurious,
-            //DroneBrand::Fungi,
-            //DroneBrand::RustBusters,
-            //DroneBrand::RustEze,
-            //DroneBrand::SkyLink,
-            //DroneBrand::RollingDrones,
+            //DroneBrand::KrustyDrone,
+            DroneBrand::RustyDrone,
+            DroneBrand::Rustable,
+            DroneBrand::BagelBomber,
+            DroneBrand::RustAndFurious,
+            DroneBrand::Fungi,
+            DroneBrand::RustBusters,
+            DroneBrand::RustEze,
+            DroneBrand::SkyLink,
+            DroneBrand::RollingDrones,
             //DroneBrand::BobryWLucie,
         ]
             .into_iter()
@@ -225,17 +225,17 @@ impl NetworkInitializer {
 
             // Use helper function or macro (in this case function) to create and spawn drones based on their brand
             match self.choose_drone_brand_evenly() {
-                DroneBrand::KrustyDrone => self.create_and_spawn_drone::<RustyDrone>(drone_params),
-                //DroneBrand::RustyDrone => self.create_and_spawn_drone::<RustyDrone>(drone_params),
-                //DroneBrand::RollingDrones => self.create_and_spawn_drone::<RollingDrone>(drone_params),
-                //DroneBrand::Rustable => self.create_and_spawn_drone::<RustableDrone>(drone_params),
-                //DroneBrand::RustBusters => self.create_and_spawn_drone::<RustBustersDrone>(controller, drone_params),
-                //DroneBrand::RustEze => self.create_and_spawn_drone::<RustezeDrone>(drone_params),
-                //DroneBrand::Fungi => self.create_and_spawn_drone::<FungiDrone>(drone_params),
-                //DroneBrand::BagelBomber => self.create_and_spawn_drone::<BagelBomber>(drone_params),
-                //DroneBrand::SkyLink => self.create_and_spawn_drone::<SkyLinkDrone>(drone_params),
-                //DroneBrand::RustAndFurious => self.create_and_spawn_drone::<RustAndFurious>(drone_params),
-                //DroneBrand::BobryWLucie => self.create_and_spawn_drone::<BoberDrone>(controller, drone_params),
+                //DroneBrand::KrustyDrone => self.create_and_spawn_drone::<RustyDrone>(drone_params),
+                DroneBrand::RustyDrone => self.create_and_spawn_drone::<RustyDrone>(drone_params),
+                DroneBrand::RollingDrones => self.create_and_spawn_drone::<RollingDrone>(drone_params),
+                DroneBrand::Rustable => self.create_and_spawn_drone::<RustableDrone>(drone_params),
+                DroneBrand::RustBusters => self.create_and_spawn_drone::<RustBustersDrone>(drone_params),
+                DroneBrand::RustEze => self.create_and_spawn_drone::<RustezeDrone>(drone_params),
+                DroneBrand::Fungi => self.create_and_spawn_drone::<FungiDrone>(drone_params),
+                DroneBrand::BagelBomber => self.create_and_spawn_drone::<BagelBomber>(drone_params),
+                DroneBrand::SkyLink => self.create_and_spawn_drone::<SkyLinkDrone>(drone_params),
+                DroneBrand::RustAndFurious => self.create_and_spawn_drone::<RustAndFurious>(drone_params),
+                //DroneBrand::BobryWLucie => self.create_and_spawn_drone::<BoberDrone>(drone_params),
             }
         }
     }
@@ -291,7 +291,7 @@ impl NetworkInitializer {
             }
         }
         //Shouldn't happen
-        DroneBrand::KrustyDrone
+        DroneBrand::Fungi
     }
     ///CLIENTS GENERATION
     fn create_clients(

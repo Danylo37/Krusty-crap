@@ -10,22 +10,7 @@ use crate::general_use::DataScope::{UpdateAll, UpdateSelf};
 
 impl Monitoring for ClientChen{
     fn send_display_data(&mut self, sender_to_gui: Sender<String>, data_scope: DataScope){
-        self.update_connected_nodes();
-        let content_servers =  self.get_content_servers_from_topology().clone();
-        // Create the DisplayData struct
-        let display_data = DisplayDataWebBrowser {
-            node_id: self.metadata.node_id,
-            node_type: "Web Browser".to_string(),
-            flood_id: self.status.flood_id,
-            session_id: self.status.session_id,
-            connected_node_ids: self.communication.connected_nodes_ids.clone(),
-            routing_table: self.communication.routing_table.clone(),
-            registered_content_servers : content_servers.clone(),
-            curr_received_file_list: self.storage.current_list_file.clone(),
-            chosen_file_text: self.storage.current_requested_text_file.clone(),
-            serialized_media: self.storage.current_received_serialized_media.clone(),
-        };
-        self.send_event(WebClientData(self.metadata.node_id, display_data, data_scope));
+        self.send_display_data_simplified(data_scope);
     }
 
     fn run_with_monitoring(&mut self, sender_to_gui: Sender<String>) {
