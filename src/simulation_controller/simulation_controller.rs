@@ -443,7 +443,7 @@ impl SimulationController {
                         match self.drones_data.entry(node_id){
                             Entry::Occupied(mut entry) => {
                                 let display_data_drone = entry.get_mut();
-                                display_data_drone.connected_nodes_ids = self.command_senders_drones.keys().cloned().collect();
+                                display_data_drone.connected_nodes_ids.push(connected_node_id);
                             },
                             _=> {}
                         }
