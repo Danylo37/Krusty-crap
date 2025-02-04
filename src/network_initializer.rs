@@ -23,8 +23,8 @@ use crate::{
         client_chen::ClientChen,
         client_danylo::ChatClientDanylo,
     },
-    general_use::{ClientId, ClientCommand, ClientEvent, ServerEvent, ClientType, ServerType, DroneId, UsingTimes},
-    servers::{content, communication_server::CommunicationServer, text_server::TextServer, media_server::MediaServer, server::Server as ServerTrait},
+    general_use::{ClientId, ClientCommand, ClientEvent, ClientType, ServerType, DroneId, UsingTimes, DisplayDataDrone},
+    servers::{content, communication_server::CommunicationServer, text_server::TextServer, media_server::MediaServer},
     simulation_controller::SimulationController,
     initialization_file_checker::InitializationFileChecker,
 };
@@ -40,17 +40,18 @@ use fungi_drone::FungiDrone;
 use bagel_bomber::BagelBomber;
 use skylink::SkyLinkDrone;
 use RF_drone::RustAndFurious;
+use bobry_w_locie::drone::BoberDrone;
+use crate::clients::client_chen::Serialize;
 use crate::general_use::ServerCommand;
-//use bobry_w_locie::drone::BoberDrone;
+
 
 
 //UI
 use crate::ui_traits::Monitoring;
-use crate::ui::start_ui;
 use crate::websocket::WsCommand;
 
 //Drone Enum + iterator over it
-#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize)]
 pub enum DroneBrand {
     //KrustyDrone,
     RustyDrone,
@@ -62,7 +63,8 @@ pub enum DroneBrand {
     RustEze,
     SkyLink,
     RollingDrones,
-    //BobryWLucie,
+    BobryWLucie,
+    Undefined,
 }
 
 impl DroneBrand {
@@ -75,11 +77,11 @@ impl DroneBrand {
             DroneBrand::BagelBomber,
             DroneBrand::RustAndFurious,
             DroneBrand::Fungi,
-            DroneBrand::RustBusters,
+            //DroneBrand::RustBusters,
             DroneBrand::RustEze,
             DroneBrand::SkyLink,
             DroneBrand::RollingDrones,
-            //DroneBrand::BobryWLucie,
+            DroneBrand::BobryWLucie,
         ]
             .into_iter()
     }
@@ -94,7 +96,6 @@ pub struct NetworkInitializer {
     pub client_type_usage: HashMap<ClientType, UsingTimes>,
     pub sender_to_gui: Sender<String>,
     pub command_senders: HashMap<NodeId, Sender<DroneCommand>>, // Add this field
-    //sender_to_gui: mpsc::Sender<Vec<u8>> for message packet
 
 }
 
@@ -215,7 +216,7 @@ impl NetworkInitializer {
             // Prepare parameters array for the macro
 
             let drone_params = (
-                drone.id,
+                drone.id.clone(),
                 drone_events_sender_clone,
                 command_receiver,
                 packet_receiver,
@@ -226,16 +227,88 @@ impl NetworkInitializer {
             // Use helper function or macro (in this case function) to create and spawn drones based on their brand
             match self.choose_drone_brand_evenly() {
                 //DroneBrand::KrustyDrone => self.create_and_spawn_drone::<RustyDrone>(drone_params),
-                DroneBrand::RustyDrone => self.create_and_spawn_drone::<RustyDrone>(drone_params),
-                DroneBrand::RollingDrones => self.create_and_spawn_drone::<RollingDrone>(drone_params),
-                DroneBrand::Rustable => self.create_and_spawn_drone::<RustableDrone>(drone_params),
-                DroneBrand::RustBusters => self.create_and_spawn_drone::<RustBustersDrone>(drone_params),
-                DroneBrand::RustEze => self.create_and_spawn_drone::<RustezeDrone>(drone_params),
-                DroneBrand::Fungi => self.create_and_spawn_drone::<FungiDrone>(drone_params),
-                DroneBrand::BagelBomber => self.create_and_spawn_drone::<BagelBomber>(drone_params),
-                DroneBrand::SkyLink => self.create_and_spawn_drone::<SkyLinkDrone>(drone_params),
-                DroneBrand::RustAndFurious => self.create_and_spawn_drone::<RustAndFurious>(drone_params),
-                //DroneBrand::BobryWLucie => self.create_and_spawn_drone::<BoberDrone>(drone_params),
+                DroneBrand::RustyDrone => {
+                    self.create_and_spawn_drone::<RustyDrone>(drone_params.clone());
+                    self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone{
+                        drone_brand: DroneBrand::RustyDrone,
+                        connected_nodes_ids: Vec::new(),
+                        pdr: drone_params.5,
+                    });
+                },
+                DroneBrand::RollingDrones => {
+                    self.create_and_spawn_drone::<RollingDrone>(drone_params.clone());
+                    self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone{
+                        drone_brand: DroneBrand::RollingDrones,
+                        connected_nodes_ids: Vec::new(),
+                        pdr: drone_params.5,
+                    });
+                },
+                DroneBrand::Rustable => {
+                    self.create_and_spawn_drone::<RustableDrone>(drone_params.clone());
+                    self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone{
+                        drone_brand: DroneBrand::Rustable,
+                        connected_nodes_ids: Vec::new(),
+                        pdr: drone_params.5,
+                    });
+
+                },
+                /*DroneBrand::RustBusters => {
+                    self.create_and_spawn_drone::<RustBustersDrone>(drone_params.clone());
+                    self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone{
+                        drone_brand: DroneBrand::RustBusters,
+                        connected_nodes_ids: Vec::new(),
+                        pdr: drone_params.5,
+                    });
+                },*/
+                DroneBrand::RustEze => {
+                    self.create_and_spawn_drone::<RustezeDrone>(drone_params.clone());
+                    self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone{
+                        drone_brand: DroneBrand::RustEze,
+                        connected_nodes_ids: Vec::new(),
+                        pdr: drone_params.5,
+                    });
+                },
+                DroneBrand::Fungi => {
+                    self.create_and_spawn_drone::<FungiDrone>(drone_params.clone());
+                    self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone{
+                        drone_brand: DroneBrand::Fungi,
+                        connected_nodes_ids: Vec::new(),
+                        pdr: drone_params.5,
+                    });
+                },
+                DroneBrand::BagelBomber => {
+                    self.create_and_spawn_drone::<BagelBomber>(drone_params.clone());
+                    self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone{
+                        drone_brand: DroneBrand::BagelBomber,
+                        connected_nodes_ids: Vec::new(),
+                        pdr: drone_params.5,
+                    });
+                },
+                DroneBrand::SkyLink => {
+                    self.create_and_spawn_drone::<SkyLinkDrone>(drone_params.clone());
+                    self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone{
+                        drone_brand: DroneBrand::SkyLink,
+                        connected_nodes_ids: Vec::new(),
+                        pdr: drone_params.5,
+                    });
+                },
+                DroneBrand::RustAndFurious => {
+                    self.create_and_spawn_drone::<RustAndFurious>(drone_params.clone());
+                    self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone{
+                        drone_brand: DroneBrand::RustAndFurious,
+                        connected_nodes_ids: Vec::new(),
+                        pdr: drone_params.5,
+                    });
+                },
+                DroneBrand::BobryWLucie => {
+                    self.create_and_spawn_drone::<BoberDrone>(drone_params.clone());
+                    self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone{
+                        drone_brand: DroneBrand::BobryWLucie,
+                        connected_nodes_ids: Vec::new(),
+                        pdr: drone_params.5,
+                    });
+                },
+                _=>{}
             }
         }
     }

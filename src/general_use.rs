@@ -7,6 +7,7 @@ use wg_2024::{
     network::NodeId,
     packet::{Packet, NodeType},
 };
+use crate::network_initializer::DroneBrand;
 
 pub type MediaRef = String;
 pub type FileRef = String;
@@ -60,6 +61,26 @@ impl Message {
     pub fn get_content(&self) -> &str {
         &self.content
     }
+}
+//todo! send also the drone specific data (e.g. pdr, status: Crashed or NotCrashed, ...)
+#[derive(Debug, Serialize)]
+pub struct DisplayDataSimulationController{
+    //drones
+    pub data_title: String,
+    pub web_clients_data: HashMap<NodeId, DisplayDataWebBrowser>,
+    pub chat_clients_data: HashMap<NodeId, DisplayDataChatClient>,
+    pub comm_servers_data: HashMap<NodeId, DisplayDataCommunicationServer>,
+    pub text_servers_data: HashMap<NodeId, DisplayDataTextServer>,
+    pub media_servers_data: HashMap<NodeId, DisplayDataMediaServer>,
+    pub drones_data: HashMap<NodeId, DisplayDataDrone>,
+    pub topology: HashMap<NodeId, Vec<NodeId>>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct DisplayDataDrone{
+    pub(crate) drone_brand: DroneBrand,
+    pub(crate) connected_nodes_ids: Vec<NodeId>,
+    pub(crate) pdr: f32,
 }
 
 #[derive(Debug, Serialize, Clone)]

@@ -7,21 +7,9 @@ use crate::clients::client_chen::{NodeId, Serialize};
 use crate::simulation_controller::SimulationController;
 use crate::ui_traits::Monitoring;
 use crate::websocket::{ClientCommandWs, DroneCommandWs, ServerCommandWs, WsCommand};
-use crate::general_use::{ClientCommand, ClientEvent, DataScope, DisplayDataChatClient, DisplayDataCommunicationServer, DisplayDataMediaServer, DisplayDataTextServer, DisplayDataWebBrowser, ServerCommand, ServerEvent};
+use crate::general_use::{ClientCommand, ClientEvent, DataScope, DisplayDataChatClient, DisplayDataCommunicationServer, DisplayDataMediaServer, DisplayDataSimulationController, DisplayDataTextServer, DisplayDataWebBrowser, ServerCommand, ServerEvent};
+use crate::network_initializer::DroneBrand;
 
-//todo! send also the drone specific data (e.g. pdr, status: Crashed or NotCrashed, ...)
-#[derive(Debug, Serialize)]
-pub struct DisplayDataSimulationController{
-    //drones
-    pub data_title: String,
-    pub web_clients_data: HashMap<NodeId, DisplayDataWebBrowser>,
-    pub chat_clients_data: HashMap<NodeId, DisplayDataChatClient>,
-    pub comm_servers_data: HashMap<NodeId, DisplayDataCommunicationServer>,
-    pub text_servers_data: HashMap<NodeId, DisplayDataTextServer>,
-    pub media_servers_data: HashMap<NodeId, DisplayDataMediaServer>,
-    pub drones: Vec<NodeId>,
-    pub topology: HashMap<NodeId, Vec<NodeId>>,
-}
 impl Monitoring for SimulationController {
     fn send_display_data(&mut self, sender_to_gui: Sender<String>, data_scope: DataScope) {
         let display_data = DisplayDataSimulationController{
@@ -31,7 +19,7 @@ impl Monitoring for SimulationController {
             comm_servers_data: self.comm_servers_data.clone(),
             text_servers_data: self.text_servers_data.clone(),
             media_servers_data: self.media_servers_data.clone(),
-            drones: self.command_senders_drones.keys().cloned().collect(),
+            drones_data: self.drones_data.clone(),
             topology: self.state.topology.clone(),
         };
         let json_string = serde_json::to_string(&display_data).unwrap();

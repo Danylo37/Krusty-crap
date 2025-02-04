@@ -11,7 +11,8 @@ use wg_2024::{
     network::NodeId,
     packet::{NodeType, Packet, PacketType}
 };
-use crate::general_use::{ClientCommand, ClientEvent, ServerCommand, ServerEvent, ServerType, ClientType, ServerId, Query, DisplayDataWebBrowser, DisplayDataCommunicationServer, DisplayDataMediaServer, DisplayDataChatClient, DisplayDataTextServer};
+use crate::general_use::{ClientCommand, ClientEvent, ServerCommand, ServerEvent, ServerType, ClientType, ServerId, Query, DisplayDataWebBrowser, DisplayDataCommunicationServer, DisplayDataMediaServer, DisplayDataChatClient, DisplayDataTextServer, DisplayDataDrone};
+use crate::network_initializer::DroneBrand;
 use crate::websocket::WsCommand;
 
 pub struct SimulationState {
@@ -67,6 +68,7 @@ pub struct SimulationController {
     pub comm_servers_data: HashMap<NodeId, DisplayDataCommunicationServer>,
     pub text_servers_data: HashMap<NodeId, DisplayDataTextServer>,
     pub media_servers_data: HashMap<NodeId, DisplayDataMediaServer>,
+    pub drones_data: HashMap<NodeId, DisplayDataDrone>,
     pub updating_nodes: HashSet<NodeId>,
     pub ws_command_receiver: Receiver<WsCommand>,
 }
@@ -109,6 +111,7 @@ impl SimulationController {
             comm_servers_data: HashMap::new(),
             text_servers_data: HashMap::new(),
             media_servers_data: HashMap::new(),
+            drones_data: HashMap::new(),
             updating_nodes: HashSet::new(),
             ws_command_receiver,
         }
@@ -230,9 +233,23 @@ impl SimulationController {
             self.drone_event_sender.clone(),
             command_receiver,
             packet_receiver,
-            connected_nodes,
+            connected_nodes.clone(),
             pdr,
         );
+        use std::collections::hash_map::Entry;
+        match self.drones_data.entry(drone_id){
+            Entry::Occupied(mut entry) => {
+                let display_data_drone = entry.get_mut();
+                display_data_drone.connected_nodes_ids = connected_nodes.keys().cloned().collect();
+            },
+            Entry::Vacant(entry) => {
+                entry.insert(DisplayDataDrone{
+                    drone_brand: DroneBrand::Undefined,
+                    connected_nodes_ids: connected_nodes.keys().cloned().collect(),
+                    pdr,
+                });
+            }
+        }
         Ok(drone)
     }
 
