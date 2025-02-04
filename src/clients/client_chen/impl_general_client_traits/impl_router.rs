@@ -1,4 +1,4 @@
-use crate::clients::client_chen::{ClientChen, NodeInfo, PacketCreator, Router, Sending, SpecificInfo};
+use crate::clients::client_chen::{ClientChen, NodeInfo, PacketCreator, Router, Sending, ServerInformation, SpecificInfo};
 use crate::clients::client_chen::prelude::*;
 use crate::clients::client_chen::general_client_traits::*;
 use crate::clients::client_chen::SpecificInfo::ServerInfo;
@@ -63,11 +63,33 @@ impl Router for ClientChen {
     }
 
     fn update_topology_entry_for_server(&mut self, initiator_id: NodeId, server_type: ServerType) {
-        if let Some(node_info) = self.network_info.topology.get_mut(&initiator_id) {
-            if let SpecificInfo::ServerInfo(server_info) = &mut node_info.specific_info {
-                if server_info.server_type == Undefined {
-                    server_info.server_type = server_type;
+        use std::collections::hash_map::Entry;
+
+        match self.network_info.topology.entry(initiator_id) {
+            Entry::Occupied(mut entry) => {
+                let node_info = entry.get_mut();
+                match &mut node_info.specific_info {
+                    SpecificInfo::ServerInfo(server_info) => {
+                        server_info.server_type = server_type;  // Update server type correctly
+                    }
+                    _ => {
+                        // If the node exists but is not a ServerInfo, replace it
+                        node_info.specific_info = SpecificInfo::ServerInfo(ServerInformation {
+                            connected_nodes_ids: Default::default(),
+                            server_type,
+                        });
+                    }
                 }
+            }
+            Entry::Vacant(entry) => {
+                // If the node doesn't exist, insert it as a new ServerInfo
+                entry.insert(NodeInfo {
+                    node_id: initiator_id,
+                    specific_info: SpecificInfo::ServerInfo(ServerInformation {
+                        connected_nodes_ids: Default::default(),
+                        server_type,
+                    }),
+                });
             }
         }
     }

@@ -35,9 +35,10 @@ pub trait Router{
     fn update_topology_entry_for_server(&mut self, initiator_id: NodeId, server_type: ServerType);
 }
 
-pub trait CommunicationTools{
+pub trait CommunicationTrait{
     fn get_discovered_servers_from_topology(&mut self) -> HashSet<ServerId>;
     fn get_edge_nodes_from_topology(&mut self) -> HashSet<NodeId>;
+    fn get_content_servers_from_topology(&mut self) -> HashSet<ServerId>;
 }
 
 pub trait PacketCreator{

@@ -31,6 +31,7 @@ pub struct DisplayDataWebBrowser {
     pub session_id: SessionId,
     pub connected_node_ids: HashSet<NodeId>,
     pub routing_table: HashMap<NodeId, Vec<NodeId>>,
+    pub registered_content_servers: HashSet<ServerId>,
     pub curr_received_file_list: Vec<String>,
     pub chosen_file_text: String,
     pub serialized_media: HashMap<MediaRef, String>,

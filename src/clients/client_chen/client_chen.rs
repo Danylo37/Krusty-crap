@@ -11,8 +11,9 @@ use crate::clients::Client as TraitClient;
 /// Note: when you send the packet with routing the hop_index is increased in the receiving by a drone
 
 use crate::clients::client_chen::prelude::*;
-use crate::clients::client_chen::{CommandHandler, FragmentsHandler, PacketsReceiver, Router, Sending};
-use crate::general_use::{ClientType, MediaRef};
+use crate::clients::client_chen::{CommandHandler, CommunicationTrait, FragmentsHandler, PacketsReceiver, Router, Sending};
+use crate::general_use::{ClientType, DataScope, DisplayDataWebBrowser, MediaRef};
+use crate::general_use::ClientEvent::WebClientData;
 
 #[derive(Clone)]
 pub(crate) struct ClientChen {
@@ -28,6 +29,7 @@ pub(crate) struct ClientChen {
     pub(crate) storage: NodeStorage,
     // Information about the current network topology
     pub(crate) network_info: NetworkInfo,
+
 }
 
 impl TraitClient for ClientChen {
@@ -88,7 +90,6 @@ impl TraitClient for ClientChen {
             network_info: NetworkInfo{
                 topology: HashMap::new(),
             },
-
         }
     }
 
@@ -120,6 +121,25 @@ impl TraitClient for ClientChen {
 impl ClientChen{
     pub(crate) fn update_connected_nodes(&mut self) {
         self.communication.connected_nodes_ids = self.communication_tools.packet_send.keys().cloned().collect();
+    }
+
+    pub(crate) fn send_display_data_simplified(&mut self, data_scope: DataScope){
+            self.update_connected_nodes();
+            let content_servers =  self.get_content_servers_from_topology().clone();
+            // Create the DisplayData struct
+            let display_data = DisplayDataWebBrowser {
+                node_id: self.metadata.node_id,
+                node_type: "Web Browser".to_string(),
+                flood_id: self.status.flood_id,
+                session_id: self.status.session_id,
+                connected_node_ids: self.communication.connected_nodes_ids.clone(),
+                routing_table: self.communication.routing_table.clone(),
+                registered_content_servers : content_servers.clone(),
+                curr_received_file_list: self.storage.current_list_file.clone(),
+                chosen_file_text: self.storage.current_requested_text_file.clone(),
+                serialized_media: self.storage.current_received_serialized_media.clone(),
+            };
+            self.send_event(WebClientData(self.metadata.node_id, display_data, data_scope));
     }
 }
 
@@ -176,12 +196,12 @@ pub(crate) struct NetworkInfo{
     pub(crate) topology: HashMap<NodeId, NodeInfo>,
 }
 
-#[derive(Default, Clone,Serialize, Deserialize)]
+#[derive(Default, Clone, Serialize, Deserialize, Debug)]
 pub struct NodeInfo{
     pub(crate) node_id: NodeId,
     pub(crate) specific_info: SpecificInfo,
 }
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SpecificInfo {
     ClientInfo(ClientInformation),
     ServerInfo(ServerInformation),
@@ -195,7 +215,7 @@ impl Default for SpecificInfo {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, Default)]
+#[derive(Debug,Clone, Serialize, Deserialize, Default)]
 pub struct ClientInformation {
     pub(crate) connected_nodes_ids: HashSet<NodeId>,
 }
@@ -208,7 +228,7 @@ impl ClientInformation {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerInformation {
     pub(crate) connected_nodes_ids: HashSet<NodeId>,
     pub(crate) server_type: ServerType,
@@ -223,7 +243,7 @@ impl ServerInformation {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DroneInformation {
     pub(crate) connected_nodes_ids: HashSet<NodeId>,
 }
