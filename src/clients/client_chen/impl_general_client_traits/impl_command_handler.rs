@@ -19,9 +19,6 @@ impl CommandHandler for ClientChen{
                 self.do_flooding();
             }
             ClientCommand::GetKnownServers => {
-                // Get the registered servers before the closure
-                let registered_servers = self.get_registered_servers();
-
                 let servers: Vec<(ServerId, ServerType, bool)> = self
                     .get_discovered_servers_from_topology()
                     .iter()
@@ -32,8 +29,7 @@ impl CommandHandler for ClientChen{
                             |server| {
                                 if let SpecificInfo::ServerInfo(server_info) = &server.specific_info {
                                     let server_type = server_info.server_type;
-                                    let is_registered = registered_servers.contains(server_id);
-                                    (*server_id, server_type, is_registered)
+                                    (*server_id, server_type, false)
                                 } else {
                                     (*server_id, ServerType::Undefined, false)
                                 }
@@ -45,23 +41,16 @@ impl CommandHandler for ClientChen{
             }
 
             ClientCommand::AskTypeTo(server_id) => {
-                self.send_query(server_id, Query::AskType);
+                self.ask_server_type(server_id);
             }
             ClientCommand::RequestListFile(server_id) => {
-                self.send_query(server_id, Query::AskListFiles);
+                self.ask_list_files(server_id);
             }
-            ClientCommand::RequestText(server_id, file) => {
-                self.send_query(server_id, Query::AskFile(file));
+            ClientCommand::RequestText(server_id, file_ref) => {
+                self.ask_file(server_id, file_ref);
             }
             ClientCommand::RequestMedia(server_id, media_ref) => {
-                self.send_query(server_id, Query::AskMedia(media_ref));
-            }
-            //testing command
-            ClientCommand::RequestRoutes(destination_id) => {
-                if let Some(routes) = self.communication.routing_table.get(&destination_id) {
-                    eprintln!("The routes from {} to {} are: \n\
-                     {:?}", self.metadata.node_id, destination_id, routes);
-                }
+                self.ask_media(server_id, media_ref);
             }
             _=>{}
 

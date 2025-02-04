@@ -43,7 +43,7 @@ impl Sending for ClientChen {
         }
     }
 
-    fn send_events(&mut self, client_event: ClientEvent) {
+    fn send_event(&mut self, client_event: ClientEvent) {
         self.communication_tools.controller_send.send(client_event)
             .unwrap_or_else(|e| error!("Failed to send client event: {}", e));
     }
@@ -58,16 +58,28 @@ impl Sending for ClientChen {
         }
     }
 
-    fn send_packet_to_connected_node(&mut self, target_node_id: NodeId, mut packet: Packet) {
-        // Update routing metrics
-        //eprintln!("We are sending the flood response to {}", target_node_id);
-        if let Some(destination) = packet.routing_header.destination() {
-            if let Some(routes) = self.communication.routing_table.get_mut(&destination) {
-                routes.entry(packet.clone().routing_header.hops)
-                    .and_modify(|using_times| *using_times += 1);
+    fn send_query_by_routing_header(&mut self, source_routing_header: SourceRoutingHeader, query: Query) {
+        if let Some(query_packets) = self.msg_to_fragments_by_routing_header(query, source_routing_header) {
+            /* DEBUGGING
+            let test_query = self.reassemble_fragments::<Query>(query_packets.clone());
+            match test_query {
+                Ok(test_query) => {
+                    println!("the query: {:?}", test_query);
+                }
+                Err(e) => {
+                    error!("Failed to assemble query: {}", e);
+                }
             }
+            */
+            for query_packet in query_packets {
+                self.send(query_packet);
+            }
+        } else {
+            warn!("Failed to fragment query");
         }
+    }
 
+    fn send_packet_to_connected_node(&mut self, target_node_id: NodeId, mut packet: Packet) {
         // Store packet with proper nested structure
         let (session_id, fragment_index) = match &packet.pack_type {
             PacketType::MsgFragment(fragment) => (packet.session_id, fragment.fragment_index),
@@ -75,11 +87,6 @@ impl Sending for ClientChen {
         };
 
         self.storage.output_buffer
-            .entry(session_id)
-            .or_default()
-            .insert(fragment_index, packet.clone());
-
-        self.storage.output_packet_disk
             .entry(session_id)
             .or_default()
             .insert(fragment_index, packet.clone());
@@ -113,25 +120,7 @@ impl Sending for ClientChen {
             PacketStatus::NotSent(not_sent_type) => {
                 self.handle_not_sent_packet(packet, not_sent_type, destination.unwrap());
             }
-            PacketStatus::Sent => {
-                self.handle_sent_packet(packet);
-            }
             _ => {} // No action needed
-        }
-    }
-
-    fn handle_sent_packet(&mut self, packet: Packet) {
-        let (session_id, fragment_index) = match &packet.pack_type {
-            PacketType::MsgFragment(fragment) => (packet.session_id, fragment.fragment_index),
-            _ => (packet.session_id, 0),
-        };
-
-        // This is already done in the ack handling, but it's ok to retain it,
-        if let Some(fragments) = self.storage.output_buffer.get_mut(&session_id) {
-            fragments.remove(&fragment_index);
-            if fragments.is_empty() {
-                self.storage.output_buffer.remove(&session_id);
-            }
         }
     }
 
@@ -170,4 +159,5 @@ impl Sending for ClientChen {
             .or_default()
             .insert(fragment_index, status);
     }
+
 }

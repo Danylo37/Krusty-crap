@@ -6,11 +6,6 @@ use crate::clients::client_chen::web_browser_client_traits::WebBrowserClientTrai
 
 impl FragmentsHandler for ClientChen {
     fn handle_fragment(&mut self, msg_packet: Packet, fragment: &Fragment) {
-        self.decreasing_using_times_when_receiving_packet(&msg_packet);
-        self.storage.input_packet_disk
-            .entry(msg_packet.session_id)
-            .or_insert_with(HashMap::new)
-            .insert(fragment.fragment_index, msg_packet.clone());
         self.storage.fragment_assembling_buffer
             .entry(msg_packet.session_id)
             .or_insert_with(HashMap::new)
@@ -80,6 +75,7 @@ impl FragmentsHandler for ClientChen {
                             if let Ok(message) = self.reassemble_fragments_in_buffer(session_id) {
                                 if let Some(id) = initiator_id {
                                     self.process_message(id, message);
+                                    self.storage.fragment_assembling_buffer.remove(&session_id);
                                 } else {
                                     warn!("Initiator ID not found for session: {:?}", session_id);
                                 }
@@ -101,26 +97,50 @@ impl FragmentsHandler for ClientChen {
 
     fn process_message(&mut self, initiator_id: NodeId, message: Response) {
         match message {
-            Response::ServerType(server_type) => self.update_topology_entry_for_server(initiator_id, server_type),
+            Response::ServerType(server_type) => {
+                self.update_topology_entry_for_server(initiator_id, server_type);
+                println!("The type of the server is {:?}", server_type);
+            },
             Response::ListFiles(list_file)  => {
-                // Placeholder for file/media handling
                 self.handle_list_file(list_file);
-            }
-
+            },
             Response::File(text) => {
                 self.handle_text_file(text);
-            }
+            },
             Response::Media(media) =>{
                 self.handle_media(media);
-            }
+            },
             Response::Err(error) => {
                 warn!("Error received: {:?}", error);
-            }
+            },
             _ => {}
         }
     }
 
-    fn reassemble_fragments_in_buffer(&mut self, session_id: SessionId) -> Result<Response, String> {
+    fn reassemble_fragments<T: Serialize + DeserializeOwned>(&mut self, fragments: Vec<Packet>) -> Result<T, String> {
+        let mut raw_data = Vec::new();
+
+        for packet in fragments {
+            match &packet.pack_type {
+                PacketType::MsgFragment(fragment) => {
+                    // Push only the valid portion of `data`
+                    raw_data.extend_from_slice(&fragment.data[..fragment.length as usize]);
+                }
+                _ => return Err("Non-fragment packet type".to_string()),
+            }
+        }
+
+        // Convert bytes to String once at the end
+        let serialized_msg = String::from_utf8(raw_data)
+            .map_err(|e| format!("Invalid UTF-8 sequence: {}", e))?;
+
+        eprintln!("Reassembled JSON: {:?}", serialized_msg); // Debugging
+
+        // Deserialize the complete message
+        serde_json::from_str(&serialized_msg)
+            .map_err(|e| format!("Deserialization failed: {}", e))
+    }
+    fn reassemble_fragments_in_buffer<T: Serialize + DeserializeOwned>(&mut self, session_id: SessionId) -> Result<T, String> {
         // Get fragments once to avoid multiple lookups
         let fragments = self.storage
             .fragment_assembling_buffer
@@ -140,7 +160,7 @@ impl FragmentsHandler for ClientChen {
 
             match &packet.pack_type {
                 PacketType::MsgFragment(fragment) => {
-                    raw_data.extend_from_slice(&fragment.data);
+                    raw_data.extend_from_slice(&fragment.data[..fragment.length as usize]);
                 }
                 _ => return Err(format!("Non-fragment packet type in session {} at index {}", session_id, key)),
             }
