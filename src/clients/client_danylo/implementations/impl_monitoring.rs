@@ -7,8 +7,6 @@ use crate::{
     },
     ui_traits::Monitoring,
 };
-use crate::clients::client_chen::NodeId;
-use crate::general_use::ServerId;
 use super::{ChatClientDanylo, Senders, PacketHandler, CommandHandler};
 
 impl Monitoring for ChatClientDanylo {

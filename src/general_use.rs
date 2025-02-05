@@ -225,6 +225,7 @@ pub enum ClientEvent {
     PacketSent(Packet),
     KnownServers(Vec<(NodeId, ServerType, bool)>),
 
+    CallTechniciansToFixDrone(DroneId),
 }
 
 //Queries (Client -> Server)

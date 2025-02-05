@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crossbeam_channel::Sender;
 use log::{debug, error, info, warn};
 
@@ -255,6 +256,7 @@ impl CommandHandler for ChatClientDanylo {
         let mut message = MessageFragments::new(session_id, hops);
         if message.create_message_of(query) {
             self.messages_to_send.insert(session_id, message.clone());
+            self.drops_counter.insert(session_id, HashMap::new());
             self.send_to_next_hop(message.get_fragment_packet(0).unwrap())
         } else {
             Err("Failed to create message.".to_string())

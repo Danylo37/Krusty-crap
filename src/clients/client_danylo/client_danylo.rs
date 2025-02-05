@@ -10,7 +10,7 @@ use wg_2024::{
 
 use crate::{
     general_use::{
-        ClientCommand, ClientEvent, ServerType, ClientId, ServerId, SessionId, FloodId, ChatHistory
+        ClientCommand, ClientEvent, ServerType, ClientId, ServerId, SessionId, FloodId, ChatHistory, DroneId
     },
     clients::Client
 };
@@ -31,9 +31,12 @@ pub struct ChatClientDanylo {
     pub(super) is_registered: HashMap<ServerId, bool>,                       // Registration status on servers
     pub(super) clients: HashMap<ServerId, Vec<ClientId>>,                    // Available clients on different servers
 
-    // Used IDs
+    // Counters
+    pub(super) drops_counter: HashMap<SessionId, HashMap<DroneId, u8>>,      // Counter for dropped packets
     pub(super) session_id_counter: SessionId,                                // Counter for session IDs
     pub(super) flood_id_counter: FloodId,                                    // Counter for flood IDs
+
+    // Used IDs
     pub(super) session_ids: Vec<SessionId>,                                  // Used session IDs
     pub(super) flood_ids: Vec<FloodId>,                                      // Used flood IDs
 
@@ -60,21 +63,29 @@ impl Client for ChatClientDanylo {
         info!("Starting ChatClientDanylo with ID: {}", id);
         Self {
             id,
+
             packet_send,
             packet_recv,
             controller_send,
             controller_recv,
+
             servers: HashMap::new(),
             is_registered: HashMap::new(),
             clients: HashMap::new(),
+
+            drops_counter: HashMap::new(),
             session_id_counter: 0,
             flood_id_counter: 0,
+
             session_ids: Vec::new(),
             flood_ids: Vec::new(),
+
             topology: HashMap::new(),
             routes: HashMap::new(),
+
             messages_to_send: HashMap::new(),
             fragments_to_reassemble: HashMap::new(),
+
             chats: HashMap::new(),
         }
     }

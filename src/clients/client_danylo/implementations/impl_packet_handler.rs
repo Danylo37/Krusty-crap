@@ -1,4 +1,8 @@
-use std::collections::{HashSet, VecDeque};
+use std::{
+    collections::{HashSet, VecDeque},
+    thread,
+    time::Duration,
+};
 use log::{debug, error, info};
 
 use wg_2024::{
@@ -6,7 +10,7 @@ use wg_2024::{
     network::NodeId,
 };
 
-use crate::general_use::{FragmentIndex, ServerId, ServerType, SessionId, Node};
+use crate::general_use::{FragmentIndex, ServerId, ServerType, SessionId, Node, ClientEvent};
 use super::{PacketHandler, ChatClientDanylo, Senders, ServerResponseHandler, Reassembler, CommandHandler};
 
 impl PacketHandler for ChatClientDanylo {
@@ -14,7 +18,10 @@ impl PacketHandler for ChatClientDanylo {
     fn handle_packet(&mut self, packet: Packet) {
         match packet.pack_type.clone() {
             PacketType::Ack(ack) => self.handle_ack(ack.fragment_index, packet.session_id),
-            PacketType::Nack(nack) => self.handle_nack(nack, packet.session_id),
+            PacketType::Nack(nack) => {
+                let last_node_id = packet.routing_header.hops.last().unwrap();
+                self.handle_nack(nack, packet.session_id, *last_node_id);
+            },
             PacketType::MsgFragment(fragment) => {
                 // Send acknowledgment for the received fragment
                 self.send_ack(fragment.fragment_index, packet.session_id, packet.routing_header.clone());
@@ -48,13 +55,14 @@ impl PacketHandler for ChatClientDanylo {
         } else {
             // All fragments are acknowledged; remove the message from queue.
             self.messages_to_send.remove(&session_id);
+            self.drops_counter.remove(&session_id);
             info!("Client {}: All fragments acknowledged for session {}", self.id, session_id);
         }
     }
 
     /// ###### Handles the negative acknowledgment (NACK) for a given session.
     /// Processes the NACK for a specific session and takes appropriate action based on the NACK type.
-    fn handle_nack(&mut self, nack: Nack, session_id: SessionId) {
+    fn handle_nack(&mut self, nack: Nack, session_id: SessionId, last_node_id: NodeId) {
         debug!("Client {}: Handling NACK for session {}: {:?}", self.id, session_id, nack);
 
         match nack.nack_type {
@@ -68,9 +76,39 @@ impl PacketHandler for ChatClientDanylo {
                 self.update_message_route_and_resend(nack.fragment_index, session_id);
             }
             NackType::Dropped => {
-                self.resend_fragment(nack.fragment_index, session_id);
+                self.handle_nack_dropped(session_id, nack.fragment_index, last_node_id);
             }
         }
+    }
+
+    /// ###### Handles the NACK with the "Dropped" type.
+    /// Increments the counter for the number of consecutive dropped fragments.
+    /// If the counter reaches 10, it sends an event to call technicians to fix the drone.
+    /// Resends the fragment that was dropped.
+    fn handle_nack_dropped(&mut self, session_id: SessionId, fragment_index: FragmentIndex, last_node_id: NodeId) {
+        // Retrieve the counter of drops for last_node_id for the given session.
+        let drones_and_counters = self.drops_counter.get_mut(&session_id).unwrap();
+        let Some(counter) = drones_and_counters.get_mut(&last_node_id) else {
+            drones_and_counters.insert(last_node_id, 1);
+
+            // Resend the fragment that was dropped.
+            self.resend_fragment(fragment_index, session_id);
+
+            return;
+        };
+
+        *counter += 1;
+
+        // If the counter reaches 10, send an event to call technicians to fix the drone.
+        if *counter == 10 {
+            self.send_event(ClientEvent::CallTechniciansToFixDrone(last_node_id));
+
+            // Wait for the technicians to fix the drone.
+            thread::sleep(Duration::from_millis(100));
+        }
+
+        // Resend the fragment that was dropped.
+        self.resend_fragment(fragment_index, session_id);
     }
 
     /// ###### Updates the network topology and routes.
