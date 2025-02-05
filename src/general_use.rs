@@ -95,10 +95,12 @@ pub struct DisplayDataChatClient {
     pub flood_ids: Vec<FloodId>,
     pub session_ids: Vec<SessionId>,
 
+    // Network
+    pub routes: HashMap<ServerId, Vec<NodeId>>,
+
     // Connections
     pub neighbours: HashSet<NodeId>,
     pub discovered_servers: HashMap<ServerId, ServerType>,
-    //registered_communication_servers: HashMap<ServerId, bool>,
     pub available_clients: HashMap<ServerId, Vec<ClientId>>,
 
     // Chats

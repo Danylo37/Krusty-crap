@@ -7,6 +7,8 @@ use crate::{
     },
     ui_traits::Monitoring,
 };
+use crate::clients::client_chen::NodeId;
+use crate::general_use::ServerId;
 use super::{ChatClientDanylo, Senders, PacketHandler, CommandHandler};
 
 impl Monitoring for ChatClientDanylo {
@@ -16,10 +18,10 @@ impl Monitoring for ChatClientDanylo {
             node_id: self.id,
             node_type: "Chat Client".to_string(),
             flood_ids: self.flood_ids.clone(),
+            routes: self.routes.clone(),
             session_ids: self.session_ids.clone(),
             neighbours: connected_nodes_ids,
             discovered_servers: self.servers.clone(),
-            //registered_communication_servers: self.is_registered.clone(),
             available_clients: self.clients.clone(),
             chats: self.chats.clone(),
         };
