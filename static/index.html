@@ -1096,9 +1096,8 @@
             serversContainer.appendChild(panel);
         });
 
-        // Add panels for drones
-        data.drones.forEach((nodeId) => {
-            const panel = createPanel(nodeId, "Drone", {});
+        Object.entries(data.drones_data).forEach(([nodeId, fields]) => {
+            const panel = createPanel(nodeId, "Drone", fields);
             dronesContainer.appendChild(panel);
         });
 
