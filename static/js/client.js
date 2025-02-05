@@ -385,23 +385,28 @@ const file_lists = [
         }
     }*/
 ];
-
-
 // TRACK CURRENT SERVER INDEX
 let currentServerIndex = 0;
 
+// FILTER CURRENT and SEARCH CURRENT
+let currentFilterType = ""; // An empty string means no filter is applied.
+let currentSearchValue = "";
+
+
 // FUNCTION TO NAVIGATE SERVERS
 function navigateServer(direction) {
-    currentServerIndex += direction;
+    // Get an array of server IDs (as numbers) from file_lists,
+    // and sort them numerically.
+    const serverKeys = Object.keys(file_lists).map(Number).sort((a, b) => a - b);
 
-    // Ensure index stays within bounds
-    if (currentServerIndex < 0) {
-        currentServerIndex = file_lists.length - 1; // Loop to last server
-    } else if (currentServerIndex >= file_lists.length) {
-        currentServerIndex = 0; // Loop to first server
+    // currentServerIndex now is an index into this serverKeys array.
+    let newIndex = currentServerIndex + direction;
+    if (newIndex < 0) {
+        newIndex = serverKeys.length - 1;
+    } else if (newIndex >= serverKeys.length) {
+        newIndex = 0;
     }
-
-    // Update UI
+    currentServerIndex = newIndex;
     updateServerDisplay();
 }
 
@@ -430,7 +435,10 @@ function askListFilesServer(whichClient, whichServer) {
 
 // FUNCTION TO UPDATE UI WHEN SWITCHING SERVERS
 function updateServerDisplay() {
-    const currentServer = file_lists[currentServerIndex];
+    const serverKeys = Object.keys(file_lists).map(Number).sort((a, b) => a - b);
+    // Get the actual server ID for the current index.
+    const currentServerId = serverKeys[currentServerIndex];
+    const currentServer = file_lists[currentServerId];
 
     // Update Server Name
     document.getElementById("current-server").textContent = currentServer.name;
@@ -438,6 +446,24 @@ function updateServerDisplay() {
     // Update File List
     updateFileList(currentServer.files);
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll('.filter-option').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Set the current filter type from the button's data-type attribute.
+            currentFilterType = this.dataset.type;
+            // Optionally, you can add visual feedback (e.g., add a 'selected' class).
+            document.querySelectorAll('.filter-option').forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            // Now update the file list for the current server.
+            const currentServer = file_lists[currentServerIndex];
+            if (currentServer && currentServer.files) {
+                updateFileList(currentServer.files);
+            }
+        });
+    });
+});
+
 
 
 // FUNCTION TO OPEN POP-UP WITH FILE CONTENT
@@ -469,11 +495,40 @@ document.addEventListener("DOMContentLoaded", updateServerDisplay);
 
 // FUNCTION TO UPDATE FILE LIST BASED ON SERVER
 function updateFileList(files) {
-    const fileListTable = document.querySelector(".file-list tbody");
+    const fileListTable = document.querySelector(".file-list");
     fileListTable.innerHTML = ""; // Clear existing content
 
-    // Populate new file list
+
+    // Get the sorted array of server IDs.
+    const serverKeys = Object.keys(file_lists).map(Number).sort((a, b) => a - b);
+    // Get the current server ID from the sorted array.
+    const currentServerId = serverKeys[currentServerIndex];
+
+    // Ensure the current server exists before updating.
+    if (file_lists[currentServerId]) {
+        file_lists[currentServerId].files = files;
+    } else {
+        console.error("No server found for ID", currentServerId);
+    }
+
+    // Populate new file list filtering by the currentFilterType.
     for (const [fileName, fileContent] of Object.entries(files)) {
+        // If a filter is set, check the file extension.
+        if (currentFilterType) {
+            // Extract the extension (assuming files are named like "foo.ext")
+            const extension = fileName.split('.').pop().toLowerCase();
+            if (extension !== currentFilterType.toLowerCase()) {
+                continue;  // Skip files that don't match the filter.
+            }
+        }
+
+        if (currentSearchValue) {
+            // Convert both strings to lowercase for case-insensitive matching.
+            if (!fileName.toLowerCase().includes(currentSearchValue.toLowerCase())) {
+                continue; // Skip if the file name doesn't match the search term.
+            }
+        }
+
         const row = document.createElement("tr");
         row.innerHTML = `
             <td>${fileName}</td>
@@ -483,24 +538,12 @@ function updateFileList(files) {
         fileListTable.appendChild(row);
     }
 
-    file_lists[currentClientId]["files"] = files;
-
-    // Stop loading container
+    // Stop and hide the loading popup.
     const loadingPopup = document.getElementById("loading-popup");
-    if(loadingPopup.style.display === "flex"){
+    if (loadingPopup.style.display === "flex") {
         loadingPopup.style.display = "none";
     }
 }
-
-
-
-
-
-
-
-
-
-
 
 
 // Attach Click Event to Each File Row
@@ -518,10 +561,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 function searchGoogleDrive() {
-    const searchInput = document.querySelector('.search-input').value.trim();
-    if (searchInput) {
-        alert(`Searching for: ${searchInput}`);
-        // You can replace this with an actual search function
+    const searchInputValue = document.querySelector('.search-input').value.trim();
+
+    if (currentSearchValue !== searchInputValue) {
+        currentSearchValue = searchInputValue;
+        updateFileList(file_lists[currentServerIndex]);
     }
 }
 
@@ -529,11 +573,6 @@ function handleSearchKeyPress(event) {
     if (event.key === "Enter") {
         searchGoogleDrive();
     }
-}
-
-function filterGoogleDrive() {
-    alert("Filter function clicked! (Placeholder for filtering logic)");
-    // You can replace this with an actual filter function
 }
 
 function logOut() {
