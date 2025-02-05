@@ -1,4 +1,4 @@
-use std::eprintln;
+use std::{eprintln, matches};
 use serde::de::DeserializeOwned;
 use crate::clients::client_chen::prelude::*;
 use crate::clients::client_chen::SpecificInfo;
@@ -38,7 +38,8 @@ pub trait Router{
 pub trait CommunicationTrait{
     fn get_discovered_servers_from_topology(&mut self) -> HashSet<ServerId>;
     fn get_edge_nodes_from_topology(&mut self) -> HashSet<NodeId>;
-    fn get_content_servers_from_topology(&mut self) -> HashSet<ServerId>;
+    fn get_text_servers_from_topology(&mut self) -> HashSet<ServerId>;
+    fn get_media_servers_from_topology(&mut self) -> HashSet<ServerId>;
 }
 
 pub trait PacketCreator{

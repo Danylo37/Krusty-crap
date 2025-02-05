@@ -27,11 +27,26 @@ impl CommunicationTrait for ClientChen{
             .collect()
     }
 
-    fn get_content_servers_from_topology(&mut self) -> HashSet<ServerId> {
+    fn get_text_servers_from_topology(&mut self) -> HashSet<ServerId> {
         self.network_info.topology.iter()
             .filter_map(|(&node_id, node_info)| {
                 if let SpecificInfo::ServerInfo(server_info) = &node_info.specific_info {
-                    if matches!(server_info.server_type, ServerType::Media | ServerType::Text) {
+                    if matches!(server_info.server_type, ServerType::Text) {
+                        Some(node_id)
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+    fn get_media_servers_from_topology(&mut self) -> HashSet<ServerId> {
+        self.network_info.topology.iter()
+            .filter_map(|(&node_id, node_info)| {
+                if let SpecificInfo::ServerInfo(server_info) = &node_info.specific_info {
+                    if matches!(server_info.server_type, ServerType::Media) {
                         Some(node_id)
                     } else {
                         None

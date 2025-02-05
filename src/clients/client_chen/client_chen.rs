@@ -125,7 +125,6 @@ impl ClientChen{
 
     pub(crate) fn send_display_data_simplified(&mut self, data_scope: DataScope){
             self.update_connected_nodes();
-            let content_servers =  self.get_content_servers_from_topology().clone();
             // Create the DisplayData struct
             let display_data = DisplayDataWebBrowser {
                 node_id: self.metadata.node_id,
@@ -134,7 +133,8 @@ impl ClientChen{
                 session_id: self.status.session_id,
                 connected_node_ids: self.communication.connected_nodes_ids.clone(),
                 routing_table: self.communication.routing_table.clone(),
-                registered_content_servers : content_servers.clone(),
+                discovered_text_servers : self.get_text_servers_from_topology().clone(),
+                discovered_media_servers : self.get_media_servers_from_topology().clone(),
                 curr_received_file_list: self.storage.current_list_file.clone(),
                 chosen_file_text: self.storage.current_requested_text_file.clone(),
                 serialized_media: self.storage.current_received_serialized_media.clone(),

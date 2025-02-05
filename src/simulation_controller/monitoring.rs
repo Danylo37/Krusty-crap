@@ -22,7 +22,6 @@ impl Monitoring for SimulationController {
             drones_data: self.drones_data.clone(),
             topology: self.state.topology.clone(),
         };
-        println!("drones_data: {:?}", display_data.drones_data);
         let json_string = serde_json::to_string(&display_data).unwrap();
         info!("Controller has sent the data of all the nodes {:?}", display_data);
         sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
