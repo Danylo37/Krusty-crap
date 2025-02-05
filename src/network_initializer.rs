@@ -501,6 +501,7 @@ impl NetworkInitializer {
         servers: Vec<Server>,
     ) {
         let mut text_server_used = false;
+        let mut comm_server_used = false;
         let mut vec_files = Vec::new();
 
         for server in servers {
@@ -519,7 +520,8 @@ impl NetworkInitializer {
             let mut server_instance_text: Option<TextServer>= None;
             let mut server_instance_media: Option<MediaServer>= None;
 
-            if random::<u8>()%2 == 0{
+            if (random::<u8>()%2 == 0) && !comm_server_used{
+                comm_server_used = !comm_server_used;
                 server_type = ServerType::Communication;
 
                 server_instance_comm = Some(CommunicationServer::new(
@@ -531,7 +533,9 @@ impl NetworkInitializer {
                 ));
 
             }else{
+                comm_server_used = false;
                 if text_server_used {
+                    text_server_used = !text_server_used;
                     let content = content::get_media(vec_files.clone());
                     server_type = ServerType::Media;
 
@@ -544,6 +548,7 @@ impl NetworkInitializer {
                         HashMap::new(),
                     ));
                 }else{
+                    text_server_used = !text_server_used;
                     vec_files = content::choose_random_texts();
                     server_type = ServerType::Text;
 

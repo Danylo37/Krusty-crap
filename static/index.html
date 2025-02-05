@@ -442,7 +442,16 @@
             <div class="search-bar">
                 <img src="content_objects/search_icon.png" alt="Search Icon" class="search-icon" onclick="searchGoogleDrive()">
                 <input type="text" class="search-input" placeholder="Search" onkeypress="handleSearchKeyPress(event)">
-                <img src="content_objects/filter_icon_png.png" alt="Filter Icon" class="filter-icon" onclick="filterGoogleDrive()">
+                <div class="filter-container">
+                    <img src="content_objects/filter_icon_png.png" alt="Filter Icon" class="filter-icon">
+                    <div class="filter-dropdown">
+                        <button class="filter-option" data-type="png">PNG</button>
+                        <button class="filter-option" data-type="jpg">JPG</button>
+                        <button class="filter-option" data-type="html">HTML</button>
+                        <button class="filter-option" data-type="mp3">MP3</button>
+                        <button class="filter-option" data-type="">All</button>
+                    </div>
+                </div>
             </div>
 
             <!-- Logout Button -->
@@ -465,7 +474,7 @@
                         </div>
                     </div>
 
-                    <img src="content_objects/reload.png" alt="reload" class="reload-button" onclick="reloadFilesServer(servers[currentServerIndex])">
+                    <img src="content_objects/reload.png" alt="reload" class="reload-button" onclick="reloadFilesServer(file_lists[currentServerIndex])">
                 </div>
 
 
@@ -479,7 +488,7 @@
                 <div id="loading-popup" class="file-loading-overlay" style="display: none;">
                     <div class="file-loading-content">
                         <img src="content_objects/reload.png" alt="Loading..." class="file-loading-gif">
-                        <p>Retrieving files... Take a coffee meanwhile (b^_^)</p>
+                        <p style="margin-top:0">Retrieving files... Take a coffee meanwhile (b^_^)</p>
                     </div>
                 </div>
 
@@ -806,7 +815,23 @@
             }
         }
 
-        document.getElementById("current-server").innerHTML = `Server Id: ${available_servers[0]}`
+        // Update the current-server display.
+        if (available_servers.length > 0) {
+            document.getElementById("current-server").innerHTML = `Server Id: ${available_servers[0]}`;
+        } else {
+            document.getElementById("current-server").innerHTML = "No server available";
+        }
+
+        console.log(available_servers)
+        // Hide or show the server navigation arrows based on the number of available servers.
+        const serverNav = document.querySelector('.server-nav');
+        if (serverNav) {
+            if (available_servers.length <= 1) {
+                serverNav.style.display = "none";
+            } else {
+                serverNav.style.display = "flex";
+            }
+        }
     }
 
     function logOut() {
@@ -909,9 +934,10 @@
 
                 case "web_client":
                     if (parsedData.id === currentClientId){
-
+                        console.log("arrivedData_web_client")
                         updateFileList(parsedData.curr_received_file_list);
-                        //updateFileContent();
+                        updateFile(parsedData.chosen_file_text);
+                        updateMedia(parsedData.serialized_media)
                     }
                     break;
 
@@ -1071,16 +1097,10 @@
         });
 
         // Add panels for drones
-        Object.entries(data.drones_data).forEach(([nodeId, fields]) => {
-            const panel = createPanel(nodeId, "Drone", fields);
-            dronesContainer.appendChild(panel);
-        });
-
-        /*
         data.drones.forEach((nodeId) => {
             const panel = createPanel(nodeId, "Drone", {});
             dronesContainer.appendChild(panel);
-        });*/
+        });
 
         console.log("Monitoring sections updated!");
     }
