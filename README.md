@@ -1,46 +1,28 @@
-# WG REPO
-The description of the project, the protocols, the examples and the tests are all in this repo, moreover here we have some of the libraries that we needed to use.
+# Setup Instructions
 
-The **link** to the repo is: https://github.com/WGL-2024/WGL_repo_2024
+## Windows Users
+If you are using Windows, open **PowerShell as Administrator** and run the following commands to allow the necessary ports through the firewall:
 
-### Note: 
-If you wanna read the summaries of the WG discussion, here's the **link**: https://github.com/WGL-2024/summaries_WG
+```powershell
+# Allow port 8000 (HTTP server)
+New-NetFirewallRule -DisplayName "Rust HTTP Server" -Direction Inbound -LocalPort 8000 -Protocol TCP -Action Allow
 
-# OUR DRONE
-Here is the **link** to our drone:
-https://github.com/Danylo37/krusty_drone.git
+# Allow port 8080 (WebSocket server)
+New-NetFirewallRule -DisplayName "Rust WebSocket" -Direction Inbound -LocalPort 8080 -Protocol TCP -Action Allow
+```
 
+## Windows Users
+If you are using Linux, run the following commands in the terminal to allow the necessary ports through the firewall:
 
-# DRONES WE BOUGHT
-We put here the **link** repos of the drones we bought:
+```bash
+# Allow ports through firewall (Linux)
+sudo ufw allow 8000/tcp
+sudo ufw allow 8080/tcp
+```
 
-## Rusty Drone
-https://github.com/rusty-drone-2024/rusty-drone.git
-## Rustable
-https://github.com/SmL-Boi/RustableDroneLib.git
-## Bagel Bomber
-https://github.com/daw-dev/bagel-bomber.git
-## Rust & Furious
-https://github.com/RustAndFurious/RF_drone.git
-## Fungi
-https://github.com/Fungi-B-D/Fungi-Drone.git
-## Rust Busters
-https://github.com/Rustbusters/drone.git
-## Rust-eze
-https://github.com/Rusteze-AP/drone.git
-## SkyLink
-https://github.com/Suge42/Skylink_drone.git
-## Rolling Drones
-https://github.com/giorebecchi/RollingDrone.git
-## Bobry w locie
-https://github.com/Seregno/Public_Bry_w_locie.git
+## Accessing the Webpage
+After setting up the firewall rules, you can access the webpage by opening your browser and entering:
 
-### Note:
-In order to use the drones of the other groups as
-a library we just need to write in the Cargo.toml file:
-
-for example for our drone:
-
-[dependencies]
-
-krusty_drone = { git = "https://github.com/Danylo37/krusty_drone.git"}
+```
+localhost:8000/index.html
+```
