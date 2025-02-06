@@ -1,9 +1,9 @@
 use crossbeam_channel::{select_biased, Receiver, Sender};
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{HashMap, HashSet, VecDeque},
     fmt::Debug,
 };
-use log::info;
+use log::{info, warn};
 use crate::general_use::{DataScope, DisplayDataCommunicationServer, Message, Query, Response, ServerCommand, ServerEvent, ServerType};
 //UI
 use crate::ui_traits::Monitoring;
@@ -46,6 +46,9 @@ pub struct CommunicationServer{
 
     //Characteristic-Server fields
     pub list_users: Vec<NodeId>,
+
+    //Queries to process
+    pub queries_to_process: VecDeque<(NodeId, Query)>,
 }
 
 impl CommunicationServer{
@@ -75,14 +78,14 @@ impl CommunicationServer{
             packet_send,
 
             list_users: Vec::new(),
+
+            queries_to_process: VecDeque::new(),
         }
     }
 }
 
-
-
 impl Monitoring for CommunicationServer {
-    fn send_display_data(&mut self, sender_to_gui: Sender<String>, data_scope: DataScope) {
+    fn send_display_data(&mut self, _sender_to_gui: Sender<String>, data_scope: DataScope) {
         let neighbors =  self.packet_send.keys().cloned().collect();
         let display_data = DisplayDataCommunicationServer{
             node_id: self.id,
@@ -99,14 +102,14 @@ impl Monitoring for CommunicationServer {
         &mut self,
         sender_to_gui: Sender<String>,
     ) {
-        self.send_display_data(sender_to_gui.clone(), DataScope::UpdateAll);
+        self.send_display_data(sender_to_gui.clone(), UpdateAll);
         loop {
             select_biased! {
                 recv(self.get_from_controller_command()) -> command_res => {
                     if let Ok(command) = command_res {
                         match command {
                             ServerCommand::UpdateMonitoringData => {
-                                self.send_display_data(sender_to_gui.clone(), DataScope::UpdateAll);
+                                self.send_display_data(sender_to_gui.clone(), UpdateAll);
                             }
                             ServerCommand::StartFlooding => {
                                 self.discover();
@@ -118,37 +121,26 @@ impl Monitoring for CommunicationServer {
                             ServerCommand::RemoveSender(id) => {
                                 self.get_packet_send().remove(&id);
                                 self.update_topology_and_routes(id);
-                                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
+                                self.send_display_data(sender_to_gui.clone(), UpdateSelf);
                             }
                             ServerCommand::ShortcutPacket(packet) => {
-                                 match packet.pack_type {
-                                    PacketType::Nack(nack) => self.handle_nack(nack, packet.session_id),
-                                    PacketType::Ack(ack) => self.handle_ack(ack),
-                                    PacketType::MsgFragment(fragment) => self.handle_fragment(fragment, packet.routing_header ,packet.session_id),
-                                    PacketType::FloodRequest(flood_request) => self.handle_flood_request(flood_request, packet.session_id),
-                                    PacketType::FloodResponse(flood_response) => self.handle_flood_response(flood_response),
-                                }
-                                self.send_display_data(sender_to_gui.clone(),DataScope::UpdateSelf);
+                                self.handle_packet(packet);
+                                self.send_display_data(sender_to_gui.clone(), UpdateSelf);
                             }
                         }
                     }
                 },
                 recv(self.get_packet_recv()) -> packet_res => {
                     if let Ok(packet) = packet_res {
-                        match packet.pack_type {
-                            PacketType::Nack(nack) => self.handle_nack(nack, packet.session_id),
-                            PacketType::Ack(ack) => self.handle_ack(ack),
-                            PacketType::MsgFragment(fragment) => self.handle_fragment(fragment, packet.routing_header ,packet.session_id),
-                            PacketType::FloodRequest(flood_request) => self.handle_flood_request(flood_request, packet.session_id),
-                            PacketType::FloodResponse(flood_response) => self.handle_flood_response(flood_response),
-                        }
-                        self.send_display_data(sender_to_gui.clone(), DataScope::UpdateSelf);
+                        self.handle_packet(packet);
+                        self.send_display_data(sender_to_gui.clone(), UpdateSelf);
                     }
                 },
             }
         }
     }
 }
+
 impl MainTrait for CommunicationServer{
     fn get_id(&self) -> NodeId{ self.id }
     fn get_server_type(&self) -> ServerType{ ServerType::Communication }
@@ -174,6 +166,15 @@ impl MainTrait for CommunicationServer{
     fn get_packet_send_not_mutable(&self) -> &HashMap<NodeId, Sender<Packet>>{ &self.packet_send }
     fn get_reassembling_messages(&mut self) -> &mut HashMap<u64, Vec<u8>>{ &mut self.reassembling_messages }
     fn process_query(&mut self, query: Query, src_id: NodeId) {
+        // Check if there is a route to the client, save query and start the discovery process if it's not.
+        if self.routes.get(&src_id).is_none() {
+            warn!("Server {}: Error sending response to query {:?}: no route to the Client {}",
+                self.id, query, src_id);
+
+            self.save_query_to_process(src_id, query);
+            return;
+        }
+
         match query {
             Query::AskType => self.give_type_back(src_id),
 
@@ -186,6 +187,8 @@ impl MainTrait for CommunicationServer{
     fn get_sending_messages(&mut self) ->  &mut HashMap<u64, (Vec<u8>, u8)>{ &mut self.sending_messages }
 
     fn get_sending_messages_not_mutable(&self) -> &HashMap<u64, (Vec<u8>, u8)>{ &self.sending_messages }
+
+    fn get_queries_to_process(&mut self) -> &mut VecDeque<(NodeId, Query)>{ &mut self.queries_to_process }
 }
 
 impl CharTrait for CommunicationServer {

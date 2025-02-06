@@ -35,6 +35,8 @@ pub trait Server{
     fn get_sending_messages(&mut self) -> &mut HashMap<u64, (Vec<u8>, u8)>;
     fn get_sending_messages_not_mutable(&self) -> &HashMap<u64, (Vec<u8>, u8)>;
 
+    fn get_queries_to_process(&mut self) -> &mut VecDeque<(NodeId, Query)>;
+
     fn run(&mut self) {
         info!("Running {} server with ID: {}", self.get_server_type(), self.get_id());
         loop {
@@ -46,7 +48,9 @@ pub trait Server{
                             ServerCommand::AddSender(id, sender) => {
                                 self.get_packet_send().insert(id, sender);
                                 info!("Server {}: Added sender for node {}", self.get_id(), id);
-
+                            }
+                            ServerCommand::StartFlooding => {
+                                self.discover();
                             }
                             ServerCommand::RemoveSender(id) => {
                                 self.get_packet_send().remove(&id);
@@ -75,7 +79,7 @@ pub trait Server{
         match packet.pack_type {
             PacketType::Nack(nack) => self.handle_nack(nack, packet.session_id),
             PacketType::Ack(ack) => self.handle_ack(ack),
-            PacketType::MsgFragment(fragment) => self.handle_fragment(fragment, packet.routing_header ,packet.session_id),
+            PacketType::MsgFragment(fragment) => self.handle_fragment(fragment, packet.routing_header, packet.session_id),
             PacketType::FloodRequest(flood_request) => self.handle_flood_request(flood_request, packet.session_id),
             PacketType::FloodResponse(flood_response) => self.handle_flood_response(flood_response),
         }
@@ -147,7 +151,26 @@ pub trait Server{
                     path.iter().map(|entry| entry.0.clone()).collect(),
                 );
                 info!("Server {}: Updated route to client {}: {:?}", self.get_id(), id, path);
+
+                // Resend responses that were waiting for the route to the client.
+                if !self.get_queries_to_process().is_empty() && self.get_queries_to_process().front().unwrap().0 == *id {
+                    self.reprocess_query();
+                }
             }
+        }
+    }
+
+    fn reprocess_query(&mut self) {
+        let queries = self.get_queries_to_process().clone();
+
+        for (client_id, response) in queries {
+
+            if !self.get_routes().contains_key(&client_id) {
+                return;
+            }
+
+            self.process_query(response, client_id);
+            self.get_queries_to_process().pop_front();
         }
     }
 
@@ -324,6 +347,18 @@ pub trait Server{
             },
             Err(e) => println!("Argh, {:?}", e),
         }
+    }
+
+    fn save_query_to_process(&mut self, src_id: NodeId, query: Query) {
+        if self.get_queries_to_process().is_empty() {
+            self.discover();
+        }
+
+        debug!("Server {}: Query {:?} will be processed after finding route to the Client {}",
+            self.get_id(), query, src_id);
+
+        self.get_queries_to_process().push_back((src_id, query));
+        return;
     }
 
     fn send_fragments(&mut self, session_id: u64, n_fragments: usize, response_in_vec_bytes: &[u8], header: SourceRoutingHeader) {
@@ -540,4 +575,3 @@ pub trait TextServer {
 pub trait MediaServer {
     fn give_media_back(&mut self, client_id: NodeId, reference: String);
 }
-
