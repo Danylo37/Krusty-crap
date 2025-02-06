@@ -11,7 +11,7 @@ New-NetFirewallRule -DisplayName "Rust HTTP Server" -Direction Inbound -LocalPor
 New-NetFirewallRule -DisplayName "Rust WebSocket" -Direction Inbound -LocalPort 8080 -Protocol TCP -Action Allow
 ```
 
-## Windows Users
+## Linux Users
 If you are using Linux, run the following commands in the terminal to allow the necessary ports through the firewall:
 
 ```bash
