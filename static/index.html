@@ -1065,8 +1065,7 @@
         // Add panels for web_clients_data
         Object.entries(data.web_clients_data).forEach(([nodeId, fields]) => {
             const panel = createPanel(nodeId, "Web Client", fields);
-            console.log(JSON.stringify(fields.registered_content_servers));
-            panel.dataset.content_servers = JSON.stringify(fields.registered_content_servers);
+            panel.dataset.content_servers = JSON.stringify(fields.discovered_text_servers);
             clientsContainer.appendChild(panel);
         });
 
