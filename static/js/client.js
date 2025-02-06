@@ -46,6 +46,13 @@ function openChat(chatName, clientId) {
 const phonebooks = {
 };
 
+/*
+const phonebooks = {
+    "0": ["0", "2", "5"],
+    "1": ["1", "3", "4"],
+    "2": ["7", "10", "15"],
+};
+*/
 
 function createNewChat() {
     const chatPopup = document.getElementById('chat-popup');
@@ -97,6 +104,7 @@ function createNewChat() {
         // Server list box
         const listBox = document.createElement('select');
         listBox.className = 'server-list-box';
+        listBox.id = `server-list-box-${serverId}`;
         listBox.style = "margin-left: 10px; padding: 5px;";
 
         // Default "Not Choosed" option
@@ -109,17 +117,20 @@ function createNewChat() {
         const existingChats = Array.from(document.getElementById('chat-list').children)
             .map(item => item.dataset.id);
 
-        // Populate options with receivers that do not already have a chat
-        phonebooks[serverId].forEach((receiver) => {
-            if (existingChats.includes(receiver)) {
-                // Skip if a chat with this receiver already exists
-                return;
-            }
-            const option = document.createElement('option');
-            option.value = receiver;
-            option.textContent = receiver;
-            listBox.appendChild(option);
-        });
+        if (Array.isArray(phonebooks[serverId])) {
+            phonebooks[serverId].forEach((receiver) => {
+                if (existingChats.includes(receiver)) {
+                    // Skip if a chat with this receiver already exists
+                    return;
+                }
+                const option = document.createElement('option');
+                option.value = receiver;
+                option.textContent = receiver;
+                listBox.appendChild(option);
+            });
+        } else {
+            console.error("Expected an array for phonebooks[" + serverId + "], but got", phonebooks[serverId]);
+        }
 
         // Add change event to handle exclusivity among list boxes
         listBox.addEventListener('change', () => {
@@ -213,7 +224,7 @@ function closeChatPopup() {
 
 // Requesting
 function askListRegisteredClientsToServer(whichClient, whichServer){
-    // CHen function to retrieve List registered clients
+    // CHen/Chen/CHEN function to retrieve List registered clients
 }
 
 
@@ -269,11 +280,35 @@ function sendMessageController(senderClientId, receiverClientId){
 // UPDATING
 
 function updateChatReceivers(HashListReceivers){
-    for ([serverId, listReceivers] of Object.entries(HashListReceivers)) {
+    for (const [serverId, listReceivers] of Object.entries(HashListReceivers)) {
+        // Update the phonebooks object.
         phonebooks[serverId] = listReceivers;
 
-        if (document.getElementById(`reload-${serverId}`)) {
-            document.getElementById(`reload-${serverId}`).style.animation = "";
+        // Stop the reload animation, if present.
+        const reloadElem = document.getElementById(`reload-${serverId}`);
+        if (reloadElem) {
+            reloadElem.style.animation = "";
+        }
+
+        // Update the list box options.
+        const listBox = document.getElementById(`server-list-box-${serverId}`);
+        if (listBox) {
+            // Clear existing options.
+            listBox.innerHTML = "";
+
+            // Create and append the default "Not Choosed" option.
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Not Choosed';
+            listBox.appendChild(defaultOption);
+
+            // Populate options with each receiver from listReceivers.
+            listReceivers.forEach(receiver => {
+                const option = document.createElement('option');
+                option.value = receiver;
+                option.textContent = receiver;
+                listBox.appendChild(option);
+            });
         }
     }
 }
@@ -385,6 +420,15 @@ const file_lists = [
         }
     }*/
 ];
+
+const media = [
+    /*
+    {
+        reference : ""
+    },
+    */
+]
+
 // TRACK CURRENT SERVER INDEX
 let currentServerIndex = 0;
 
@@ -410,6 +454,32 @@ function navigateServer(direction) {
     updateServerDisplay();
 }
 
+function get_server_id_from_current_server_index(){
+    const serverKeys = Object.keys(file_lists);
+    return serverKeys[currentServerIndex];
+}
+
+
+// FUNCTION TO UPDATE UI WHEN SWITCHING SERVERS
+function updateServerDisplay() {
+    const serverKeys = Object.keys(file_lists).map(Number).sort((a, b) => a - b);
+    // Get the actual server ID for the current index.
+    const currentServerId = serverKeys[currentServerIndex];
+    const currentServer = file_lists[currentServerId];
+
+    // Update Server Name
+    document.getElementById("current-server").textContent = currentServer.name;
+
+    // Update File List
+    updateFileList(currentServer.files);
+}
+
+
+
+
+
+
+// Reload and askListFiles
 function reloadFilesServer(whichServer) {
     // Call the empty function
     askListFilesServer(currentClientId, whichServer);
@@ -433,37 +503,23 @@ function askListFilesServer(whichClient, whichServer) {
 }
 
 
-// FUNCTION TO UPDATE UI WHEN SWITCHING SERVERS
-function updateServerDisplay() {
-    const serverKeys = Object.keys(file_lists).map(Number).sort((a, b) => a - b);
-    // Get the actual server ID for the current index.
-    const currentServerId = serverKeys[currentServerIndex];
-    const currentServer = file_lists[currentServerId];
 
-    // Update Server Name
-    document.getElementById("current-server").textContent = currentServer.name;
 
-    // Update File List
-    updateFileList(currentServer.files);
-}
 
-document.addEventListener("DOMContentLoaded", () => {
-    document.querySelectorAll('.filter-option').forEach(btn => {
-        btn.addEventListener('click', function() {
-            // Set the current filter type from the button's data-type attribute.
-            currentFilterType = this.dataset.type;
-            // Optionally, you can add visual feedback (e.g., add a 'selected' class).
-            document.querySelectorAll('.filter-option').forEach(b => b.classList.remove('selected'));
-            this.classList.add('selected');
-            // Now update the file list for the current server.
-            const currentServer = file_lists[currentServerIndex];
-            if (currentServer && currentServer.files) {
-                updateFileList(currentServer.files);
-            }
+
+
+
+
+
+// Attach Click Event to Each File Row
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".file-list tr").forEach(row => {
+        row.addEventListener("click", function () {
+            const fileName = this.cells[0].textContent.trim(); // Get file name from row
+            openPopup(fileName);
         });
     });
 });
-
 
 
 // FUNCTION TO OPEN POP-UP WITH FILE CONTENT
@@ -472,14 +528,50 @@ function openPopup(fileName) {
     const popupTitle = document.getElementById("file-popup-title");
     const popupFileContent = document.getElementById("file-popup-file-content");
 
-    // Get the current server and file content as before…
-    const currentServer = file_lists[currentServerIndex];
-    const fileContent = currentServer.files[fileName] || "No content available.";
+    // Get the current server and file content.
+    const currentServer = file_lists[get_server_id_from_current_server_index()];
+    const fileContent = currentServer.files[fileName];
 
     popupTitle.textContent = fileName;
-    popupFileContent.textContent = fileContent;
+
+    if (fileContent) {
+
+        // Determine the file extension.
+        const extension = fileName.split('.').pop().toLowerCase();
+        if (extension === "html") {
+            // Use a regular expression to find all occurrences of #Media[...] in the content.
+            const processedContent = fileContent.replace(/#Media\[(.*?)\]/g, (match, p1) => {
+                const found = media.find(item => item.reference === p1);
+                console.error("not sure if there can be not the reference inside media when fileContent is present");
+                if (found && found.media) {
+                    // Use the already loaded media image.
+                    return `<img src="${found.media}" id="reference-${p1}" alt="Media loaded" />`;
+                } else {
+                    // Otherwise, request the media and show a loading image.
+                    askMedia(p1);
+                    return `<img src="content_objects/reload.png" id="reference-${p1}" alt="Loading..." />`;
+                }
+            });
+            // Insert the processed HTML into the popup.
+            popupFileContent.innerHTML = processedContent;
+        } else {
+            // For other file types, just display the content as text.
+            popupFileContent.textContent = fileContent;
+        }
+    }else{
+        popupFileContent.innerHTML = `<img src="content_objects/reload.png" id="reference-${fileName}" alt="Loading..." />`;
+        askFileContent(get_server_id_from_current_server_index(), fileName);
+    }
 
     popup.style.display = "flex";
+}
+
+function askFileContent(serverId, fileName) {
+    //Chen ask file to controller (file name with .extension given)
+}
+
+function askMedia(reference_media){
+    //Chen ask media to controller
 }
 
 // Close the Pop-Up
@@ -488,9 +580,22 @@ function closePopup() {
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+/*
 // INITIALIZE UI WITH FIRST SERVER
 document.addEventListener("DOMContentLoaded", updateServerDisplay);
-
+*/
 
 
 // FUNCTION TO UPDATE FILE LIST BASED ON SERVER
@@ -506,11 +611,13 @@ function updateFileList(files) {
 
     // Ensure the current server exists before updating.
     if (file_lists[currentServerId]) {
+        console.error("Da inserire per ogni file un valore correlato (content)")
         file_lists[currentServerId].files = files;
     } else {
         console.error("No server found for ID", currentServerId);
     }
 
+    console.log(files)
     // Populate new file list filtering by the currentFilterType.
     for (const [fileName, fileContent] of Object.entries(files)) {
         // If a filter is set, check the file extension.
@@ -532,7 +639,7 @@ function updateFileList(files) {
         const row = document.createElement("tr");
         row.innerHTML = `
             <td>${fileName}</td>
-            <td style="text-align:right;">${file_lists[currentServerIndex].name}</td>
+            <td style="text-align:right;">${file_lists[get_server_id_from_current_server_index()].name}</td>
         `;
         row.addEventListener("click", () => openPopup(fileName, fileContent));
         fileListTable.appendChild(row);
@@ -545,27 +652,69 @@ function updateFileList(files) {
     }
 }
 
+function updateFile(file_content) {
+    // Get the file name from the popup title.
+    const fileName = document.getElementById("file-popup-title").textContent.trim();
 
-// Attach Click Event to Each File Row
-document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll(".file-list tr").forEach(row => {
-        row.addEventListener("click", function () {
-            const fileName = this.cells[0].textContent.trim(); // Get file name from row
-            openPopup(fileName);
+    // Get the current server from the file_lists.
+    // Here, file_lists is assumed to be an object keyed by server IDs.
+    // We retrieve the sorted server keys and use currentServerIndex.
+    const serverKeys = Object.keys(file_lists).map(Number).sort((a, b) => a - b);
+    const currentServerId = serverKeys[currentServerIndex];
+    const currentServer = file_lists[currentServerId];
+
+    // Update the file content if this file exists on the current server.
+    if (currentServer && currentServer.files && currentServer.files.hasOwnProperty(fileName)) {
+        currentServer.files[fileName] = file_content;
+    }
+
+    // Update the popup with the new file content.
+    const popupFileContent = document.getElementById("file-popup-file-content");
+    // Determine the file extension.
+    const extension = fileName.split('.').pop().toLowerCase();
+
+    if (extension === "html") {
+        // Replace any #Media[...] references with a loading image.
+        const processedContent = file_content.replace(/#Media\[(.*?)\]/g, (match, p1) => {
+            askMedia(p1);
+            return `<img src="content_objects/reload.png" id="reference-${p1}" alt="Loading..." />`;
         });
-    });
-});
+        popupFileContent.innerHTML = processedContent;
+    } else {
+        popupFileContent.textContent = file_content;
+    }
+}
+
+function updateMedia(mediaRef) {
+    // mediaRef is expected to be an array: [reference, base64ImageString]
+    const reference = mediaRef[0];
+    const base64Image = mediaRef[1];
+
+    // Find the image element with the corresponding id.
+    const imgElem = document.getElementById("reference-" + reference);
+    if (imgElem) {
+        imgElem.src = base64Image;
+    } else {
+        console.warn("No element found with id:", "reference-" + reference);
+    }
+}
 
 
 
 
 
+
+
+
+
+
+// SEARCH AND FILTERS
 function searchGoogleDrive() {
     const searchInputValue = document.querySelector('.search-input').value.trim();
 
-    if (currentSearchValue !== searchInputValue) {
+    if (currentSearchValue !== searchInputValue && Object.keys(file_lists[get_server_id_from_current_server_index()].files).length !== 0) {
         currentSearchValue = searchInputValue;
-        updateFileList(file_lists[currentServerIndex]);
+        updateFileList(file_lists[get_server_id_from_current_server_index()].files);
     }
 }
 
@@ -574,6 +723,24 @@ function handleSearchKeyPress(event) {
         searchGoogleDrive();
     }
 }
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll('.filter-option').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Set the current filter type from the button's data-type attribute.
+            currentFilterType = this.dataset.type;
+            // Optionally, you can add visual feedback (e.g., add a 'selected' class).
+            document.querySelectorAll('.filter-option').forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            // Now update the file list for the current server.
+            const currentServer = file_lists[get_server_id_from_current_server_index()];
+            if (currentServer && currentServer.files) {
+                updateFileList(currentServer.files);
+            }
+        });
+    });
+});
 
 function logOut() {
     alert("Logging out...");
