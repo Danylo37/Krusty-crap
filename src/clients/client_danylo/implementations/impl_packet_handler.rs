@@ -297,14 +297,12 @@ impl PacketHandler for ChatClientDanylo {
                 .get(id)
                 .map_or(true, |prev_path| prev_path.len() > path.len())
             {
+                let mut ask_type = false;
+
                 // Add the server to the servers list with an undefined type if it is not already present.
                 if !self.servers.contains_key(id) {
                     self.servers.insert(*id, ServerType::Undefined);
-                }
-
-                // Request the server type if it is undefined.
-                if self.servers.get(id).unwrap() == &ServerType::Undefined {
-                    self.request_server_type(*id);
+                    ask_type = true;
                 }
 
                 // Update the routing table with the new, shorter path.
@@ -313,6 +311,11 @@ impl PacketHandler for ChatClientDanylo {
                     path.iter().map(|entry| entry.0.clone()).collect(),
                 );
                 info!("Client {}: Updated route to server {}: {:?}", self.id, id, path);
+
+                // Request the server type if it is undefined and the server is new.
+                if ask_type {
+                    self.request_server_type(*id);
+                }
             }
         }
     }
