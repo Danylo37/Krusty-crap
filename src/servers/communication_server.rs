@@ -4,15 +4,15 @@ use std::{
     fmt::Debug,
 };
 use log::{info, warn};
-use crate::general_use::{DataScope, DisplayDataCommunicationServer, Message, Query, Response, ServerCommand, ServerEvent, ServerType};
+use crate::general_use::{
+    DataScope, DisplayDataCommunicationServer, Message, Query, Response, ServerCommand, ServerEvent,
+    ServerType, SpecificNodeType
+};
 //UI
 use crate::ui_traits::Monitoring;
 use wg_2024::{
     network::NodeId,
-    packet::{
-        Packet,
-        PacketType,
-    },
+    packet::Packet,
 };
 use crate::general_use::DataScope::{UpdateAll, UpdateSelf};
 use super::server::CommunicationServer as CharTrait;
@@ -89,7 +89,7 @@ impl Monitoring for CommunicationServer {
         let neighbors =  self.packet_send.keys().cloned().collect();
         let display_data = DisplayDataCommunicationServer{
             node_id: self.id,
-            node_type: "Communication Server".to_string(),
+            node_type: SpecificNodeType::CommunicationServer,
             flood_id: self.flood_ids.last().cloned().unwrap_or(0),
             connected_node_ids: neighbors,
             routing_table: self.routes.clone(),

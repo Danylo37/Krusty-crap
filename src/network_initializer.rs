@@ -2,7 +2,6 @@
 use std::{
     collections::HashMap,
     env, fs, thread,
-    time::Duration
 };
 use crossbeam_channel::*;
 use rand::prelude::*;
@@ -42,7 +41,7 @@ use skylink::SkyLinkDrone;
 use RF_drone::RustAndFurious;
 use bobry_w_locie::drone::BoberDrone;
 use crate::clients::client_chen::Serialize;
-use crate::general_use::{ServerCommand, SpecificNodeType};
+use crate::general_use::SpecificNodeType;
 
 
 
@@ -398,7 +397,7 @@ impl NetworkInitializer {
                 );
 
             let tx_clone = self.sender_to_gui.clone();
-            let mut client_type;
+            let client_type;
             match self.choose_client_type_evenly() {
                 ClientType::Web => {
                     client_type = ClientType::Web;
