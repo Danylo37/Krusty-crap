@@ -43,12 +43,12 @@ impl Router for ClientChen {
         let srh = SourceRoutingHeader::initialize(hops);
         if let Some(node_info) = self.network_info.topology.get(&destination_id){
             if let ServerInfo(server_info) = &node_info.specific_info{
-                if server_info.server_type == Undefined{
+                if server_info.server_type == Undefined  || self.communication.routing_table.get(&destination_id).is_none(){
                     self.send_query_by_routing_header(srh, Query::AskType);
                 }
             }
         }
-        //println!("Successfully successfully sent the Query::AskType to the server {}", destination_id);
+        //println!("Successfully sent the Query::AskType to the server {}", destination_id);
     }
     fn update_routing_for_client(&mut self, destination_id: NodeId, path_trace: Vec<(NodeId, NodeType)>) {
         let hops = self.get_hops_from_path_trace(path_trace.clone());
