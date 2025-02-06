@@ -71,6 +71,7 @@ impl Senders for ChatClientDanylo {
             ClientEvent::PacketSent(_) => "PacketSent",
             ClientEvent::KnownServers(_) => "KnownServers",
             ClientEvent::ChatClientData(_, _, _) => "ChatClientData",
+            ClientEvent::CallTechniciansToFixDrone(_) => "CallTechniciansToFixDrone",
             _ => "Unknown",
         };
 
