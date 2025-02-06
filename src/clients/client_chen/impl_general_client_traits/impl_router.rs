@@ -24,8 +24,6 @@ impl Router for ClientChen {
             flood_request,
         );
 
-        self.update_connected_nodes();      // todo: only for testing repo
-
         // Collect the connected node IDs into a temporary vector
         let connected_nodes: Vec<_> = self.communication_tools.packet_send.keys().cloned().collect();
 
