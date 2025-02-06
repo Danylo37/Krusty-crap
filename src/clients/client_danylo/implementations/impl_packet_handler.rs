@@ -19,8 +19,8 @@ impl PacketHandler for ChatClientDanylo {
         match packet.pack_type.clone() {
             PacketType::Ack(ack) => self.handle_ack(ack.fragment_index, packet.session_id),
             PacketType::Nack(nack) => {
-                let last_node_id = packet.routing_header.hops.last().unwrap();
-                self.handle_nack(nack, packet.session_id, *last_node_id);
+                let last_node_id = packet.routing_header.hops[0];
+                self.handle_nack(nack, packet.session_id, last_node_id);
             },
             PacketType::MsgFragment(fragment) => {
                 // Send acknowledgment for the received fragment
