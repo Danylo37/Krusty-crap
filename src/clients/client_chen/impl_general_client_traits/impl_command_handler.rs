@@ -16,6 +16,7 @@ impl CommandHandler for ClientChen{
             }
 
             ClientCommand::StartFlooding => {
+                println!("Starting Flooding");
                 self.do_flooding();
             }
             ClientCommand::GetKnownServers => {

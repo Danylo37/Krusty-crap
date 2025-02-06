@@ -2,7 +2,7 @@ use crate::clients::client_chen::{ClientChen, NodeInfo, PacketCreator, Router, S
 use crate::clients::client_chen::prelude::*;
 use crate::clients::client_chen::general_client_traits::*;
 use crate::clients::client_chen::SpecificInfo::ServerInfo;
-use crate::general_use::ServerType::Undefined;
+use crate::general_use::ServerType::{Undefined, WaitingForResponse};
 
 impl Router for ClientChen {
     ///main method of for discovering the routing
@@ -32,21 +32,42 @@ impl Router for ClientChen {
             self.send_packet_to_connected_node(node_id, packet.clone()); // Assuming `send_packet_to_connected_node` takes a cloned packet
         }
     }
-
     fn update_routing_for_server(&mut self, destination_id: NodeId, path_trace: Vec<(NodeId, NodeType)>) {
+        // Step 1: Extract hops from the path trace
         let hops = self.get_hops_from_path_trace(path_trace);
+
+        // Step 2: Update the routing table
         self.communication.routing_table.insert(destination_id, hops.clone());
-        //println!("Successfully updated routing table for server {}", destination_id);
-        //println!("The routing table is: {:?}", self.communication.routing_table);
+
+        // Step 3: Create a SourceRoutingHeader
         let srh = SourceRoutingHeader::initialize(hops);
-        if let Some(node_info) = self.network_info.topology.get(&destination_id){
-            if let ServerInfo(server_info) = &node_info.specific_info{
-                if server_info.server_type == Undefined  || self.communication.routing_table.get(&destination_id).is_none(){
-                    self.send_query_by_routing_header(srh, Query::AskType);
+
+        // Step 4: Check server type and send query if necessary
+        let should_send_query = {
+            if let Some(node_info) = self.network_info.topology.get_mut(&destination_id) {
+                if let ServerInfo(server_info) = &mut node_info.specific_info {
+                    if matches!(server_info.server_type, Undefined) {
+                        // Update the server type to indicate we're waiting for a response
+                        println!("Before: Undefined");
+                        server_info.server_type = WaitingForResponse;
+                        println!("After: Waiting for response");
+                        true // Indicate that we need to send a query
+                    } else {
+                        false // No query needed
+                    }
+                } else {
+                    false // No query needed
                 }
+            } else {
+                false // No query needed
             }
+        };
+
+        // Step 5: Send the query if necessary
+        if should_send_query {
+            self.send_query_by_routing_header(srh, Query::AskType);
+            println!("Successfully sent the Query::AskType to the server {}", destination_id);
         }
-        //println!("Successfully sent the Query::AskType to the server {}", destination_id);
     }
     fn update_routing_for_client(&mut self, destination_id: NodeId, path_trace: Vec<(NodeId, NodeType)>) {
         let hops = self.get_hops_from_path_trace(path_trace.clone());

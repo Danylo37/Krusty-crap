@@ -102,7 +102,7 @@ impl FragmentsHandler for ClientChen {
         match message {
             Response::ServerType(server_type) => {
                 self.update_topology_entry_for_server(initiator_id, server_type);
-                //println!("The type of the server is {:?}", server_type);
+                println!("The type of the server is {:?}", server_type);
                 self.send_display_data_simplified(DataScope::UpdateSelf);
             },
             Response::ListFiles(list_file)  => {

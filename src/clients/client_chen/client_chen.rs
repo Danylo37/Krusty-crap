@@ -188,7 +188,7 @@ pub struct NodeStorage {
     pub(crate) current_text_media_list: Vec<MediaRef>,
     pub(crate) current_chosen_media_ref: MediaRef,
     pub(crate) current_received_serialized_media: HashMap<MediaRef, String>,
-    pub current_chosen_media: String,
+    pub(crate) current_chosen_media: String,
 }
 
 

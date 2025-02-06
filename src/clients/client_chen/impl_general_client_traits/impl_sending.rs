@@ -114,15 +114,17 @@ impl Sending for ClientChen {
     }
 
     fn packets_status_sending_actions(&mut self, packet: Packet, packet_status: PacketStatus) {
-        let destination = packet.routing_header.destination();
+        if let Some(destination) = packet.routing_header.destination(){
 
         match packet_status {
             PacketStatus::NotSent(not_sent_type) => {
-                self.handle_not_sent_packet(packet, not_sent_type, destination.unwrap());
+                self.handle_not_sent_packet(packet, not_sent_type, destination);
             }
             _ => {} // No action needed
         }
     }
+}
+
 
     fn handle_not_sent_packet(&mut self, mut packet: Packet, not_sent_type: NotSentType, destination: NodeId) {
         let routes = self.communication.routing_table.get(&destination);
@@ -137,10 +139,6 @@ impl Sending for ClientChen {
                     warn!("No valid routes to {}", destination);
                 }
             }
-            NotSentType::Dropped =>{
-                //resend the packet
-                self.send(packet);
-            }
             NotSentType::DroneDestination => {
                 let (session_id, fragment_index) = match &packet.pack_type {
                     PacketType::MsgFragment(fragment) => (packet.session_id, fragment.fragment_index),
@@ -150,6 +148,7 @@ impl Sending for ClientChen {
                     .entry(session_id)
                     .and_modify(|fragments| { fragments.remove(&fragment_index); });
             }
+            _=>{}
         }
     }
 

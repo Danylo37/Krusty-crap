@@ -275,7 +275,10 @@ pub enum Response {
     Media(String),
 
     //General Error
-    Err(String)
+    Err(String),
+
+    //Ack for flood response
+    FloodAck(FragmentIndex),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Copy)]
@@ -294,7 +297,10 @@ pub enum ServerType {
     Communication,
     Text,
     Media,
+
+    //for the requesting
     Undefined,
+    WaitingForResponse,
 }
 
 impl Display for ServerType {
@@ -304,6 +310,7 @@ impl Display for ServerType {
             ServerType::Text => "Text",
             ServerType::Media => "Media",
             ServerType::Undefined => "Undefined",
+            ServerType::WaitingForResponse => "WaitingForResponse",
         };
         write!(f, "{}", name)
     }

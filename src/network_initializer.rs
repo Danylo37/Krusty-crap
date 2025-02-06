@@ -582,7 +582,7 @@ impl NetworkInitializer {
                             server_instance.run_with_monitoring(sender_to_gui_clone);
                         }
                     }
-                    ServerType::Undefined => panic!("what?")
+                    _=> panic!("what?")
                 }
             );
         }

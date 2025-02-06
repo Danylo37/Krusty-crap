@@ -52,12 +52,16 @@ impl FloodingPacketsHandler for ClientChen {
             // Ensure entry exists for the node, so create a raw one when it is not created for the node
             let entry = self.network_info.topology.entry(node_id).or_insert_with(|| {
                 match node_type {
-                    NodeType::Server => NodeInfo {
+                    NodeType::Server => {
+                        let node_inf = NodeInfo {
                         node_id,
                         specific_info: SpecificInfo::ServerInfo(ServerInformation {
                             server_type: ServerType::Undefined,
                             connected_nodes_ids: HashSet::new(),
                         }),
+                        };
+                        println!("Inserted Server Undefined: {}", node_id);
+                        node_inf
                     },
                     NodeType::Client => NodeInfo {
                         node_id,
