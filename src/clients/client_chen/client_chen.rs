@@ -12,7 +12,7 @@ use crate::clients::Client as TraitClient;
 
 use crate::clients::client_chen::prelude::*;
 use crate::clients::client_chen::{CommandHandler, CommunicationTrait, FragmentsHandler, PacketsReceiver, Router, Sending};
-use crate::general_use::{ClientType, DataScope, DisplayDataWebBrowser, MediaRef};
+use crate::general_use::{ClientType, DataScope, DisplayDataWebBrowser, DroneId, MediaRef, SpecificNodeType};
 use crate::general_use::ClientEvent::WebClientData;
 
 #[derive(Clone)]
@@ -61,6 +61,7 @@ impl TraitClient for ClientChen {
             communication: CommunicationInfo {
                 connected_nodes_ids: connected_nodes,
                 routing_table: HashMap::new(),
+                drops_counter: HashMap::new(),
             },
 
             // Communication tools
@@ -128,7 +129,7 @@ impl ClientChen{
             // Create the DisplayData struct
             let display_data = DisplayDataWebBrowser {
                 node_id: self.metadata.node_id,
-                node_type: "Web Browser".to_string(),
+                node_type: SpecificNodeType::WebBrowser,
                 flood_id: self.status.flood_id,
                 session_id: self.status.session_id,
                 connected_node_ids: self.communication.connected_nodes_ids.clone(),
@@ -163,6 +164,7 @@ pub(crate) struct NodeStatus {
 pub(crate) struct CommunicationInfo {
     pub(crate) connected_nodes_ids: HashSet<NodeId>,
     pub(crate) routing_table: HashMap<NodeId, Vec<NodeId>>, // Routing information per protocol
+    pub(super) drops_counter: HashMap<SessionId, HashMap<DroneId, u8>>, // Counter for dropped packets
 }
 
 

@@ -42,7 +42,7 @@ use skylink::SkyLinkDrone;
 use RF_drone::RustAndFurious;
 use bobry_w_locie::drone::BoberDrone;
 use crate::clients::client_chen::Serialize;
-use crate::general_use::ServerCommand;
+use crate::general_use::{ServerCommand, SpecificNodeType};
 
 
 
@@ -220,6 +220,7 @@ impl NetworkInitializer {
                     self.create_and_spawn_drone::<RustyDrone>(drone_params.clone());
                     self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone {
                         node_id: drone_params.0,
+                        node_type: SpecificNodeType::Drone,
                         drone_brand: DroneBrand::RustyDrone,
                         connected_nodes_ids: Vec::new(),
                         pdr: drone_params.5,
@@ -229,6 +230,7 @@ impl NetworkInitializer {
                     self.create_and_spawn_drone::<RollingDrone>(drone_params.clone());
                     self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone {
                         node_id: drone_params.0,
+                        node_type: SpecificNodeType::Drone,
                         drone_brand: DroneBrand::RollingDrones,
                         connected_nodes_ids: Vec::new(),
                         pdr: drone_params.5,
@@ -238,6 +240,7 @@ impl NetworkInitializer {
                     self.create_and_spawn_drone::<RustableDrone>(drone_params.clone());
                     self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone {
                         node_id: drone_params.0,
+                        node_type: SpecificNodeType::Drone,
                         drone_brand: DroneBrand::Rustable,
                         connected_nodes_ids: Vec::new(),
                         pdr: drone_params.5,
@@ -247,6 +250,7 @@ impl NetworkInitializer {
                     self.create_and_spawn_drone::<RustBustersDrone>(drone_params.clone());
                     self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone{
                         node_id: drone_params.0,
+                        node_type: SpecificNodeType::Drone,
                         drone_brand: DroneBrand::RustBusters,
                         connected_nodes_ids: Vec::new(),
                         pdr: drone_params.5,
@@ -256,6 +260,7 @@ impl NetworkInitializer {
                     self.create_and_spawn_drone::<RustezeDrone>(drone_params.clone());
                     self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone {
                         node_id: drone_params.0,
+                        node_type: SpecificNodeType::Drone,
                         drone_brand: DroneBrand::RustEze,
                         connected_nodes_ids: Vec::new(),
                         pdr: drone_params.5,
@@ -265,6 +270,7 @@ impl NetworkInitializer {
                     self.create_and_spawn_drone::<FungiDrone>(drone_params.clone());
                     self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone {
                         node_id: drone_params.0,
+                        node_type: SpecificNodeType::Drone,
                         drone_brand: DroneBrand::Fungi,
                         connected_nodes_ids: Vec::new(),
                         pdr: drone_params.5,
@@ -274,6 +280,7 @@ impl NetworkInitializer {
                     self.create_and_spawn_drone::<BagelBomber>(drone_params.clone());
                     self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone {
                         node_id: drone_params.0,
+                        node_type: SpecificNodeType::Drone,
                         drone_brand: DroneBrand::BagelBomber,
                         connected_nodes_ids: Vec::new(),
                         pdr: drone_params.5,
@@ -283,6 +290,7 @@ impl NetworkInitializer {
                     self.create_and_spawn_drone::<SkyLinkDrone>(drone_params.clone());
                     self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone {
                         node_id: drone_params.0,
+                        node_type: SpecificNodeType::Drone,
                         drone_brand: DroneBrand::SkyLink,
                         connected_nodes_ids: Vec::new(),
                         pdr: drone_params.5,
@@ -292,6 +300,7 @@ impl NetworkInitializer {
                     self.create_and_spawn_drone::<RustAndFurious>(drone_params.clone());
                     self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone {
                         node_id: drone_params.0,
+                        node_type: SpecificNodeType::Drone,
                         drone_brand: DroneBrand::RustAndFurious,
                         connected_nodes_ids: Vec::new(),
                         pdr: drone_params.5,
@@ -301,6 +310,7 @@ impl NetworkInitializer {
                     self.create_and_spawn_drone::<BoberDrone>(drone_params.clone());
                     self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone {
                         node_id: drone_params.0,
+                        node_type: SpecificNodeType::Drone,
                         drone_brand: DroneBrand::BobryWLucie,
                         connected_nodes_ids: Vec::new(),
                         pdr: drone_params.5,

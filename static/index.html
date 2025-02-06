@@ -876,14 +876,13 @@
             const text = event.data; // Removed unnecessary `await`
             const parsedData = JSON.parse(text);
 
-            console.log(parsedData);
             switch (current_role_chosen) {
                 case "undefined":
                     // Handle only data with "data_title" field
                     if (parsedData.hasOwnProperty("data_title")) {
                         console.log("Processing full dataset for undefined role...");
                         createMonitoringSections(parsedData);
-                        createTopology(parsedData);
+                        createTopology(parsedData.topology);
                     } else {
                         console.log("Discarded data without 'data_title' for undefined role.");
                     }
@@ -893,6 +892,13 @@
                     console.log(parsedData);
                     // Handle updates for individual nodes
                     if (parsedData.hasOwnProperty("node_type")) {
+                        if (parsedData.node_type === "Web Browser" || parsedData.node_type === "Chat Client"){
+
+                        }else if (parsedData.node_type === "Drone"){
+
+                        }else{
+
+                        }
                         console.log("Processing node update for controller...");
                         switch (parsedData.node_type) {
                             case "Web Browser":
@@ -1025,8 +1031,69 @@
 
      */
 
-    function createTopology() {
+    function createTopology(topologyData) {
+        // Clear any previous data
+        drawn_nodes.length = 0;
+        connections.length = 0;
 
+        // Get all unique node IDs from the topology object.
+        const nodeIds = Object.keys(topologyData);
+        const totalNodes = nodeIds.length;
+
+        // Set up parameters for a circle layout.
+        const centerX = 1000; // adjust as needed
+        const centerY = 1000; // adjust as needed
+        const radius = 400;   // distance from center
+
+        // Position each node on a circle.
+        nodeIds.forEach((nodeId, i) => {
+            const angle = (2 * Math.PI * i) / totalNodes;
+            const x = centerX + radius * Math.cos(angle);
+            const y = centerY + radius * Math.sin(angle);
+            // For simplicity, set type to "node" (or you can decide based on nodeId)
+            drawn_nodes.push({ id: nodeId, type: "node", x: x, y: y });
+        });
+
+        // Build connections from topologyData.
+        for (const [nodeId, targetNodes] of Object.entries(topologyData)) {
+            targetNodes.forEach(targetId => {
+                connections.push({ from: nodeId, to: targetId });
+            });
+        }
+
+        // Now update the SVG canvas.
+        const canvas = document.getElementById("network-canvas");
+        // Clear any existing children.
+        while (canvas.firstChild) {
+            canvas.removeChild(canvas.firstChild);
+        }
+
+        // Draw connections (lines).
+        connections.forEach(conn => {
+            const fromNode = drawn_nodes.find(n => n.id === conn.from);
+            const toNode = drawn_nodes.find(n => n.id === conn.to);
+            if (fromNode && toNode) {
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute("x1", fromNode.x);
+                line.setAttribute("y1", fromNode.y);
+                line.setAttribute("x2", toNode.x);
+                line.setAttribute("y2", toNode.y);
+                line.classList.add("connection");
+                canvas.appendChild(line);
+            }
+        });
+
+        // Draw nodes (circles).
+        drawn_nodes.forEach(node => {
+            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circle.setAttribute("cx", node.x);
+            circle.setAttribute("cy", node.y);
+            circle.setAttribute("r", 15);
+            console.log(node.type)
+            circle.classList.add("node", node.type);
+            circle.addEventListener("click", () => alert(`Node: ${node.id}`));
+            canvas.appendChild(circle);
+        });
     }
 
     function createMonitoringSections(data) {

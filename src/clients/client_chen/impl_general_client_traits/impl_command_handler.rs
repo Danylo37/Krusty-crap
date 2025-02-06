@@ -52,8 +52,28 @@ impl CommandHandler for ClientChen{
             ClientCommand::RequestMedia(server_id, media_ref) => {
                 self.ask_media(server_id, media_ref);
             }
-            _=>{}
+            ClientCommand::DroneFixed(drone_id) => {
+                let packet_status_map = self.storage.packets_status.get(&self.status.session_id).cloned();
 
+                if let Some(packet_status_map) = packet_status_map {
+                    for (fragment_index, status) in packet_status_map {
+                        if matches!(status, PacketStatus::WaitingForFixing) {
+                            if let Some(output_buffer_map) = self.storage.output_buffer.get(&self.status.session_id) {
+                                if let Some(packet) = output_buffer_map.get(&fragment_index) {
+                                    self.send(packet.clone());
+                                } else {
+                                    warn!("Packet not found in output buffer for fragment index: {}", fragment_index);
+                                }
+                            } else {
+                                warn!("Output buffer not found for session ID: {}", self.status.session_id);
+                            }
+                        }
+                    }
+                } else {
+                    warn!("Packet status map not found for session ID: {}", self.status.session_id);
+                }
+            }
+            _ => {}
         }
     }
 
@@ -63,59 +83,7 @@ impl CommandHandler for ClientChen{
                 //debug!("I'm here sending data with scope UpdateAll");
                 self.send_display_data(sender_to_gui.clone(), DataScope::UpdateAll);
             },
-
-            ClientCommand::AddSender(target_node_id, sender) => {
-                self.communication_tools.packet_send.insert(target_node_id, sender);
-            }
-            ClientCommand::RemoveSender(target_node_id) => {
-                self.communication_tools.packet_send.remove(&target_node_id);
-            }
-
-            ClientCommand::StartFlooding => {
-                self.do_flooding();
-            }
-            ClientCommand::GetKnownServers => {
-                let servers: Vec<(ServerId, ServerType, bool)> = self
-                    .get_discovered_servers_from_topology()
-                    .iter()
-                    .map(|server_id| {
-                        self.network_info.topology.get(server_id).map_or(
-                            // Default to undefined server info if not found
-                            (*server_id, ServerType::Undefined, false),
-                            |server| {
-                                if let SpecificInfo::ServerInfo(server_info) = &server.specific_info {
-                                    let server_type = server_info.server_type;
-                                    (*server_id, server_type, false)
-                                } else {
-                                    (*server_id, ServerType::Undefined, false)
-                                }
-                            },
-                        )
-                    })
-                    .collect();
-                self.send_event(ClientEvent::KnownServers(servers));
-            }
-
-            ClientCommand::AskTypeTo(server_id) => {
-                self.send_query(server_id, Query::AskType);
-            }
-            ClientCommand::RequestListFile(server_id) => {
-                self.send_query(server_id, Query::AskListFiles);
-            }
-            ClientCommand::RequestText(server_id, file) => {
-                self.send_query(server_id, Query::AskFile(file));
-            }
-            ClientCommand::RequestMedia(server_id, media_ref) => {
-                self.send_query(server_id, Query::AskMedia(media_ref));
-            }
-            //testing command
-            ClientCommand::RequestRoutes(destination_id) => {
-                if let Some(routes) = self.communication.routing_table.get(&destination_id) {
-                    eprintln!("The routes from {} to {} are: \n\
-                     {:?}", self.metadata.node_id, destination_id, routes);
-                }
-            }
-            _=>{}
+            _=> self.handle_controller_command(command),
         }
     }
 }

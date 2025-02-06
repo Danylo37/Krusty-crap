@@ -23,21 +23,7 @@ pub type UsingTimes = u64;  //to measure traffic of fragments in a path.
 pub type ChatHistory = Vec<(Speaker, String)>;
 pub type Node = (NodeId, NodeType);
 
-///all the monitoring data
-#[derive(Debug, Serialize, Clone)]
-pub struct DisplayDataWebBrowser {
-    pub node_id: NodeId,
-    pub node_type: String,
-    pub flood_id: FloodId,
-    pub session_id: SessionId,
-    pub connected_node_ids: HashSet<NodeId>,
-    pub routing_table: HashMap<NodeId, Vec<NodeId>>,
-    pub discovered_text_servers: HashSet<ServerId>,
-    pub discovered_media_servers: HashSet<ServerId>,
-    pub curr_received_file_list: Vec<String>,
-    pub chosen_file_text: String,
-    pub serialized_media: HashMap<MediaRef, String>,
-}
+
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Message {
@@ -63,7 +49,22 @@ impl Message {
         &self.content
     }
 }
-//todo! send also the drone specific data (e.g. pdr, status: Crashed or NotCrashed, ...)
+
+///all the monitoring data
+#[derive(Debug, Serialize, Clone)]
+pub struct DisplayDataWebBrowser {
+    pub node_id: NodeId,
+    pub node_type: SpecificNodeType,
+    pub flood_id: FloodId,
+    pub session_id: SessionId,
+    pub connected_node_ids: HashSet<NodeId>,
+    pub routing_table: HashMap<NodeId, Vec<NodeId>>,
+    pub discovered_text_servers: HashSet<ServerId>,
+    pub discovered_media_servers: HashSet<ServerId>,
+    pub curr_received_file_list: Vec<String>,
+    pub chosen_file_text: String,
+    pub serialized_media: HashMap<MediaRef, String>,
+}
 #[derive(Debug, Serialize)]
 pub struct DisplayDataSimulationController{
     //drones
@@ -80,6 +81,7 @@ pub struct DisplayDataSimulationController{
 #[derive(Debug, Clone, Serialize)]
 pub struct DisplayDataDrone{
     pub(crate) node_id: NodeId,
+    pub(crate) node_type: SpecificNodeType,
     pub(crate) drone_brand: DroneBrand,
     pub(crate) connected_nodes_ids: Vec<NodeId>,
     pub(crate) pdr: f32,
@@ -89,7 +91,7 @@ pub struct DisplayDataDrone{
 pub struct DisplayDataChatClient {
     // Client metadata
     pub node_id: NodeId,
-    pub node_type: String,
+    pub node_type: SpecificNodeType,
 
     // Used IDs
     pub flood_ids: Vec<FloodId>,
@@ -110,8 +112,9 @@ pub struct DisplayDataChatClient {
 #[derive(Debug, Clone, Serialize)]
 pub struct DisplayDataCommunicationServer{
     pub node_id: NodeId,
-    pub node_type: String,
-    pub flood_id: crate::general_use::FloodId,
+    pub node_type: SpecificNodeType,
+    pub flood_id: FloodId,
+    //session_id: SessionId,
     pub connected_node_ids: HashSet<NodeId>,
     pub routing_table: HashMap<NodeId, Vec<NodeId>>,
     pub registered_clients: Vec<NodeId>,
@@ -120,9 +123,9 @@ pub struct DisplayDataCommunicationServer{
 #[derive(Debug, Clone,  Serialize)]
 pub struct DisplayDataMediaServer{
     pub node_id: NodeId,
-    pub node_type: String,
-    pub flood_id: crate::general_use::FloodId,
-    //session_id: crate::general_use::SessionId,
+    pub node_type: SpecificNodeType,
+    pub flood_id: FloodId,
+    //session_id: SessionId,
     pub connected_node_ids: HashSet<NodeId>,
     pub routing_table: HashMap<NodeId, Vec<NodeId>>,
     pub media: HashMap<String, String>,
@@ -131,9 +134,9 @@ pub struct DisplayDataMediaServer{
 #[derive(Debug, Clone, Serialize)]
 pub struct DisplayDataTextServer{
     pub node_id: NodeId,
-    pub node_type: String,
-    pub flood_id: crate::general_use::FloodId,
-    //session_id: crate::general_use::SessionId,
+    pub node_type: SpecificNodeType,
+    pub flood_id: FloodId,
+    //session_id: SessionId,
     pub connected_node_ids: HashSet<NodeId>,
     pub routing_table: HashMap<NodeId, Vec<NodeId>>,
     pub text_files: Vec<String>,
@@ -160,6 +163,9 @@ pub enum PacketStatus{
     Sent,                   //Successfully sent packet, that is with ack received
     NotSent(NotSentType),   //Include the packet not successfully sent, that is nack received
     InProgress,             //When we have no ack or nack confirmation
+
+    //
+    WaitingForFixing,
 }
 
 /// From controller to Server
@@ -210,6 +216,8 @@ pub enum ClientCommand {
     RegisterToServer(ServerId),
     AskListClients(ServerId),
 
+    //drone fixing
+    DroneFixed(NodeId),
 
     //commands for testing
     RequestRoutes(DestinationId),
@@ -268,6 +276,16 @@ pub enum Response {
 
     //General Error
     Err(String)
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Copy)]
+pub enum SpecificNodeType{
+    WebBrowser,
+    ChatClient,
+    TextServer,
+    CommunicationServer,
+    MediaServer,
+    Drone,
 }
 
 ///Material

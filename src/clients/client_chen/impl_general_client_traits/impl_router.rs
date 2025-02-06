@@ -24,8 +24,6 @@ impl Router for ClientChen {
             flood_request,
         );
 
-        self.update_connected_nodes();      // todo: only for testing repo
-
         // Collect the connected node IDs into a temporary vector
         let connected_nodes: Vec<_> = self.communication_tools.packet_send.keys().cloned().collect();
 
@@ -43,12 +41,12 @@ impl Router for ClientChen {
         let srh = SourceRoutingHeader::initialize(hops);
         if let Some(node_info) = self.network_info.topology.get(&destination_id){
             if let ServerInfo(server_info) = &node_info.specific_info{
-                if server_info.server_type == Undefined{
+                if server_info.server_type == Undefined  || self.communication.routing_table.get(&destination_id).is_none(){
                     self.send_query_by_routing_header(srh, Query::AskType);
                 }
             }
         }
-        //println!("Successfully successfully sent the Query::AskType to the server {}", destination_id);
+        //println!("Successfully sent the Query::AskType to the server {}", destination_id);
     }
     fn update_routing_for_client(&mut self, destination_id: NodeId, path_trace: Vec<(NodeId, NodeType)>) {
         let hops = self.get_hops_from_path_trace(path_trace.clone());
@@ -63,8 +61,6 @@ impl Router for ClientChen {
     }
 
     fn update_topology_entry_for_server(&mut self, initiator_id: NodeId, server_type: ServerType) {
-        use std::collections::hash_map::Entry;
-
         match self.network_info.topology.entry(initiator_id) {
             Entry::Occupied(mut entry) => {
                 let node_info = entry.get_mut();

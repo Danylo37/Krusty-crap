@@ -56,7 +56,11 @@ const container = document.getElementById("network-container");
 const canvas = document.getElementById("network-canvas");
 
 
+// Global arrays for nodes and connections
+const drawn_nodes = [];
+const connections = [];
 
+/*
 //TESTING VARIABLES
 const drawn_nodes = [
     { id: "C1", type: "client", x: 100, y: 400 },
@@ -72,6 +76,7 @@ const connections = [
     { from: "D1", to: "D2" },
     { from: "D1", to: "D3" },
 ];
+*/
 
 
 //!!!!! CONNECTING NODES FOR TESTING for now !!!!

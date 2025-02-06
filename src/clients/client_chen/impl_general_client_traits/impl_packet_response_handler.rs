@@ -100,7 +100,38 @@ impl PacketResponseHandler for ClientChen {
         self.storage.output_buffer.remove(&self.status.session_id);
         //the post-part of the handling is in the send_packets_in_buffer_checking_status
     }
-    fn handle_packdrop(&mut self, _nack_packet: Packet, nack: &Nack) {
+    fn handle_packdrop(&mut self, nack_packet: Packet, nack: &Nack) {
+        if let Some(drone) = nack_packet.routing_header.source(){
+            match self.communication.drops_counter.entry(self.status.session_id){
+                Entry::Occupied(mut entry) => {
+                    let map = entry.get_mut();
+                    match map.entry(drone){
+                        Entry::Occupied(mut entry) => {
+                            let counter = entry.get_mut();
+                            *counter += 1;
+
+                            if *counter == 10 {
+                                self.send_event(ClientEvent::CallTechniciansToFixDrone(drone));
+                                if let Some(map) = self.storage.packets_status.get_mut(&self.status.session_id){
+                                    map.insert(nack.fragment_index, PacketStatus::WaitingForFixing);
+                                    return;
+                                } else{
+                                    self.storage.packets_status.insert(self.status.session_id, HashMap::from([(nack.fragment_index, PacketStatus::WaitingForFixing)]));
+                                    return;
+                                }
+                            }
+                        }
+                        Entry::Vacant(entry) => {
+                            entry.insert(1);
+                        }
+                    }
+                }
+                Entry::Vacant(entry) => {
+                    entry.insert(HashMap::from([(drone, 1)]));
+                }
+            }
+        }
+
         self.update_packet_status(self.status.session_id, nack.fragment_index, PacketStatus::NotSent(NotSentType::Dropped));
         if let Some(entry) = &mut self.storage.output_buffer.get(&self.status.session_id){
             if let Some(packet) = entry.get(&nack.fragment_index) {
