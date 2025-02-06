@@ -474,7 +474,7 @@
                         </div>
                     </div>
 
-                    <img src="content_objects/reload.png" alt="reload" class="reload-button" onclick="reloadFilesServer(file_lists[currentServerIndex])">
+                    <img src="content_objects/reload.png" alt="reload" class="reload-button" onclick="reloadFilesServer(get_server_id_from_current_server_index())">
                 </div>
 
 
@@ -621,10 +621,11 @@
 
                 // Create buttons for each panel (node)
                 panelsArray.forEach((panel) => {
-                    console.log(`Nodetype: ${panel.dataset.nodeType}`);
+
                     const nodeId = panel.dataset.nodeId || 'Unknown'; // Retrieve node_id from panel's dataset
                     const nodeType = panel.dataset.nodeType || 'Unknown'; // Retrieve node_type from panel's dataset
-                    console.log(`after assignment: ${nodeType}`);
+
+
                     // Create the button-option
                     const clientButton = document.createElement('div');
                     clientButton.style = "display:flex; align-items: center; justify-content: start";
@@ -777,9 +778,10 @@
         }
 
         //populate phonebooks
-        phonebooks[currentClientId] = availableClients;
+        for (const serverId in availableClients){
+            phonebooks[serverId] = availableClients[serverId];
+        }
 
-        console.log(availableClients)
         // Get the container where the receivers will be listed.
         const receiverListContainer = document.getElementById('receiver-list');
 
@@ -1054,6 +1056,7 @@
             const fieldsContainer = document.createElement("div");
             Object.entries(fields).forEach(([key, value]) => {
                 const field = document.createElement("p");
+                field.style= "overflow-wrap: break-word";
                 field.textContent = `${key}: ${JSON.stringify(value)}`;
                 fieldsContainer.appendChild(field);
             });
@@ -1099,6 +1102,14 @@
             const panel = createPanel(nodeId, "Drone", fields);
             dronesContainer.appendChild(panel);
         });
+
+        const panel_padding = document.createElement('p');
+        panel_padding.style = "height:10px; width:100%; padding-bottom: 300px;"
+
+        clientsContainer.appendChild(panel_padding.cloneNode(true));
+        serversContainer.appendChild(panel_padding.cloneNode(true));
+        dronesContainer.appendChild(panel_padding.cloneNode(true));
+
 
         console.log("Monitoring sections updated!");
     }
