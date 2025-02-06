@@ -63,8 +63,6 @@ impl Router for ClientChen {
     }
 
     fn update_topology_entry_for_server(&mut self, initiator_id: NodeId, server_type: ServerType) {
-        use std::collections::hash_map::Entry;
-
         match self.network_info.topology.entry(initiator_id) {
             Entry::Occupied(mut entry) => {
                 let node_info = entry.get_mut();

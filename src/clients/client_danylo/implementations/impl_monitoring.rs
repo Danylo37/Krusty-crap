@@ -7,6 +7,7 @@ use crate::{
     },
     ui_traits::Monitoring,
 };
+use crate::general_use::SpecificNodeType;
 use super::{ChatClientDanylo, Senders, PacketHandler, CommandHandler};
 
 impl Monitoring for ChatClientDanylo {
@@ -14,7 +15,7 @@ impl Monitoring for ChatClientDanylo {
         let connected_nodes_ids = self.packet_send.keys().cloned().collect();
         let display_data = DisplayDataChatClient {
             node_id: self.id,
-            node_type: "Chat Client".to_string(),
+            node_type: SpecificNodeType::ChatClient,
             flood_ids: self.flood_ids.clone(),
             routes: self.routes.clone(),
             session_ids: self.session_ids.clone(),

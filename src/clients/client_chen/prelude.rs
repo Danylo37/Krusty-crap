@@ -1,6 +1,6 @@
 pub use std::{
     hash::Hash,
-    collections::{HashMap, HashSet},
+    collections::{HashMap, HashSet, hash_map::Entry,},
     thread, vec,
     string::String,
 };

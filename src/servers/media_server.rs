@@ -1,6 +1,6 @@
 use super::server::MediaServer as CharTrait;
 use super::server::Server as MainTrait;
-use crate::general_use::{DataScope, DisplayDataMediaServer, Query, Response, ServerCommand, ServerEvent, ServerType};
+use crate::general_use::{DataScope, DisplayDataMediaServer, Query, Response, ServerCommand, ServerEvent, ServerType, SpecificNodeType};
 use crate::ui_traits::Monitoring;
 use crossbeam_channel::{select_biased, Receiver, Sender};
 use std::collections::{HashMap, HashSet};
@@ -80,7 +80,7 @@ impl Monitoring for MediaServer {
         let neighbors =  self.packet_send.keys().cloned().collect();
         let display_data = DisplayDataMediaServer {
             node_id: self.id,
-            node_type: "Media Server".to_string(),
+            node_type: SpecificNodeType::MediaServer,
             flood_id: self.flood_ids.last().cloned().unwrap_or(0)   ,
             connected_node_ids: neighbors,
             routing_table: self.routes.clone(),

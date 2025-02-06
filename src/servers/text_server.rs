@@ -1,7 +1,7 @@
 use super::server::Server as MainTrait;
 use super::server::TextServer as CharTrait;
 use crate::general_use::DataScope::{UpdateAll, UpdateSelf};
-use crate::general_use::{DataScope, DisplayDataTextServer, Query, Response, ServerCommand, ServerEvent, ServerType};
+use crate::general_use::{DataScope, DisplayDataTextServer, Query, Response, ServerCommand, ServerEvent, ServerType, SpecificNodeType};
 use crate::ui_traits::Monitoring;
 use crossbeam_channel::{select_biased, Receiver, Sender};
 use std::collections::{HashMap, HashSet};
@@ -81,7 +81,7 @@ impl Monitoring for TextServer {
         let neighbors =  self.packet_send.keys().cloned().collect();
         let display_data = DisplayDataTextServer {
             node_id: self.id,
-            node_type: "Text Server".to_string(),
+            node_type: SpecificNodeType::TextServer,
             flood_id: self.flood_ids.last().cloned().unwrap_or(0),
             connected_node_ids: neighbors,
             routing_table: self.routes.clone(),
