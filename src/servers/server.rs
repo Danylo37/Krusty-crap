@@ -9,7 +9,7 @@ use wg_2024::{
         Ack, FloodRequest, FloodResponse, Fragment, Nack, NackType, NodeType, Packet, PacketType,
     },
 };
-use crate::general_use::{FloodId, Message, Query, Response, ServerCommand, ServerType};
+use crate::general_use::{FloodId, Message, Query, Response, ServerCommand, ServerEvent, ServerType};
 
 
 ///SERVER TRAIT
@@ -25,6 +25,7 @@ pub trait Server{
     fn get_topology(&mut self) -> &mut HashMap<NodeId, HashSet<NodeId>>;
     fn get_routes(&mut self) -> &mut HashMap<NodeId, Vec<NodeId>>;
 
+    fn get_event_sender(&self) -> &Sender<ServerEvent>;
     fn get_from_controller_command(&mut self) -> &mut Receiver<ServerCommand>;
     fn get_packet_recv(&mut self) -> &mut Receiver<Packet>;
     fn get_packet_send(&mut self) -> &mut HashMap<NodeId, Sender<Packet>>;
@@ -34,6 +35,8 @@ pub trait Server{
     fn process_query(&mut self, query: Query, src_id: NodeId);
     fn get_sending_messages(&mut self) -> &mut HashMap<u64, (Vec<u8>, u8)>;
     fn get_sending_messages_not_mutable(&self) -> &HashMap<u64, (Vec<u8>, u8)>;
+
+    fn get_drops_counter(&mut self) -> &mut HashMap<u64, HashMap<NodeId, u8>>;
 
     fn get_queries_to_process(&mut self) -> &mut VecDeque<(NodeId, Query)>;
 
@@ -77,7 +80,7 @@ pub trait Server{
 
     fn handle_packet(&mut self, packet: Packet) {
         match packet.pack_type {
-            PacketType::Nack(nack) => self.handle_nack(nack, packet.session_id),
+            PacketType::Nack(nack) => self.handle_nack(nack, packet.session_id, packet.routing_header.hops[0]),
             PacketType::Ack(ack) => self.handle_ack(ack),
             PacketType::MsgFragment(fragment) => self.handle_fragment(fragment, packet.routing_header, packet.session_id),
             PacketType::FloodRequest(flood_request) => self.handle_flood_request(flood_request, packet.session_id),
@@ -165,13 +168,13 @@ pub trait Server{
     fn reprocess_query(&mut self) {
         let queries = self.get_queries_to_process().clone();
 
-        for (client_id, response) in queries {
+        for (client_id, query) in queries {
 
             if !self.get_routes().contains_key(&client_id) {
                 return;
             }
 
-            self.process_query(response, client_id);
+            self.process_query(query, client_id);
             self.get_queries_to_process().pop_front();
         }
     }
@@ -196,7 +199,7 @@ pub trait Server{
     }
 
     //NACK
-    fn handle_nack(&mut self, nack: Nack, session_id: u64){
+    fn handle_nack(&mut self, nack: Nack, session_id: u64, last_node_id: NodeId){
         debug!("Server {}: Handling NACK for session {}: {:?}", self.get_id(), session_id, nack);
 
         match nack.nack_type {
@@ -204,7 +207,7 @@ pub trait Server{
                 self.send_again_fragment(session_id, nack.fragment_index);
             },
             NackType::Dropped => {
-                self.send_again_fragment(session_id, nack.fragment_index);
+                self.handle_nack_dropped(session_id, nack.fragment_index, last_node_id);
             },
             NackType::DestinationIsDrone => {
                 self.send_again_fragment(session_id, nack.fragment_index);
@@ -215,6 +218,30 @@ pub trait Server{
             }
         }
     }
+
+    fn handle_nack_dropped(&mut self, session_id: u64, fragment_index: u64, last_node_id: NodeId) {
+        let drones_and_counters = self.get_drops_counter().get_mut(&session_id).unwrap();
+        let Some(counter) = drones_and_counters.get_mut(&last_node_id) else {
+            drones_and_counters.insert(last_node_id, 1);
+
+            self.send_again_fragment(session_id, fragment_index);
+            return;
+        };
+
+        *counter += 1;
+
+        // If the counter reaches 10, send an event to call technicians to fix the drone.
+        if *counter == 10 {
+            self.get_event_sender().send(ServerEvent::CallTechniciansToFixDrone(last_node_id)).unwrap();
+
+            // Wait for the technicians to fix the drone.
+            // thread::sleep(Duration::from_millis(100));
+        }
+
+        self.send_again_fragment(session_id, fragment_index);
+    }
+
+
     fn send_nack(&self, nack: Nack, routing_header: SourceRoutingHeader, session_id: u64){
         let packet= Self::create_packet(PacketType::Nack(nack), routing_header, session_id);
         self.send_packet(packet);
@@ -338,7 +365,9 @@ pub trait Server{
         info!("Message length {} n_fragments {} current.fragment length {}, fragment_index: {}", message.len(), current_fragment.total_n_fragments, current_fragment.length, current_fragment.fragment_index );
         if(message.len() as u64) == ((current_fragment.total_n_fragments-1)*128 + current_fragment.length as u64)
         {
+
             let reassembled_data = message.clone(); // Take ownership of the data
+            self.get_drops_counter().remove(&session_id);
             self.get_reassembling_messages().remove(&session_id); // Remove from map
             self.process_reassembled_message(reassembled_data, routing_header.hops[0]);
             return true;
@@ -404,6 +433,7 @@ pub trait Server{
             );
 
             self.send_packet(packet);
+            self.get_drops_counter().insert(session_id, HashMap::new());
         }
     }
 
@@ -504,9 +534,9 @@ pub trait Server{
         );
 
         //Finding route
-        let src_id = message_and_destination.1;
-        let Some(route) = self.find_path_to(src_id) else {
-            error!("Server {}: No route found to the client {}", self.get_id(), src_id);
+        let recipient_id = message_and_destination.1;
+        let Some(route) = self.find_path_to(recipient_id) else {
+            error!("Server {}: No route found to the client {}", self.get_id(), recipient_id);
             return;
         };
 
