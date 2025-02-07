@@ -6,12 +6,12 @@ use tungstenite::client;
 use wg_2024::controller::DroneCommand;
 use crate::clients::client_chen::{NodeId, Serialize};
 use crate::simulation_controller::SimulationController;
-use crate::ui_traits::Monitoring;
+use crate::ui_traits::{SimulationControllerMonitoring};
 use crate::websocket::{WsCommand};
 use crate::general_use::{ClientCommand, ClientEvent, DataScope, DisplayDataChatClient, DisplayDataCommunicationServer, DisplayDataMediaServer, DisplayDataSimulationController, DisplayDataTextServer, DisplayDataWebBrowser, ServerCommand, ServerEvent};
 use crate::network_initializer::DroneBrand;
 
-impl Monitoring for SimulationController {
+impl SimulationControllerMonitoring for SimulationController {
     fn send_display_data(&mut self, sender_to_gui: Sender<String>, data_scope: DataScope) {
         let display_data = DisplayDataSimulationController{
             data_title: "Network Data".to_string(),

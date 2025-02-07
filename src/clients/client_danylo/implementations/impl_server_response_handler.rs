@@ -1,5 +1,6 @@
 use log::{debug, error, info};
-use crate::general_use::{ClientId, Message, Response, ServerId, ServerType, Speaker::HimOrHer};
+use crate::general_use::{ClientId, DataScope, Message, Response, ServerId, ServerType, Speaker::HimOrHer};
+use crate::ui_traits::Monitoring;
 use super::{ServerResponseHandler, ChatClientDanylo, CommandHandler};
 
 impl ServerResponseHandler for ChatClientDanylo {
@@ -12,6 +13,7 @@ impl ServerResponseHandler for ChatClientDanylo {
             match response {
                 Response::ServerType(server_type) => {
                     self.handle_server_type(server_id, server_type);
+                    self.send_display_data(DataScope::UpdateSelf);
                 },
                 Response::ClientRegistered => {
                     self.handle_client_registered(server_id);

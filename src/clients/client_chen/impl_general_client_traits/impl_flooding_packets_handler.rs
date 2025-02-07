@@ -104,7 +104,7 @@ impl FloodingPacketsHandler for ClientChen {
             // Use match to call the correct update function
             match destination_type {
                 NodeType::Server => {
-                    println!("|{:?}| CLIENT [{}] UPDATE SERVER [{}] with the path: {:?}", self.metadata.client_type ,destination_id, self.metadata.node_id , response.path_trace);
+                    //println!("|{:?}| CLIENT [{}] UPDATE SERVER [{}] with the path: {:?}", self.metadata.client_type , self.metadata.node_id , destination_id, response.path_trace);
                     self.update_routing_for_server(destination_id, response.path_trace.clone());
                 }
                 NodeType::Client => {

@@ -85,7 +85,7 @@ impl CommunicationServer{
 }
 
 impl Monitoring for CommunicationServer {
-    fn send_display_data(&mut self, _sender_to_gui: Sender<String>, data_scope: DataScope) {
+    fn send_display_data(&mut self, data_scope: DataScope) {
         let neighbors =  self.packet_send.keys().cloned().collect();
         let display_data = DisplayDataCommunicationServer{
             node_id: self.id,
@@ -101,32 +101,31 @@ impl Monitoring for CommunicationServer {
     }
     fn run_with_monitoring(
         &mut self,
-        sender_to_gui: Sender<String>,
     ) {
-        self.send_display_data(sender_to_gui.clone(), UpdateAll);
+        self.send_display_data(UpdateAll);
         loop {
             select_biased! {
                 recv(self.get_from_controller_command()) -> command_res => {
                     if let Ok(command) = command_res {
                         match command {
                             ServerCommand::UpdateMonitoringData => {
-                                self.send_display_data(sender_to_gui.clone(), UpdateAll);
+                                self.send_display_data(UpdateAll);
                             }
                             ServerCommand::StartFlooding => {
                                 self.discover();
                             }
                             ServerCommand::AddSender(id, sender) => {
                                 self.get_packet_send().insert(id, sender);
-                                self.send_display_data(sender_to_gui.clone(), UpdateSelf);
+                                self.send_display_data(UpdateSelf);
                             }
                             ServerCommand::RemoveSender(id) => {
                                 self.get_packet_send().remove(&id);
                                 self.update_topology_and_routes(id);
-                                self.send_display_data(sender_to_gui.clone(), UpdateSelf);
+                                self.send_display_data(UpdateSelf);
                             }
                             ServerCommand::ShortcutPacket(packet) => {
                                 self.handle_packet(packet);
-                                self.send_display_data(sender_to_gui.clone(), UpdateSelf);
+                                self.send_display_data(UpdateSelf);
                             }
                         }
                     }
@@ -134,7 +133,7 @@ impl Monitoring for CommunicationServer {
                 recv(self.get_packet_recv()) -> packet_res => {
                     if let Ok(packet) = packet_res {
                         self.handle_packet(packet);
-                        self.send_display_data(sender_to_gui.clone(), UpdateSelf);
+                        self.send_display_data(UpdateSelf);
                     }
                 },
             }

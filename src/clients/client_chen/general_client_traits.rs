@@ -96,7 +96,7 @@ pub trait FragmentsHandler:PacketsReceiver{ //message fragments
 
 pub trait CommandHandler{
     fn handle_controller_command(&mut self, command: ClientCommand);
-    fn handle_controller_command_with_monitoring(&mut self, command: ClientCommand, sender_to_gui: Sender<String>);
+    fn handle_controller_command_with_monitoring(&mut self, command: ClientCommand);
     // fn handle_controller_command_with_monitoring(&mut self, command: ClientCommand, sender_to_gui: Sender<String>);      // todo: commented for test repo
 }
 

@@ -489,7 +489,7 @@ impl NetworkInitializer {
         );
 
         thread::spawn( move|| {
-            client_instance.run_with_monitoring(sender_to_gui);
+            client_instance.run_with_monitoring();
         });
     }
 
@@ -569,17 +569,17 @@ impl NetworkInitializer {
                 match server_type {
                     ServerType::Communication => {
                         if let Some(mut server_instance) = server_instance_comm {
-                            server_instance.run_with_monitoring(sender_to_gui_clone);
+                            server_instance.run_with_monitoring();
                         }
                     },
                     ServerType::Media => {
                         if let Some(mut server_instance) = server_instance_media {
-                            server_instance.run_with_monitoring(sender_to_gui_clone);
+                            server_instance.run_with_monitoring();
                         }
                     },
                     ServerType::Text => {
                         if let Some(mut server_instance) = server_instance_text {
-                            server_instance.run_with_monitoring(sender_to_gui_clone);
+                            server_instance.run_with_monitoring();
                         }
                     }
                     _=> panic!("what?")

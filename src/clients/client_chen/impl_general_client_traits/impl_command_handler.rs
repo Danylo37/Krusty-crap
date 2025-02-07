@@ -77,13 +77,16 @@ impl CommandHandler for ClientChen{
         }
     }
 
-    fn handle_controller_command_with_monitoring(&mut self, command: ClientCommand, sender_to_gui: Sender<String>) {
+    fn handle_controller_command_with_monitoring(&mut self, command: ClientCommand) {
         match command {
             ClientCommand::UpdateMonitoringData => {
                 //debug!("I'm here sending data with scope UpdateAll");
-                self.send_display_data(sender_to_gui.clone(), DataScope::UpdateAll);
+                self.send_display_data(UpdateAll);
             },
-            _=> self.handle_controller_command(command),
+            _=> {
+                self.handle_controller_command(command);
+                self.send_display_data(UpdateSelf);
+            },
         }
     }
 }
