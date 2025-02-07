@@ -45,7 +45,7 @@ pub fn get_media(vec_files: Vec<(String, String)>) -> HashMap<String, String> {
 
 pub const TEXT: [(&str, &str); N_FILES] = [
     //1
-    ("Leopardi's Verses", r#"Alcuni versi di Leopardi:
+    ("Leopardi_verses.txt", r#"Alcuni versi di Leopardi:
 Ma perchè dare al sole,
 Perchè reggere in vita
 Chi poi di quella consolar convenga?
@@ -57,24 +57,24 @@ Ma tu mortal non sei,
 E forse del mio dir poco ti cale."#),
 
     //2
-    ("The Banana", "Una banana #Media[banana]"),
+    ("The_Banana.html", "Una banana #Media[banana]"),
 
     //3
-    ("Forbidden Text", "Non scegliere questo testo #Media[do_not_search_this]"),
+    ("Forbidden_Text.html", "Non scegliere questo testo #Media[do_not_search_this]"),
 
     //4
-    ("Phrases by Lillo", r#"Phrases by Lillo:
+    ("Phrases_by_Lillo.txt", r#"Phrases by Lillo:
 - a lack of belief in free will is the antidote to hate and judgement
 - il disordine è tale finche non viene ordinato
 - if you have to ask if you’re a member of a group, you’re probably not."#),
 
     //5
-    ("Mountain Panoramas", r#"One of the best panoramas are next to us,
+    ("Mountain_Panoramas.html", r#"One of the best panoramas are next to us,
 just walk up on a mountain,
 sit in the middle of the forest and watch at the Sparkling snow #Media[sparkling_snow]"#),
 
     //6
-    ("Bigfoot Sighting", r#"Bigfoot Sighting Report
+    ("Bigfoot_Sighting.html", r#"Bigfoot Sighting Report
 Location: Dense forest near Willow Creek, California
 Date and Time: December 12, 2024, 4:45 PM
 
@@ -86,60 +86,58 @@ The figure was enormous, standing between 7 and 8 feet tall, with broad shoulder
 Its body appeared to be covered in dark, shaggy hair, likely black or very dark brown, and it moved with a distinct upright, bipedal gait."#),
 
     //7
-    ("A Cat's Life", "A day in the life of a cat: sleep, eat, stare at nothing, and repeat. #Media[cat_life]"),
+    ("A_Cat_Life.txt", "A day in the life of a cat: sleep, eat, stare at nothing, and repeat."),
 
     //8
-    ("Famous Quote", "To be or not to be, that is the question. #Media[shakespeare]"),
+    ("Famous_Quote.html", "To be or not to be, that is the question. #Media[shakespeare]"),
 
     //9
-    ("Recipe for Happiness", r#"Take one sunny day,
+    ("Recipe_for_Happiness.txt", r#"Take one sunny day,
 Add a sprinkle of laughter,
 Mix in some good company,
-And serve with warm smiles. #Media[happiness_recipe]"#),
+And serve with warm smiles."#),
 
     //10
-    ("Travel Dream", r#"Imagine waking up to the sound of waves,
+    ("Travel_Dream.html", r#"Imagine waking up to the sound of waves,
 A gentle sea breeze,
 And a sunrise over turquoise waters. #Media[tropical_paradise]"#),
 
     //11
-    ("Astronomy Facts", "Did you know? The light from the Sun takes about 8 minutes to reach Earth. #Media[sunlight]"),
+    ("Astronomy_Facts.html", "Did you know? The light from the Sun takes about 8 minutes to reach Earth. #Media[sunlight]"),
 
     //12
-    ("Forest Mysteries", r#"The forest is alive with secrets:
+    ("Forest_Mysteries.html", r#"The forest is alive with secrets:
 Listen closely to the rustling leaves,
 And you might hear a hidden story. #Media[forest_story]"#),
 
     //13
-    ("Tech Innovations", r#"The rise of AI is transforming industries:
+    ("Tech_Innovations.txt", r#"The rise of AI is transforming industries:
 From healthcare to space exploration,
-The future is already here. #Media[ai_future]"#),
+The future is already here."#),
 
     //14
-    ("City Lights", "Standing at the rooftop, I watch as the city glows with a million lights. #Media[city_night]"),
+    ("City_Lights.html", "Standing at the rooftop, I watch as the city glows with a million lights. #Media[city_night]"),
 
     //15
-    ("Winter Tale", r#"The first snow of the year falls gently,
+    ("Winter_Tale.txt", r#"The first snow of the year falls gently,
 Covering the world in a blanket of white.
-A serene and magical moment. #Media[first_snow]"#),
+A serene and magical moment."#),
 
     //16
-    ("Lost Artifact", r#"A mysterious artifact was discovered in the desert,
+    ("Lost_Artifact.html", r#"A mysterious artifact was discovered in the desert,
 Its symbols remain undeciphered to this day. #Media[ancient_artifact]"#),
 ];
 
 
-pub const IMAGE_PATHS: [(&str, &str, &str); 12] = [
-    ("The Banana", "banana", "path/to/banana.jpeg"),
-    ("Forbidden Text", "do_not_search_this", "path/to/do_not_search_this.jpeg"),
-    ("Mountain Panoramas", "sparkling_snow", "path/to/sparkling_snow.jpeg"),
-    ("Bigfoot Sighting", "big_foot", "path/to/big_foot.jpeg"),
-    ("A Cat's Life", "cat_life", "path/to/cat_life.jpeg"),
-    ("Famous Quote", "shakespeare", "path/to/shakespeare.jpeg"),
-    ("Recipe for Happiness", "happiness_recipe", "path/to/happiness_recipe.jpeg"),
-    ("Travel Dream", "tropical_paradise", "path/to/tropical_paradise.jpeg"),
-    ("Astronomy Facts", "sunlight", "path/to/sunlight.jpeg"),
-    ("Forest Mysteries", "forest_story", "path/to/forest_story.jpeg"),
-    ("Tech Innovations", "ai_future", "path/to/ai_future.jpeg"),
-    ("City Lights", "city_night", "path/to/city_night.jpeg"),
+pub const IMAGE_PATHS: [(&str, &str, &str); 10] = [
+    ("The_Banana.html", "banana", "path/to/banana.jpeg"),
+    ("Forbidden_Text.html", "do_not_search_this", "path/to/do_not_search_this.jpeg"),
+    ("Mountain_Panoramas.html", "sparkling_snow", "path/to/sparkling_snow.jpeg"),
+    ("Bigfoot_Sighting.html", "big_foot", "path/to/big_foot.jpeg"),
+    ("Famous_Quote.html", "shakespeare", "path/to/shakespeare.jpeg"),
+    ("Travel_Dream.html", "tropical_paradise", "path/to/tropical_paradise.jpeg"),
+    ("Astronomy_Facts.html", "sunlight", "path/to/sunlight.jpeg"),
+    ("Forest_Mysteries.html", "forest_story", "path/to/forest_story.jpeg"),
+    ("City_Lights.html", "city_night", "path/to/city_night.jpeg"),
+    ("Lost_Artifact.html", "ancient_artifact", "path/to/ancient_artifact.jpeg")
 ];
