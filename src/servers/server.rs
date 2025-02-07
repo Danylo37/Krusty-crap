@@ -21,7 +21,7 @@ pub trait Server{
     fn get_flood_id(&mut self) -> u64;
 
     fn push_flood_id(&mut self, flood_id: FloodId);
-    fn get_clients(&mut self) -> &mut Vec<NodeId>;
+    fn get_clients(&mut self) -> &mut HashSet<NodeId>;
     fn get_topology(&mut self) -> &mut HashMap<NodeId, HashSet<NodeId>>;
     fn get_routes(&mut self) -> &mut HashMap<NodeId, Vec<NodeId>>;
 
@@ -145,6 +145,8 @@ pub trait Server{
                 .get(id)
                 .map_or(true, |prev_path| prev_path.len() > path.len())
             {
+                self.get_clients().insert(*id);
+
                 // Update the routing table with the new, shorter path.
                 self.get_routes().insert(
                     *id,
@@ -350,7 +352,7 @@ pub trait Server{
     }
 
     fn save_query_to_process(&mut self, src_id: NodeId, query: Query) {
-        if self.get_queries_to_process().is_empty() && self.get_topology().is_empty() {
+        if self.get_queries_to_process().is_empty() && self.get_clients().is_empty() {
             self.discover();
         }
 

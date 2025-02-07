@@ -25,7 +25,7 @@ pub struct TextServer{
     pub sending_messages: HashMap<SessionId, (Vec<u8>, NodeId)>,
 
     //Flood-related
-    pub clients: Vec<NodeId>,                                   // Available clients
+    pub clients: HashSet<NodeId>,                               // Available clients
     pub topology: HashMap<NodeId, HashSet<NodeId>>,             // Nodes and their neighbours
     pub routes: HashMap<NodeId, Vec<NodeId>>,                   // Routes to the servers
     pub flood_ids: Vec<FloodId>,
@@ -87,6 +87,7 @@ impl Monitoring for TextServer {
             node_type: SpecificNodeType::TextServer,
             flood_id: self.flood_ids.last().cloned().unwrap_or(0),
             connected_node_ids: neighbors,
+            known_clients: self.clients.clone(),
             routing_table: self.routes.clone(),
             text_files: text_files_list,
         };
@@ -151,7 +152,7 @@ impl MainTrait for TextServer{
     }
 
     fn push_flood_id(&mut self, flood_id: FloodId){ self.flood_ids.push(flood_id); }
-    fn get_clients(&mut self) -> &mut Vec<NodeId>{ &mut self.clients }
+    fn get_clients(&mut self) -> &mut HashSet<NodeId>{ &mut self.clients }
     fn get_topology(&mut self) -> &mut HashMap<NodeId, HashSet<NodeId>>{ &mut self.topology }
     fn get_routes(&mut self) -> &mut HashMap<NodeId, Vec<NodeId>>{ &mut self.routes }
 

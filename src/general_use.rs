@@ -116,6 +116,7 @@ pub struct DisplayDataCommunicationServer{
     pub flood_id: FloodId,
     //session_id: SessionId,
     pub connected_node_ids: HashSet<NodeId>,
+    pub known_clients: HashSet<NodeId>,
     pub routing_table: HashMap<NodeId, Vec<NodeId>>,
     pub registered_clients: Vec<NodeId>,
 }
@@ -127,6 +128,7 @@ pub struct DisplayDataMediaServer{
     pub flood_id: FloodId,
     //session_id: SessionId,
     pub connected_node_ids: HashSet<NodeId>,
+    pub known_clients: HashSet<NodeId>,
     pub routing_table: HashMap<NodeId, Vec<NodeId>>,
     pub media: HashMap<String, String>,
 }
@@ -138,6 +140,7 @@ pub struct DisplayDataTextServer{
     pub flood_id: FloodId,
     //session_id: SessionId,
     pub connected_node_ids: HashSet<NodeId>,
+    pub known_clients: HashSet<NodeId>,
     pub routing_table: HashMap<NodeId, Vec<NodeId>>,
     pub text_files: Vec<String>,
 }
