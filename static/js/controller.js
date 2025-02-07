@@ -81,8 +81,8 @@ const connections = [
 
 //!!!!! CONNECTING NODES FOR TESTING for now !!!!
 connections.forEach(({ from, to }) => {
-    const fromNode = drawn_nodes.find((n) => n.id === from);
-    const toNode = drawn_nodes.find((n) => n.id === to);
+    const fromNode = drawn_nodes.find((n) => n.id == from);
+    const toNode = drawn_nodes.find((n) => n.id == to);
 
     if (fromNode && toNode) {
         const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -304,7 +304,7 @@ document.addEventListener('click', (event) => {
 function showSection(sectionId) {
     const sections = document.querySelectorAll('.section');
     sections.forEach(section => {
-        if (section.id === sectionId) {
+        if (section.id == sectionId) {
             section.style.display = 'block';
             section.style.animation = 'slide-in 0.5s ease-out';
         } else {
