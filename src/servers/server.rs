@@ -165,13 +165,13 @@ pub trait Server{
     fn reprocess_query(&mut self) {
         let queries = self.get_queries_to_process().clone();
 
-        for (client_id, response) in queries {
+        for (client_id, query) in queries {
 
             if !self.get_routes().contains_key(&client_id) {
                 return;
             }
 
-            self.process_query(response, client_id);
+            self.process_query(query, client_id);
             self.get_queries_to_process().pop_front();
         }
     }
