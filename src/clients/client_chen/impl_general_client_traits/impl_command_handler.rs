@@ -44,6 +44,7 @@ impl CommandHandler for ClientChen{
                 self.ask_server_type(server_id);
             }
             ClientCommand::RequestListFile(server_id) => {
+                println!("CLIENT PROCESSING ASK FILE LIST COMMAND");
                 self.ask_list_files(server_id);
             }
             ClientCommand::RequestText(server_id, file_ref) => {

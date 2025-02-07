@@ -992,10 +992,11 @@
 
     function sendUpdateCommand() {
         if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify("WsUpdateData"));
-            console.log('Update Command Sent');
+            const message = { "WsUpdateData": null }; // Use null or an empty object
+            ws.send(JSON.stringify(message));
+            console.log("Sent:", JSON.stringify(message)); // Debugging output
         } else {
-            console.error('WebSocket is not open. Unable to send update command.');
+            console.error("WebSocket is not open. Unable to send request.");
         }
     }
 

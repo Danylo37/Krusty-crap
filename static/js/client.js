@@ -223,11 +223,16 @@ function closeChatPopup() {
 
 
 // Requesting
-function askListRegisteredClientsToServer(whichClient, whichServer){
+function askListRegisteredClientsToServer(clientId, serverId){
     // CHen/Chen/CHEN function to retrieve List registered clients
     if (ws.readyState === WebSocket.OPEN) {
         // Construct the message with the actual values of whichClient and whichServer
-        const message = `WsAskListRegisteredClientsToServer(${whichClient}, ${whichServer})`;
+        const message = {
+            WsAskListRegisteredClientsToServer: {
+                client_id: clientId.toString(), // Ensure u64 is sent as a string
+                server_id: serverId.toString(), // Ensure u64 is sent as a string
+            }
+        };
         ws.send(JSON.stringify(message));
         console.log('Sent:', message);
     } else {
@@ -280,11 +285,17 @@ function sendMessage() {
         sendMessageController(currentClientId, activeChatItem.dataset.id);
     }
 }
-function sendMessageController(senderClientId, receiverClientId, messageString){
+function sendMessageController(sourceClientId, destClientId, messageText){
     //Chen sending message controller
     if (ws.readyState === WebSocket.OPEN) {
         // Construct the message with the actual values of whichClient and whichServer
-        const message = `WsSendMessage(${senderClientId}, ${receiverClientId}, ${messageString})`;
+        const message = {
+            WsSendMessage: {
+                source_client_id: sourceClientId.toString(), // Ensure u64 is sent as a string
+                dest_client_id: destClientId.toString(),     // Ensure u64 is sent as a string
+                message: messageText,
+            }
+        };
         ws.send(JSON.stringify(message));
         console.log('Sent:', message);
     } else {
@@ -498,7 +509,7 @@ function updateServerDisplay() {
 // Reload and askListFiles
 function reloadFilesServer(whichServer) {
     // Call the empty function
-    askListFilesServer(currentClientId, whichServer);
+    askFileList(currentClientId, whichServer);
 
     // Show the loading overlay pop-up
     const loadingPopup = document.getElementById("loading-popup");
@@ -506,18 +517,22 @@ function reloadFilesServer(whichServer) {
 
 }
 
-function askListFilesServer(whichClient, whichServer) {
-    // Chen put function with simulation Controller
+function askFileList(clientId, serverId) {
     if (ws.readyState === WebSocket.OPEN) {
-        // Construct the message with the actual values of whichClient and whichServer
-        const message = `WsAskFileList(${whichClient}, ${whichServer})`;
+        // Use the correct format for serde deserialization
+        const message = {
+            WsAskFileList: {
+                client_id: clientId.toString(), // Ensure u64 is sent as a string
+                server_id: serverId.toString(), // Ensure u64 is sent as a string
+            }
+        };
+
         ws.send(JSON.stringify(message));
-        console.log('Sent:', message);
+        console.log("Sent:", JSON.stringify(message)); // Debugging output
     } else {
-        console.error('WebSocket is not open. Unable to send update command.');
+        console.error("WebSocket is not open. Unable to send request.");
     }
 }
-
 
 
 
@@ -586,7 +601,13 @@ function askFileContent(clientId, serverId, fileName) {
     //Chen ask file to controller (file name with .extension given)
     if (ws.readyState === WebSocket.OPEN) {
         // Construct the message with the actual values of whichClient and whichServer
-        const message = `WsAskFileContent(${clientId},${serverId}, ${fileName})`;
+        const message = {
+            WsAskFileContent: {
+                client_id: clientId.toString(), // Ensure u64 is sent as a string
+                server_id: serverId.toString(), // Ensure u64 is sent as a string
+                file_ref: fileName,
+            }
+        };
         ws.send(JSON.stringify(message));
         console.log('Sent:', message);
     } else {
@@ -598,7 +619,12 @@ function askMedia(clientId, reference_media){
     //Chen ask media to controller
     if (ws.readyState === WebSocket.OPEN) {
         // Construct the message with the actual values of whichClient and whichServer
-        const message = `WsAskMedia(${clientId}, ${reference_media})`;
+        const message = {
+            WsAskMedia: {
+                client_id: clientId.toString(), // Ensure u64 is sent as a string
+                media_ref: reference_media,
+            }
+        };
         ws.send(JSON.stringify(message));
         console.log('Sent:', message);
     } else {

@@ -26,9 +26,10 @@ impl Router for ClientChen {
 
         self.update_connected_nodes();
         let connected_nodes = self.communication.connected_nodes_ids.clone();
-        // Collect the connected node IDs into a temporary vector
-        // Send the packet to each connected node
+        //println!("|Web| Client [{}] connected_nodes: {:?}", self.metadata.node_id, connected_nodes);
+
         for &node_id in connected_nodes.iter() {
+            //println!("|Web| Client [{}] sent to: {}", self.metadata.node_id, node_id);
             self.send_packet_to_connected_node(node_id, packet.clone()); // Assuming `send_packet_to_connected_node` takes a cloned packet
         }
     }

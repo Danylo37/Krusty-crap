@@ -6,17 +6,65 @@ use std::thread;
 use log::{debug, info, warn};
 use tungstenite::{accept, Message};
 use tungstenite::error::Error as WsError;
+use serde_json::Value;
 use crate::general_use::{ClientId, DroneId, FileRef, MediaRef, ServerId};
+
+// Helper module for handling u64 as strings in JSON
+mod stringified_u8 {
+    use serde::{Deserialize, Deserializer, Serializer};
+    use serde::de::Error;
+
+    pub fn serialize<S: Serializer>(value: &u8, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(&value.to_string())
+    }
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(deserializer: D) -> Result<u8, D::Error> {
+        let s = String::deserialize(deserializer)?;
+        s.parse().map_err(Error::custom)
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum WsCommand {
     WsUpdateData,
-    WsAskListRegisteredClientsToServer(ClientId, ServerId),
-    WsSendMessage(ClientId, ClientId, String), //source -> destination
-    WsAskFileList(ClientId, ServerId),
-    WsAskFileContent(ClientId,ServerId, FileRef),
-    WsAskMedia(ClientId, MediaRef),
+
+    WsAskListRegisteredClientsToServer {
+        #[serde(with = "stringified_u8")]
+        client_id: ClientId,
+        #[serde(with = "stringified_u8")]
+        server_id: ServerId,
+    },
+
+    WsSendMessage {
+        #[serde(with = "stringified_u8")]
+        source_client_id: ClientId,
+        #[serde(with = "stringified_u8")]
+        dest_client_id: ClientId,
+        message: String,
+    },
+
+    WsAskFileList {
+        #[serde(with = "stringified_u8")]
+        client_id: ClientId,
+        #[serde(with = "stringified_u8")]
+        server_id: ServerId,
+    },
+
+    WsAskFileContent {
+        #[serde(with = "stringified_u8")]
+        client_id: ClientId,
+        #[serde(with = "stringified_u8")]
+        server_id: ServerId,
+        file_ref: FileRef,
+    },
+
+    WsAskMedia {
+        #[serde(with = "stringified_u8")]
+        client_id: ClientId,
+        media_ref: MediaRef,
+    },
 }
+
 pub fn start_websocket_server(rx: Receiver<String>, cmd_tx: Sender<WsCommand>) {
     let listener = TcpListener::bind("0.0.0.0:8080").unwrap();
     println!("WebSocket server started on ws://0.0.0.0:8080");
@@ -78,19 +126,25 @@ pub fn start_websocket_server(rx: Receiver<String>, cmd_tx: Sender<WsCommand>) {
                                 // Non-blocking WebSocket read
                                 default => {
                                     match websocket.read() {
-                                        Ok(Message::Text(text)) => {
-                                            if let Ok(cmd) = serde_json::from_str::<WsCommand>(&text) {
-                                                ws_tx.send(cmd).unwrap();
-                                            }
-                                        }
-                                        Err(WsError::Io(ref err)) if err.kind() == std::io::ErrorKind::WouldBlock => {
-                                            // No message received, continue loop (without blocking)
-                                        }
-                                        Err(e) => {
-                                            warn!("WebSocket error: {}", e);
-                                            break;
-                                        }
-                                    _ => {}}
+    Ok(Message::Text(text)) => {
+        println!("Raw WebSocket Message Received: {}", text); // Debug log
+
+        if let Ok(cmd) = serde_json::from_str::<WsCommand>(&text) {
+            println!("Parsed command: {:?}", cmd);
+            ws_tx.send(cmd).unwrap();
+        } else {
+            println!("Failed to parse message: {}", text);
+        }
+    }
+    Err(WsError::Io(ref err)) if err.kind() == std::io::ErrorKind::WouldBlock => {
+        // No message received, continue
+    }
+    Err(e) => {
+        warn!("WebSocket error: {}", e);
+        break;
+    }
+                                        _=>{}
+}
                                 }
                             }
                         }
@@ -102,4 +156,27 @@ pub fn start_websocket_server(rx: Receiver<String>, cmd_tx: Sender<WsCommand>) {
             }
         }
     });
+}
+
+
+fn parse_message(json_str: &str) {
+    let parsed: Result<Value, _> = serde_json::from_str(json_str);
+
+    match parsed {
+        Ok(value) => {
+            if let Some(args) = value.get("WsAskFileList") {
+                if let Some(arr) = args.as_array() {
+                    let parsed_numbers: Result<Vec<u64>, _> = arr.iter()
+                        .map(|v| v.as_str().unwrap_or("").parse::<u64>())
+                        .collect();
+
+                    match parsed_numbers {
+                        Ok(numbers) => println!("Parsed numbers: {:?}", numbers),
+                        Err(e) => println!("Failed to parse numbers: {}", e),
+                    }
+                }
+            }
+        }
+        Err(e) => println!("JSON parsing error: {}", e),
+    }
 }

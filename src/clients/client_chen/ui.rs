@@ -8,6 +8,7 @@ use crate::general_use::ClientEvent::WebClientData;
 impl Monitoring for ClientChen{
     fn send_display_data(&mut self, data_scope: DataScope){
         self.update_connected_nodes();
+        self.update_servers();
         // Create the DisplayData struct
         let display_data = DisplayDataWebBrowser {
             node_id: self.metadata.node_id,

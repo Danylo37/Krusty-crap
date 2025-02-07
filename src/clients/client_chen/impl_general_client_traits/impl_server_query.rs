@@ -5,19 +5,23 @@ use crate::clients::client_chen::general_client_traits::*;
 impl ServerQuery for ClientChen{
 
     fn ask_server_type(&mut self, server_id: ServerId) {
-        if self.get_discovered_servers_from_topology().contains(&server_id) {
+        self.update_servers();
+        if self.communication.servers.contains(&server_id) {
             self.send_query(server_id, Query::AskType);
         }
     }
 
     fn ask_list_files(&mut self, server_id: ServerId) {
-        if self.get_discovered_servers_from_topology().contains(&server_id) {
+        self.update_servers();
+        if self.communication.servers.contains(&server_id) {
             self.send_query(server_id, Query::AskListFiles);
+            println!("|WEB| CLIENT [{}] SENT QUERY ASK FILE LIST TO SERVER [{}]", self.metadata.node_id, server_id);
         }
     }
 
     fn ask_file(&mut self, server_id: ServerId, file_ref: String) {
-        if self.get_discovered_servers_from_topology().contains(&server_id) {
+        self.update_servers();
+        if self.communication.servers.contains(&server_id) {
             self.send_query(server_id, Query::AskFile(file_ref));
         }
     }

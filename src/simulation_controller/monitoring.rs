@@ -40,7 +40,7 @@ impl SimulationControllerMonitoring for SimulationController {
                 recv(self.ws_command_receiver) -> command_res => {
                     debug!("Controller received command {:?}", command_res);
                     if let Ok(command) = command_res {
-                        self.handle_ws_command(sender_to_gui.clone(), command);
+                        self.handle_ws_command(command);
                     }
                 },
                 recv(self.client_event_receiver) -> client_event => {
@@ -164,55 +164,84 @@ impl SimulationControllerMonitoring for SimulationController {
 }
 
 impl SimulationController {
-    fn handle_ws_command(&mut self, sender_to_gui: Sender<String>, command: WsCommand) {
+    fn handle_ws_command(&mut self, command: WsCommand) {
         match command {
-            WsCommand::WsUpdateData=> {
+            WsCommand::WsUpdateData => {
+                println!("CONTROLLER RECEIVED NETWORK DATA UPDATE COMMAND");
                 // Update data from the simulation controller
                 let clients: Vec<NodeId> = self.command_senders_clients.keys().cloned().collect();
                 let servers: Vec<NodeId> = self.command_senders_servers.keys().cloned().collect();
 
                 // Ask every client to update its data
-                for client in clients{
-                    if let Some((sender_to_client, _)) = self.command_senders_clients.get(&client).cloned(){
-                        sender_to_client.send(ClientCommand::UpdateMonitoringData).expect("error in sending monitoring data to the websocket");
+                for client in clients {
+                    if let Some((sender_to_client, _)) = self.command_senders_clients.get(&client).cloned() {
+                        sender_to_client
+                            .send(ClientCommand::UpdateMonitoringData)
+                            .expect("error in sending monitoring data to the websocket");
                     }
                 }
 
                 // Ask every server to update its data
-                for server in servers{
-                    if let Some((sender_to_server, _)) = self.command_senders_servers.get(&server).cloned(){
-                        sender_to_server.send(ServerCommand::UpdateMonitoringData).expect("error in sending monitoring data to the websocket");
+                for server in servers {
+                    if let Some((sender_to_server, _)) = self.command_senders_servers.get(&server).cloned() {
+                        sender_to_server
+                            .send(ServerCommand::UpdateMonitoringData)
+                            .expect("error in sending monitoring data to the websocket");
                     }
                 }
-            },  //in general, it asks all the nodes to send the data to the monitor
+            }
 
-            WsCommand::WsAskFileList(client_id, server_id) => {
-                if let Some((sender_to_client, _)) = self.command_senders_clients.get(&client_id).cloned(){
-                    sender_to_client.send(ClientCommand::AskListClients(server_id)).expect("error in sending asks data to the websocket");
-                }
-            },
-            WsCommand::WsAskFileContent(client_id, server_id, file_ref) => {
-                if let Some((sender_to_client, _)) = self.command_senders_clients.get(&client_id).cloned(){
-                    sender_to_client.send(ClientCommand::RequestText(server_id, file_ref)).expect("error in sending asks data to the websocket");
-                }
-            },
-            WsCommand::WsAskMedia(client_id, media_ref ) => {
-                if let Some((sender_to_client, _)) = self.command_senders_clients.get(&client_id).cloned(){
-                    sender_to_client.send(ClientCommand::RequestMedia(media_ref)).expect("error in sending media data to the websocket");
+            WsCommand::WsAskFileList { client_id, server_id } => {
+                println!("CONTROLLER PROCESSING ASK FILE LIST COMMAND");
+                if let Some((sender_to_client, _)) = self.command_senders_clients.get(&client_id).cloned() {
+                    sender_to_client
+                        .send(ClientCommand::RequestListFile(server_id))
+                        .expect("error in sending ask file list to the websocket");
+                    println!("CONTROLLER SENT ASK FILE LIST COMMAND");
                 }
             }
-            WsCommand::WsSendMessage(source_id, destination_id, message) =>{
-                if let Some((sender_to_client, _)) = self.command_senders_clients.get(&source_id).cloned(){
-                    sender_to_client.send(ClientCommand::SendMessageTo(destination_id, message)).expect("error in sending message to the websocket");
+
+            WsCommand::WsAskFileContent { client_id, server_id, file_ref } => {
+                println!("CONTROLLER RECEIVED ASK FILE CONTENT COMMAND");
+                if let Some((sender_to_client, _)) = self.command_senders_clients.get(&client_id).cloned() {
+                    sender_to_client
+                        .send(ClientCommand::RequestText(server_id, file_ref))
+                        .expect("error in sending ask file content to the websocket");
                 }
             }
-            WsCommand::WsAskListRegisteredClientsToServer(client_id, server_id) => {
-                if let Some((sender_to_client, _)) = self.command_senders_clients.get(&client_id).cloned(){
-                    sender_to_client.send(ClientCommand::RegisterToServer(server_id)).expect("error in sending register to the websocket");
+
+            WsCommand::WsAskMedia { client_id, media_ref } => {
+                println!("CONTROLLER RECEIVED ASK FILE MEDIA COMMAND");
+                if let Some((sender_to_client, _)) = self.command_senders_clients.get(&client_id).cloned() {
+                    sender_to_client
+                        .send(ClientCommand::RequestMedia(media_ref))
+                        .expect("error in sending ask media to the websocket");
                 }
             }
-            _=>{}
+
+            WsCommand::WsSendMessage {
+                source_client_id,
+                dest_client_id,
+                message,
+            } => {
+                println!("CONTROLLER RECEIVED SEND MESSAGE COMMAND");
+                if let Some((sender_to_client, _)) = self.command_senders_clients.get(&source_client_id).cloned() {
+                    sender_to_client
+                        .send(ClientCommand::SendMessageTo(dest_client_id, message))
+                        .expect("error in sending message to the websocket");
+                }
+            }
+
+            WsCommand::WsAskListRegisteredClientsToServer { client_id, server_id } => {
+                println!("CONTROLLER RECEIVED ASK REGISTERED CLIENTS IN THE SERVER COMMAND");
+                if let Some((sender_to_client, _)) = self.command_senders_clients.get(&client_id).cloned() {
+                    sender_to_client
+                        .send(ClientCommand::AskListClients(server_id))
+                        .expect("error in sending register to the websocket");
+                }
+            }
+
+            _ => {}
         }
     }
-
 }

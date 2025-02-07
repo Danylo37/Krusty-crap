@@ -59,6 +59,7 @@ impl TraitClient for ClientChen {
 
             // Communication-related data
             communication: CommunicationInfo {
+                servers: HashSet::new(),
                 connected_nodes_ids: connected_nodes,
                 routing_table: HashMap::new(),
                 drops_counter: HashMap::new(),
@@ -123,6 +124,9 @@ impl ClientChen{
     pub(crate) fn update_connected_nodes(&mut self) {
         self.communication.connected_nodes_ids = self.communication_tools.packet_send.keys().cloned().collect();
     }
+    pub(crate) fn update_servers(&mut self){
+        self.communication.servers = self.get_discovered_servers_from_topology();
+    }
 }
 
 // Metadata about the client
@@ -143,6 +147,7 @@ pub(crate) struct NodeStatus {
 // Communication-related information
 #[derive(Clone)]
 pub(crate) struct CommunicationInfo {
+    pub(crate) servers: HashSet<ServerId>,
     pub(crate) connected_nodes_ids: HashSet<NodeId>,
     pub(crate) routing_table: HashMap<NodeId, Vec<NodeId>>, // Routing information per protocol
     pub(super) drops_counter: HashMap<SessionId, HashMap<DroneId, u8>>, // Counter for dropped packets
