@@ -401,10 +401,10 @@ fn handle_media_server(
 
                     let query = Query::AskMedia(reference);
 
-                    match controller.ask_media_from_server(client_id, server_id, query) {
+                    /*match controller.ask_media_from_server(client_id, server_id, query) {
                         Ok(_) => println!("Media request sent."),
                         Err(e) => eprintln!("Error requesting media: {}", e),
-                    }
+                    }*/
                 }else{
                     println!("Invalid server choice.");
                     continue;   //Or return here

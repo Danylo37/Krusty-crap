@@ -4,9 +4,7 @@ use crate::clients::client_chen::general_client_traits::*;
 
 impl FloodingPacketsHandler for ClientChen {
     fn handle_flood_request(&mut self, _packet: Packet, request: &mut FloodRequest) {
-        self.update_connected_nodes();      // todo: only for testing repo
-
-        info!("{:?} Client {} has received flood request that contains the path: {:?}", self.metadata.client_type ,self.metadata.node_id , request.path_trace);
+        //println!("{:?} Client {} has received flood request that contains the path: {:?}", self.metadata.client_type ,self.metadata.node_id , request.path_trace);
         // Prepare the flood response.
         self.status.session_id += 1;
         request.path_trace.push((self.metadata.node_id, self.metadata.node_type));
@@ -14,16 +12,6 @@ impl FloodingPacketsHandler for ClientChen {
 
         //you send directly because the source routing header is there
         self.send(response.clone());
-        // For packets_status
-        self.storage.packets_status
-            .entry(response.session_id)
-            .or_insert_with(HashMap::new)
-            .insert(0, PacketStatus::InProgress);
-        // Store in the buffer and wait for the Ack to arrive.
-        self.storage.output_buffer
-            .entry(response.session_id)
-            .or_insert_with(HashMap::new)
-            .insert(0, response.clone());
     }
 
     /// When you receive a flood response, you need first to update the topology with the elements of the path_traces
@@ -53,15 +41,13 @@ impl FloodingPacketsHandler for ClientChen {
             let entry = self.network_info.topology.entry(node_id).or_insert_with(|| {
                 match node_type {
                     NodeType::Server => {
-                        let node_inf = NodeInfo {
-                        node_id,
-                        specific_info: SpecificInfo::ServerInfo(ServerInformation {
-                            server_type: ServerType::Undefined,
-                            connected_nodes_ids: HashSet::new(),
-                        }),
-                        };
-                        println!("Inserted Server Undefined: {}", node_id);
-                        node_inf
+                        NodeInfo {
+                            node_id,
+                            specific_info: SpecificInfo::ServerInfo(ServerInformation {
+                                server_type: ServerType::Undefined,
+                                connected_nodes_ids: HashSet::new(),
+                            }),
+                        }
                     },
                     NodeType::Client => NodeInfo {
                         node_id,

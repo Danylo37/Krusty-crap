@@ -225,6 +225,14 @@ function closeChatPopup() {
 // Requesting
 function askListRegisteredClientsToServer(whichClient, whichServer){
     // CHen/Chen/CHEN function to retrieve List registered clients
+    if (ws.readyState === WebSocket.OPEN) {
+        // Construct the message with the actual values of whichClient and whichServer
+        const message = `WsAskListRegisteredClientsToServer(${whichClient}, ${whichServer})`;
+        ws.send(JSON.stringify(message));
+        console.log('Sent:', message);
+    } else {
+        console.error('WebSocket is not open. Unable to send update command.');
+    }
 }
 
 
@@ -274,6 +282,14 @@ function sendMessage() {
 }
 function sendMessageController(senderClientId, receiverClientId){
     //Chen sending message controller
+    if (ws.readyState === WebSocket.OPEN) {
+        // Construct the message with the actual values of whichClient and whichServer
+        const message = `WsSendMessage(${senderClientId}, ${receiverClientId})`;
+        ws.send(JSON.stringify(message));
+        console.log('Sent:', message);
+    } else {
+        console.error('WebSocket is not open. Unable to send update command.');
+    }
 }
 
 
@@ -566,12 +582,28 @@ function openPopup(fileName) {
     popup.style.display = "flex";
 }
 
-function askFileContent(serverId, fileName) {
+function askFileContent(clientId, serverId, fileName) {
     //Chen ask file to controller (file name with .extension given)
+    if (ws.readyState === WebSocket.OPEN) {
+        // Construct the message with the actual values of whichClient and whichServer
+        const message = `WsAskFileContent(${clientId},${serverId}, ${fileName})`;
+        ws.send(JSON.stringify(message));
+        console.log('Sent:', message);
+    } else {
+        console.error('WebSocket is not open. Unable to send update command.');
+    }
 }
 
-function askMedia(reference_media){
+function askMedia(clientId, reference_media){
     //Chen ask media to controller
+    if (ws.readyState === WebSocket.OPEN) {
+        // Construct the message with the actual values of whichClient and whichServer
+        const message = `WsAskMedia(${clientId}, ${reference_media})`;
+        ws.send(JSON.stringify(message));
+        console.log('Sent:', message);
+    } else {
+        console.error('WebSocket is not open. Unable to send update command.');
+    }
 }
 
 // Close the Pop-Up

@@ -24,18 +24,18 @@ impl Router for ClientChen {
             flood_request,
         );
 
+        self.update_connected_nodes();
+        let connected_nodes = self.communication.connected_nodes_ids.clone();
         // Collect the connected node IDs into a temporary vector
-        let connected_nodes: Vec<_> = self.communication_tools.packet_send.keys().cloned().collect();
-
         // Send the packet to each connected node
-        for &node_id in &connected_nodes {
+        for &node_id in connected_nodes.iter() {
             self.send_packet_to_connected_node(node_id, packet.clone()); // Assuming `send_packet_to_connected_node` takes a cloned packet
         }
     }
     fn update_routing_for_server(&mut self, destination_id: NodeId, path_trace: Vec<(NodeId, NodeType)>) {
         // Step 1: Extract hops from the path trace
         let hops = self.get_hops_from_path_trace(path_trace);
-
+        println!("updating server:{}", destination_id);
         // Step 2: Update the routing table
         self.communication.routing_table.insert(destination_id, hops.clone());
 
@@ -48,9 +48,7 @@ impl Router for ClientChen {
                 if let ServerInfo(server_info) = &mut node_info.specific_info {
                     if matches!(server_info.server_type, Undefined) {
                         // Update the server type to indicate we're waiting for a response
-                        println!("Before: Undefined");
                         server_info.server_type = WaitingForResponse;
-                        println!("After: Waiting for response");
                         true // Indicate that we need to send a query
                     } else {
                         false // No query needed
@@ -66,7 +64,6 @@ impl Router for ClientChen {
         // Step 5: Send the query if necessary
         if should_send_query {
             self.send_query_by_routing_header(srh, Query::AskType);
-            println!("Successfully sent the Query::AskType to the server {}", destination_id);
         }
     }
     fn update_routing_for_client(&mut self, destination_id: NodeId, path_trace: Vec<(NodeId, NodeType)>) {

@@ -16,7 +16,6 @@ impl CommandHandler for ClientChen{
             }
 
             ClientCommand::StartFlooding => {
-                println!("Starting Flooding");
                 self.do_flooding();
             }
             ClientCommand::GetKnownServers => {
@@ -50,15 +49,15 @@ impl CommandHandler for ClientChen{
             ClientCommand::RequestText(server_id, file_ref) => {
                 self.ask_file(server_id, file_ref);
             }
-            ClientCommand::RequestMedia(server_id, media_ref) => {
-                self.ask_media(server_id, media_ref);
+            ClientCommand::RequestMedia(media_ref) => {
+                self.ask_media(media_ref);
             }
-            ClientCommand::DroneFixed(drone_id) => {
+            ClientCommand::DroneFixed(_drone_id) => {
                 let packet_status_map = self.storage.packets_status.get(&self.status.session_id).cloned();
 
                 if let Some(packet_status_map) = packet_status_map {
                     for (fragment_index, status) in packet_status_map {
-                        if matches!(status, PacketStatus::WaitingForFixing) {
+                        if matches!(status, PacketStatus::WaitingForFixing) {   // this is considering that we are sending packets one session at time.
                             if let Some(output_buffer_map) = self.storage.output_buffer.get(&self.status.session_id) {
                                 if let Some(packet) = output_buffer_map.get(&fragment_index) {
                                     self.send(packet.clone());

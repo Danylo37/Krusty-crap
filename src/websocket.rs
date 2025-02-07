@@ -6,34 +6,17 @@ use std::thread;
 use log::{debug, info, warn};
 use tungstenite::{accept, Message};
 use tungstenite::error::Error as WsError;
-use crate::general_use::{ClientId, DroneId, ServerId};
+use crate::general_use::{ClientId, DroneId, FileRef, MediaRef, ServerId};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum WsCommand {
     WsUpdateData,
-    WsDroneCommand(DroneId, DroneCommandWs),
-    WsClientCommand(ClientId, ClientCommandWs),
-    WsServerCommand(ServerId, ServerCommandWs),
+    WsAskListRegisteredClientsToServer(ClientId, ServerId),
+    WsSendMessage(ClientId, ClientId), //source -> destination
+    WsAskFileList(ClientId, ServerId),
+    WsAskFileContent(ClientId,ServerId, FileRef),
+    WsAskMedia(ClientId, MediaRef),
 }
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum DroneCommandWs {
-    Crash,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ClientCommandWs {
-    UpdateMonitoringData,
-
-    //Now just to test Web Client
-    GetKnownServers,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ServerCommandWs {
-    UpdateMonitoringData,
-}
-
 pub fn start_websocket_server(rx: Receiver<String>, cmd_tx: Sender<WsCommand>) {
     let listener = TcpListener::bind("0.0.0.0:8080").unwrap();
     println!("WebSocket server started on ws://0.0.0.0:8080");

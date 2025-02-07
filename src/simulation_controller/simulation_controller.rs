@@ -205,7 +205,7 @@ impl SimulationController {
         }
     }
 
-    pub fn ask_media_from_server(&mut self, client_id: NodeId, server_id: NodeId, query: Query) -> Result<(), String> {
+ /*   pub fn ask_media_from_server(&mut self, client_id: NodeId, server_id: NodeId, query: Query) -> Result<(), String> {
         if let Some((client_sender, _)) = self.command_senders_clients.get(&client_id) {
             if let Err(e) = client_sender.send(ClientCommand::RequestMedia(server_id, match query{
                 Query::AskMedia(reference) => reference,
@@ -217,7 +217,7 @@ impl SimulationController {
         }else {
             Err(format!("Client with id {} not found", client_id))
         }
-    }
+    }*/
 
     /// Spawns a new drone.
     pub fn create_drone<T: Drone + Send + 'static>(&mut self,

@@ -22,9 +22,10 @@ impl ServerQuery for ClientChen{
         }
     }
 
-    fn ask_media(&mut self, server_id: ServerId, media_ref: String) {
-        if self.get_discovered_servers_from_topology().contains(&server_id) {
-            self.send_query(server_id, Query::AskMedia(media_ref));
+    fn ask_media(&mut self, media_ref: String) {
+        let media_servers = self.get_media_servers_from_topology();
+        for server in media_servers{
+            self.send_query(server, Query::AskMedia(media_ref.clone()));
         }
     }
 }

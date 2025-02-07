@@ -138,8 +138,6 @@ impl FragmentsHandler for ClientChen {
         let serialized_msg = String::from_utf8(raw_data)
             .map_err(|e| format!("Invalid UTF-8 sequence: {}", e))?;
 
-        eprintln!("Reassembled JSON: {:?}", serialized_msg); // Debugging
-
         // Deserialize the complete message
         serde_json::from_str(&serialized_msg)
             .map_err(|e| format!("Deserialization failed: {}", e))

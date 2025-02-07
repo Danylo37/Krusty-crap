@@ -2,11 +2,12 @@ use std::cmp::PartialEq;
 use std::collections::{HashMap, HashSet};
 use crossbeam_channel::{select_biased, Sender};
 use log::{debug, info};
+use tungstenite::client;
 use wg_2024::controller::DroneCommand;
 use crate::clients::client_chen::{NodeId, Serialize};
 use crate::simulation_controller::SimulationController;
 use crate::ui_traits::Monitoring;
-use crate::websocket::{ClientCommandWs, DroneCommandWs, ServerCommandWs, WsCommand};
+use crate::websocket::{WsCommand};
 use crate::general_use::{ClientCommand, ClientEvent, DataScope, DisplayDataChatClient, DisplayDataCommunicationServer, DisplayDataMediaServer, DisplayDataSimulationController, DisplayDataTextServer, DisplayDataWebBrowser, ServerCommand, ServerEvent};
 use crate::network_initializer::DroneBrand;
 
@@ -184,44 +185,23 @@ impl SimulationController {
                     }
                 }
             },  //in general, it asks all the nodes to send the data to the monitor
-            WsCommand::WsDroneCommand(drone_id, drone_command) => {
-                if let Some(sender_to_drone) = self.command_senders_drones.get(&drone_id).cloned(){
-                    match drone_command{
-                        DroneCommandWs::Crash => {
-                            sender_to_drone.send(DroneCommand::Crash).expect("error in sending drone command to the drone");
-                        }
-                        _ => {
-                            //todo()! other commands still to implement
-                        }
-                    }
 
-                }
-            },
-            WsCommand::WsClientCommand(client_id ,client_command) => {
+            WsCommand::WsAskFileList(client_id, server_id) => {
                 if let Some((sender_to_client, _)) = self.command_senders_clients.get(&client_id).cloned(){
-
-                    match client_command{
-                        ClientCommandWs::UpdateMonitoringData => {
-                            sender_to_client.send(ClientCommand::UpdateMonitoringData).expect("error in sending client command to the client");
-                        }
-                        _ => {
-                            //todo()! other commands still to implement
-                        }
-                    }
+                    sender_to_client.send(ClientCommand::AskListClients(server_id)).expect("error in sending asks data to the websocket");
                 }
             },
-            WsCommand::WsServerCommand(server_id, server_command) => {
-                if let Some((sender_to_server, _)) = self.command_senders_servers.get(&server_id).cloned() {
-                    match server_command {
-                        ServerCommandWs::UpdateMonitoringData => {
-                            sender_to_server.send(ServerCommand::UpdateMonitoringData).expect("error in sending client command to the client");
-                        }
-                        _ => {
-                            //todo()! other commands still to implement
-                        }
-                    }
+            WsCommand::WsAskFileContent(client_id, server_id, file_ref) => {
+                if let Some((sender_to_client, _)) = self.command_senders_clients.get(&client_id).cloned(){
+                    sender_to_client.send(ClientCommand::RequestText(server_id, file_ref)).expect("error in sending asks data to the websocket");
                 }
             },
+            WsCommand::WsAskMedia(client_id, media_ref ) => {
+                if let Some((sender_to_client, _)) = self.command_senders_clients.get(&client_id).cloned(){
+                    sender_to_client.send(ClientCommand::RequestMedia(media_ref)).expect("error in sending media data to the websocket");
+                }
+            }
+            _=>{}
         }
     }
 

@@ -153,6 +153,7 @@ impl Sending for ClientChen {
     }
 
     fn update_packet_status(&mut self, session_id: SessionId, fragment_index: FragmentIndex, status: PacketStatus) {
+        //println!("packet_status updated session_id {}, fragment_index: {}, status: {:?}", session_id, fragment_index, status);
         self.storage.packets_status
             .entry(session_id)
             .or_default()
