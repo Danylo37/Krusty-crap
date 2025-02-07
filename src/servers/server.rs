@@ -248,8 +248,15 @@ pub trait Server{
         first_carrier.send(packet).unwrap();
     }
 
-    fn find_path_to(&mut self, destination_id: NodeId) -> Vec<NodeId>{
-        self.get_routes().get(&destination_id).unwrap().clone()
+    fn find_path_to(&mut self, destination_id: NodeId) -> Option<Vec<NodeId>>{
+        match self.get_routes().get(&destination_id) {
+            None => {
+                None
+            }
+            Some(route) => {
+                Some(route.clone())
+            }
+        }
     }
 
     fn create_source_routing(route: Vec<NodeId>) -> SourceRoutingHeader{
@@ -497,7 +504,11 @@ pub trait Server{
         );
 
         //Finding route
-        let route = self.find_path_to(message_and_destination.1);
+        let src_id = message_and_destination.1;
+        let Some(route) = self.find_path_to(src_id) else {
+            error!("Server {}: No route found to the client {}", self.get_id(), src_id);
+            return;
+        };
 
         //Generating packet
         let packet = Self::create_packet(
@@ -528,8 +539,13 @@ pub trait Server{
             n_fragments -= 1;
         }
 
+        // Finding route
+        let Some(route) = self.find_path_to(src_id) else {
+            error!("Server {}: No route found to the client {}", self.get_id(), src_id);
+            return;
+        };
+
         //Generating header
-        let route = self.find_path_to(src_id);
         let header = Self::create_source_routing(route);
 
         // Generating ids

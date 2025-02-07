@@ -8,7 +8,7 @@ use crate::ui_traits::Monitoring;
 use crossbeam_channel::{select_biased, Receiver, Sender};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt::Debug;
-use log::warn;
+use log::{error, warn};
 use wg_2024::{
     network::NodeId,
     packet::Packet,
@@ -211,8 +211,13 @@ impl CharTrait for MediaServer{
             n_fragments -= 1;
         }
 
+        // Finding route
+        let Some(route) = self.find_path_to(client_id) else {
+            error!("Server {}: No route found to the client {}", self.get_id(), client_id);
+            return;
+        };
+
         //Generating header
-        let route: Vec<NodeId> = self.find_path_to(client_id);
         let header = Self::create_source_routing(route);
 
         // Generating ids

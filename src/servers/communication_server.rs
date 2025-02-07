@@ -3,7 +3,7 @@ use std::{
     collections::{HashMap, HashSet, VecDeque},
     fmt::Debug,
 };
-use log::{info, warn};
+use log::{error, info, warn};
 use crate::general_use::{
     DataScope, DisplayDataCommunicationServer, Message, Query, Response, ServerCommand, ServerEvent,
     ServerType, SpecificNodeType
@@ -209,8 +209,13 @@ impl CharTrait for CommunicationServer {
             n_fragments -= 1;
         }
 
+        // Finding route
+        let Some(route) = self.find_path_to(client_id) else {
+            error!("Server {}: No route found to the client {}", self.get_id(), client_id);
+            return;
+        };
+
         //Generating header
-        let route: Vec<NodeId> = self.find_path_to(client_id);
         let header = Self::create_source_routing(route);
 
         // Generating ids
@@ -239,8 +244,13 @@ impl CharTrait for CommunicationServer {
             n_fragments -= 1;
         }
 
+        // Finding route
+        let Some(route) = self.find_path_to(client_id) else {
+            error!("Server {}: No route found to the client {}", self.get_id(), client_id);
+            return;
+        };
+
         //Generating header
-        let route: Vec<NodeId> = self.find_path_to(client_id);
         let header = Self::create_source_routing(route);
 
         // Generating ids
@@ -267,8 +277,14 @@ impl CharTrait for CommunicationServer {
             n_fragments -= 1;
         }
 
+        // Finding route
+        let src_id = message.get_recipient();
+        let Some(route) = self.find_path_to(src_id) else {
+            error!("Server {}: No route found to the client {}", self.get_id(), src_id);
+            return;
+        };
+
         //Generating header
-        let route: Vec<NodeId> = self.find_path_to(message.get_recipient());
         let header = Self::create_source_routing(route);
 
         // Generating fragment
