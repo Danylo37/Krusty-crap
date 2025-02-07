@@ -12,7 +12,7 @@ use crate::general_use::{ClientId, DroneId, FileRef, MediaRef, ServerId};
 pub enum WsCommand {
     WsUpdateData,
     WsAskListRegisteredClientsToServer(ClientId, ServerId),
-    WsSendMessage(ClientId, ClientId), //source -> destination
+    WsSendMessage(ClientId, ClientId, String), //source -> destination
     WsAskFileList(ClientId, ServerId),
     WsAskFileContent(ClientId,ServerId, FileRef),
     WsAskMedia(ClientId, MediaRef),

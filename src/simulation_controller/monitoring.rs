@@ -201,6 +201,16 @@ impl SimulationController {
                     sender_to_client.send(ClientCommand::RequestMedia(media_ref)).expect("error in sending media data to the websocket");
                 }
             }
+            WsCommand::WsSendMessage(source_id, destination_id, message) =>{
+                if let Some((sender_to_client, _)) = self.command_senders_clients.get(&source_id).cloned(){
+                    sender_to_client.send(ClientCommand::SendMessageTo(destination_id, message)).expect("error in sending message to the websocket");
+                }
+            }
+            WsCommand::WsAskListRegisteredClientsToServer(client_id, server_id) => {
+                if let Some((sender_to_client, _)) = self.command_senders_clients.get(&client_id).cloned(){
+                    sender_to_client.send(ClientCommand::RegisterToServer(server_id)).expect("error in sending register to the websocket");
+                }
+            }
             _=>{}
         }
     }

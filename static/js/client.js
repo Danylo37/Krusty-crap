@@ -280,11 +280,11 @@ function sendMessage() {
         sendMessageController(currentClientId, activeChatItem.dataset.id);
     }
 }
-function sendMessageController(senderClientId, receiverClientId){
+function sendMessageController(senderClientId, receiverClientId, messageString){
     //Chen sending message controller
     if (ws.readyState === WebSocket.OPEN) {
         // Construct the message with the actual values of whichClient and whichServer
-        const message = `WsSendMessage(${senderClientId}, ${receiverClientId})`;
+        const message = `WsSendMessage(${senderClientId}, ${receiverClientId}, ${messageString})`;
         ws.send(JSON.stringify(message));
         console.log('Sent:', message);
     } else {
