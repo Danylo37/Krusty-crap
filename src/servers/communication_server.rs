@@ -278,9 +278,9 @@ impl CharTrait for CommunicationServer {
         }
 
         // Finding route
-        let src_id = message.get_recipient();
-        let Some(route) = self.find_path_to(src_id) else {
-            error!("Server {}: No route found to the client {}", self.get_id(), src_id);
+        let recipient_id = message.get_recipient();
+        let Some(route) = self.find_path_to(recipient_id) else {
+            error!("Server {}: No route found to the client {}", self.get_id(), recipient_id);
             return;
         };
 

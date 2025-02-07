@@ -504,9 +504,9 @@ pub trait Server{
         );
 
         //Finding route
-        let src_id = message_and_destination.1;
-        let Some(route) = self.find_path_to(src_id) else {
-            error!("Server {}: No route found to the client {}", self.get_id(), src_id);
+        let recipient_id = message_and_destination.1;
+        let Some(route) = self.find_path_to(recipient_id) else {
+            error!("Server {}: No route found to the client {}", self.get_id(), recipient_id);
             return;
         };
 
