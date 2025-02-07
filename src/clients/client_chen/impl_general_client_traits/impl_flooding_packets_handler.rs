@@ -33,7 +33,7 @@ impl FloodingPacketsHandler for ClientChen {
         // Update the network topology
         let mut path_iter = response.path_trace.iter().peekable(); //we make the vector peekable
         let mut previous_node: Option<NodeId> = None;
-        // counter for debug
+
         while let Some(&(node_id, node_type)) = path_iter.next() {
             // Peek the next node in the path_trace (use the item without consuming it)
             let next_node = path_iter.peek().map(|&(next_id, _)| next_id);
@@ -104,6 +104,7 @@ impl FloodingPacketsHandler for ClientChen {
             // Use match to call the correct update function
             match destination_type {
                 NodeType::Server => {
+                    println!("|{:?}| CLIENT [{}] UPDATE SERVER [{}] with the path: {:?}", self.metadata.client_type ,destination_id, self.metadata.node_id , response.path_trace);
                     self.update_routing_for_server(destination_id, response.path_trace.clone());
                 }
                 NodeType::Client => {

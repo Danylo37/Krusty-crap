@@ -35,7 +35,6 @@ impl Router for ClientChen {
     fn update_routing_for_server(&mut self, destination_id: NodeId, path_trace: Vec<(NodeId, NodeType)>) {
         // Step 1: Extract hops from the path trace
         let hops = self.get_hops_from_path_trace(path_trace);
-        println!("updating server:{}", destination_id);
         // Step 2: Update the routing table
         self.communication.routing_table.insert(destination_id, hops.clone());
 
