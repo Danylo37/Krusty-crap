@@ -109,6 +109,7 @@ impl FragmentsHandler for ClientChen {
                 println!("CLIENT RECEIVED FILE LIST FROM SERVER");
                 self.handle_list_file(list_file);
                 self.send_display_data(DataScope::UpdateSelf);
+                println!("CLIENT SENT LIST FILE TO THE SIMULATION CONTROLLER");
             },
             Response::File(text) => {
                 self.handle_text_file(text);
