@@ -126,23 +126,22 @@ pub fn start_websocket_server(rx: Receiver<String>, cmd_tx: Sender<WsCommand>) {
                                 // Non-blocking WebSocket read
                                 default => {
                                     match websocket.read() {
-    Ok(Message::Text(text)) => {
-        println!("Raw WebSocket Message Received: {}", text); // Debug log
-
-        if let Ok(cmd) = serde_json::from_str::<WsCommand>(&text) {
-            println!("Parsed command: {:?}", cmd);
-            ws_tx.send(cmd).unwrap();
-        } else {
-            println!("Failed to parse message: {}", text);
-        }
-    }
-    Err(WsError::Io(ref err)) if err.kind() == std::io::ErrorKind::WouldBlock => {
-        // No message received, continue
-    }
-    Err(e) => {
-        warn!("WebSocket error: {}", e);
-        break;
-    }
+                                        Ok(Message::Text(text)) => {
+                                            println!("Raw WebSocket Message Received: {}", text); // Debug log
+                                            if let Ok(cmd) = serde_json::from_str::<WsCommand>(&text) {
+                                                println!("Parsed command: {:?}", cmd);
+                                                ws_tx.send(cmd).unwrap();
+                                            } else {
+                                                println!("Failed to parse message: {}", text);
+                                            }
+                                        }
+                                        Err(WsError::Io(ref err)) if err.kind() == std::io::ErrorKind::WouldBlock => {
+                                            // No message received, continue
+                                        }
+                                        Err(e) => {
+                                            warn!("WebSocket error: {}", e);
+                                            break;
+                                        }
                                         _=>{}
 }
                                 }
