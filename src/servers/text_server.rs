@@ -40,6 +40,9 @@ pub struct TextServer{
     //Characteristic-Server fields
     pub content: HashMap<String, String>,
 
+    //Drop counter
+    pub drops_counter: HashMap<SessionId, HashMap<NodeId, u8>>,
+
     //Queries to process
     pub queries_to_process: VecDeque<(NodeId, Query)>,
 }
@@ -71,6 +74,8 @@ impl TextServer{
             packet_send,
 
             content,
+
+            drops_counter: HashMap::new(),
 
             queries_to_process: VecDeque::new(),
         }
@@ -156,6 +161,7 @@ impl MainTrait for TextServer{
     fn get_topology(&mut self) -> &mut HashMap<NodeId, HashSet<NodeId>>{ &mut self.topology }
     fn get_routes(&mut self) -> &mut HashMap<NodeId, Vec<NodeId>>{ &mut self.routes }
 
+    fn get_event_sender(&self) -> &Sender<ServerEvent>{ &self.to_controller_event }
     fn get_from_controller_command(&mut self) -> &mut Receiver<ServerCommand>{ &mut self.from_controller_command }
     fn get_packet_recv(&mut self) -> &mut Receiver<Packet>{ &mut self.packet_recv }
     fn get_packet_send(&mut self) -> &mut HashMap<NodeId, Sender<Packet>>{ &mut self.packet_send }
@@ -181,6 +187,8 @@ impl MainTrait for TextServer{
     }
     fn get_sending_messages(&mut self) ->  &mut HashMap<u64, (Vec<u8>, u8)>{ &mut self.sending_messages }
     fn get_sending_messages_not_mutable(&self) -> &HashMap<u64, (Vec<u8>, u8)>{ &self.sending_messages }
+
+    fn get_drops_counter(&mut self) -> &mut HashMap<u64, HashMap<NodeId, u8>>{ &mut self.drops_counter }
 
     fn get_queries_to_process(&mut self) -> &mut VecDeque<(NodeId, Query)>{ &mut self.queries_to_process }
 }

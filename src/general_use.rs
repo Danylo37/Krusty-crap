@@ -190,6 +190,8 @@ pub enum ServerEvent {
     CommunicationServerData(InitiatorId, DisplayDataCommunicationServer, DataScope),
     TextServerData(InitiatorId, DisplayDataTextServer, DataScope),
     MediaServerData(InitiatorId, DisplayDataMediaServer, DataScope),
+
+    CallTechniciansToFixDrone(DroneId),
 }
 
 #[derive(Debug, Clone, PartialEq, Copy)]
