@@ -1,6 +1,5 @@
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use std::collections::{HashMap, HashSet};
-use std::hash::Hash;
 use std::thread::sleep;
 use std::time::Duration;
 use log::warn;
@@ -11,8 +10,12 @@ use wg_2024::{
     network::NodeId,
     packet::{NodeType, Packet, PacketType}
 };
-use crate::general_use::{ClientCommand, ClientEvent, ServerCommand, ServerEvent, ServerType, ClientType, ServerId, Query, DisplayDataWebBrowser, DisplayDataCommunicationServer, DisplayDataMediaServer, DisplayDataChatClient, DisplayDataTextServer, DisplayDataDrone};
-use crate::network_initializer::DroneBrand;
+use crate::general_use::{ClientCommand, ClientEvent, ClientType,
+                         ServerCommand, ServerEvent, ServerType, ServerId,
+                         Query,
+                         DisplayDataWebBrowser, DisplayDataCommunicationServer, DisplayDataMediaServer,
+                         DisplayDataChatClient, DisplayDataTextServer, DisplayDataDrone,
+                         SpecificNodeType};
 use crate::websocket::WsCommand;
 use std::collections::hash_map::Entry;
 
@@ -34,19 +37,15 @@ pub struct PacketInfo {
 // Define DisplayDataSimulationController and DroneMonitoringData structs here
 #[derive(Debug, Serialize)]
 pub(super) struct DisplayDataSimulationController {
-    node_type: String,
-    clients: Vec<NodeId>,
-    servers: Vec<NodeId>,
-    topology: HashMap<NodeId, Vec<NodeId>>,
-    drones: HashMap<NodeId, DroneMonitoringData>,
+    data_title: String,
+    web_clients_data: HashMap<NodeId, DisplayDataWebBrowser>,
+    chat_clients_data: HashMap<NodeId, DisplayDataChatClient>,
+    comm_servers_data: HashMap<NodeId, DisplayDataCommunicationServer>,
+    text_servers_data: HashMap<NodeId, DisplayDataTextServer>,
+    media_servers_data: HashMap<NodeId, DisplayDataMediaServer>,
+    drones_data: HashMap<NodeId, DisplayDataDrone>,
+    topology: HashMap<NodeId, (Vec<NodeId>, SpecificNodeType)>,
 }
-
-#[derive(Debug, Serialize, Clone)]
-pub(super) struct DroneMonitoringData {   //Make it public
-    neighbors: Vec<NodeId>,
-    pdr: f32,
-}
-
 
 pub struct SimulationController {
     pub state: SimulationState,
@@ -127,7 +126,6 @@ impl SimulationController {
             self.process_controller_shortcut_events();
             self.process_client_events();
             self.process_server_events();
-            // GUI updates and user input...                                                            TODO
             sleep(Duration::from_millis(100));
         }
     }
@@ -336,27 +334,79 @@ impl SimulationController {
 
 
     fn update_and_send_data_to_gui(&mut self, sender_to_gui: &Sender<String>) {
-
         //Drones
-        let mut drone_data: HashMap<NodeId, DroneMonitoringData> = HashMap::new();
+        let mut drone_data: HashMap<NodeId, DisplayDataDrone> = HashMap::new();
         for (drone_id, _) in self.command_senders_drones.iter() {
-
             //Get drone's neighbors and pdr
             let neighbors = self.state.topology.get(drone_id).cloned().unwrap_or_default();
-            let pdr = self.drones_pdr.get(drone_id).copied().unwrap_or(0.0);
+            let pdr = self.drones_pdr.get(drone_id).unwrap_or(&0.0);
 
             // Insert drone data into the HashMap
-            drone_data.insert(*drone_id, DroneMonitoringData { neighbors, pdr });
+            drone_data.insert(
+                *drone_id,
+                DisplayDataDrone {
+                    node_id: *drone_id,
+                    node_type: SpecificNodeType::Drone,
+                    drone_brand: self.drones_data.get(drone_id).unwrap().drone_brand.clone(), //Get drone brand from drones_data
+                    connected_nodes_ids: neighbors,
+                    pdr: *pdr,
+                },
+            );
+        }
+        // Topology with types included in HashMap<NodeId, Vec<NodeId>>
+        let mut topology_with_types = HashMap::new();
+
+        for (node_id, connected_nodes) in self.state.topology.iter() {
+            // Determine SpecificNodeType efficiently:
+            let node_type = if let Some(node) = self.state.nodes.get(node_id) {
+                match node {
+                    NodeType::Client => {
+                        match self.command_senders_clients.get(node_id) {
+                            Some((_, client_type)) => match client_type {
+                                ClientType::Chat => SpecificNodeType::ChatClient,
+                                ClientType::Web => SpecificNodeType::WebBrowser,
+                            },
+                            None => {
+                                warn!("Client type not found for client ID {}", node_id); // Handle the unexpected case
+                                SpecificNodeType::Drone // Or another default or error handling
+                            }
+                        }
+                    }
+                    NodeType::Server => {
+                        match self.command_senders_servers.get(node_id) {
+                            Some((_, server_type)) => match server_type {
+                                ServerType::Communication => SpecificNodeType::CommunicationServer,
+                                ServerType::Media => SpecificNodeType::MediaServer,
+                                ServerType::Text => SpecificNodeType::TextServer,
+                                _ => {
+                                    warn!("Unexpected server type for server ID {}", node_id);
+                                    SpecificNodeType::Drone // Or another default or error handling
+                                }
+                            },
+                            None => {
+                                warn!("Server type not found for server ID {}", node_id);
+                                SpecificNodeType::Drone  // Or another default or error handling
+                            }
+                        }
+                    }
+                    NodeType::Drone => SpecificNodeType::Drone,
+                }
+            } else {
+                warn!("Node type not found for node ID {}", node_id); 
+                SpecificNodeType::Drone  // Or another default or error handling
+            };
+            topology_with_types.insert(*node_id, (connected_nodes.clone(), node_type));
         }
 
         let display_data = DisplayDataSimulationController {
-            node_type: "SimulationController".to_string(),
-            clients: self.command_senders_clients.keys().copied().collect(),
-            servers: self.command_senders_servers.keys().copied().collect(),
-            topology: self.state.topology.clone(),
-
-            drones: drone_data, // Use the gathered drone data
-
+            data_title: "Network Data".to_string(),
+            web_clients_data: self.web_clients_data.clone(),
+            chat_clients_data: self.chat_clients_data.clone(),
+            comm_servers_data: self.comm_servers_data.clone(),
+            text_servers_data: self.text_servers_data.clone(),
+            media_servers_data: self.media_servers_data.clone(),
+            drones_data: drone_data,
+            topology: topology_with_types,
         };
         // Serialize and send display data
         let json_string = serde_json::to_string(&display_data).unwrap();
@@ -369,12 +419,10 @@ impl SimulationController {
         for (client_id, (client_com_sender, _)) in self.command_senders_clients.iter() {
             self.updating_nodes.insert(*client_id);  //Add this client to the updating_nodes set
 
-
             if let Err(err) = client_com_sender.send(ClientCommand::UpdateMonitoringData) {
                 warn!("Error sending UpdateMonitoringData to client {}: {:?}", client_id, err);
             }
         }
-
 
         //Servers
         for (server_id, (server_com_sender, _)) in self.command_senders_servers.iter() {
