@@ -350,7 +350,7 @@ pub trait Server{
     }
 
     fn save_query_to_process(&mut self, src_id: NodeId, query: Query) {
-        if self.get_queries_to_process().is_empty() {
+        if self.get_queries_to_process().is_empty() && self.get_topology().is_empty() {
             self.discover();
         }
 
