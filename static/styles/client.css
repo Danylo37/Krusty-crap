@@ -788,11 +788,17 @@
     font-size: 14px;
     white-space: pre-wrap;
     max-height: 400px;
-    overflow-y: auto;
+    overflow-y: scroll;
 }
 
 
 /* Make File Rows Clickable */
 .file-list tr {
     cursor: pointer;
+}
+
+.loading_image{
+    width:30px;
+    height:30px;
+    animation: spin 2s linear infinite;
 }
