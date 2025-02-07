@@ -873,9 +873,10 @@
         try {
             // Log only critical information
             console.time("PacketProcessing");
+
             const text = event.data; // Removed unnecessary `await`
             const parsedData = JSON.parse(text);
-
+            console.log(parsedData)
             switch (current_role_chosen) {
                 case "undefined":
                     // Handle only data with "data_title" field
@@ -932,7 +933,7 @@
 
                 case "chat_client":
                     if (parsedData.hasOwnProperty("chats")){
-                        updateChats(parsedData.id, parsedData.chats);
+                        updateChats(parsedData.node_id, parsedData.chats);
                         updateChatReceivers(parsedData.available_clients);
                     }else{
                         console.warn("Discarded not chat Client.");
@@ -941,7 +942,7 @@
                     break;
 
                 case "web_client":
-                    if (parsedData.id === currentClientId){
+                    if (parsedData.node_id == currentClientId){
                         console.log("arrivedData_web_client")
                         updateFileList(parsedData.curr_received_file_list);
                         updateFile(parsedData.chosen_file_text);
@@ -1071,8 +1072,8 @@
 
         // Draw connections (lines).
         connections.forEach(conn => {
-            const fromNode = drawn_nodes.find(n => n.id === conn.from);
-            const toNode = drawn_nodes.find(n => n.id === conn.to);
+            const fromNode = drawn_nodes.find(n => n.id == conn.from);
+            const toNode = drawn_nodes.find(n => n.id == conn.to);
             if (fromNode && toNode) {
                 const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
                 line.setAttribute("x1", fromNode.x);
