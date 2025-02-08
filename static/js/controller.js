@@ -44,6 +44,7 @@ function crashDrone(drone) {
     createExplosionGif(drone.x, drone.y, canvas);
     createAirplanes(drone.x, drone.y, canvas);
 
+    console.log(drone.id)
     sendCrashController(drone.id);
 
 
