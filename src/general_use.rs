@@ -75,7 +75,7 @@ pub struct DisplayDataSimulationController{
     pub text_servers_data: HashMap<NodeId, DisplayDataTextServer>,
     pub media_servers_data: HashMap<NodeId, DisplayDataMediaServer>,
     pub drones_data: HashMap<NodeId, DisplayDataDrone>,
-    pub topology: HashMap<NodeId, Vec<NodeId>>,
+    pub topology: HashMap<NodeId, (Vec<NodeId>, SpecificNodeType)>,
 }
 
 #[derive(Debug, Clone, Serialize)]

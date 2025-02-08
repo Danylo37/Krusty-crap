@@ -1,18 +1,20 @@
 use std::cmp::PartialEq;
 use std::collections::{HashMap, HashSet};
 use crossbeam_channel::{select_biased, Sender};
-use log::{debug, info};
+use log::{debug, info, warn};
 use tungstenite::client;
 use wg_2024::controller::DroneCommand;
 use crate::clients::client_chen::{NodeId, Serialize};
 use crate::simulation_controller::SimulationController;
 use crate::ui_traits::{SimulationControllerMonitoring};
 use crate::websocket::{WsCommand};
-use crate::general_use::{ClientCommand, ClientEvent, DataScope, DisplayDataChatClient, DisplayDataCommunicationServer, DisplayDataMediaServer, DisplayDataSimulationController, DisplayDataTextServer, DisplayDataWebBrowser, ServerCommand, ServerEvent};
+use crate::general_use::{ClientCommand, ClientEvent, ClientType, DataScope, DisplayDataChatClient, DisplayDataCommunicationServer, DisplayDataMediaServer, DisplayDataSimulationController, DisplayDataTextServer, DisplayDataWebBrowser, ServerCommand, ServerEvent, ServerType, SpecificNodeType};
 use crate::network_initializer::DroneBrand;
 
 impl SimulationControllerMonitoring for SimulationController {
     fn send_display_data(&mut self, sender_to_gui: Sender<String>, data_scope: DataScope) {
+        let topology_with_types = self.create_topology_with_types();
+
         let display_data = DisplayDataSimulationController{
             data_title: "Network Data".to_string(),
             web_clients_data: self.web_clients_data.clone(),
@@ -21,11 +23,32 @@ impl SimulationControllerMonitoring for SimulationController {
             text_servers_data: self.text_servers_data.clone(),
             media_servers_data: self.media_servers_data.clone(),
             drones_data: self.drones_data.clone(),
-            topology: self.state.topology.clone(),
+            topology: topology_with_types,
         };
         let json_string = serde_json::to_string(&display_data).unwrap();
-        info!("Controller has sent the data of all the nodes {:?}", display_data);
-        sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
+
+        match sender_to_gui.send(json_string) {
+            Ok(_) => {
+                info!("Controller has sent the data of all the nodes {:?}", display_data);
+
+                if data_scope == DataScope::UpdateAll {        //Ask for update only if needed
+                    // Ask clients and servers for updated data only when sending a full update.
+                    for (client_id, (client_com_sender, _)) in self.command_senders_clients.iter() {
+                        if let Err(err) = client_com_sender.send(ClientCommand::UpdateMonitoringData) {
+                            warn!("Error sending UpdateMonitoringData to client {}: {:?}", client_id, err);
+                        }
+                    }
+                    for (server_id, (server_com_sender, _)) in self.command_senders_servers.iter() {
+                        if let Err(err) = server_com_sender.send(ServerCommand::UpdateMonitoringData) {
+                            warn!("Error sending UpdateMonitoringData to server {}: {:?}", server_id, err);
+                        }
+                    }
+                }
+            }
+            Err(err) => {
+                warn!("Error sending display data to WebSocket: {}", err);
+            }
+        }
     }
 
     fn run_with_monitoring(&mut self, sender_to_gui: Sender<String>) {

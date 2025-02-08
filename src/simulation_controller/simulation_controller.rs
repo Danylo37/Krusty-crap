@@ -14,10 +14,12 @@ use crate::general_use::{ClientCommand, ClientEvent, ClientType,
                          ServerCommand, ServerEvent, ServerType, ServerId,
                          Query,
                          DisplayDataWebBrowser, DisplayDataCommunicationServer, DisplayDataMediaServer,
-                         DisplayDataChatClient, DisplayDataTextServer, DisplayDataDrone,
+                         DisplayDataChatClient, DisplayDataTextServer, DisplayDataDrone, DisplayDataSimulationController,
                          SpecificNodeType};
 use crate::websocket::WsCommand;
 use std::collections::hash_map::Entry;
+
+use crate::ui_traits::SimulationControllerMonitoring;
 
 pub struct SimulationState {
     pub nodes: HashMap<NodeId, NodeType>,
@@ -32,19 +34,6 @@ pub struct PacketInfo {
     pub destination: NodeId,
     pub packet_type: PacketType,
     pub dropped: bool,
-}
-
-// Define DisplayDataSimulationController and DroneMonitoringData structs here
-#[derive(Debug, Serialize)]
-pub(super) struct DisplayDataSimulationController {
-    data_title: String,
-    web_clients_data: HashMap<NodeId, DisplayDataWebBrowser>,
-    chat_clients_data: HashMap<NodeId, DisplayDataChatClient>,
-    comm_servers_data: HashMap<NodeId, DisplayDataCommunicationServer>,
-    text_servers_data: HashMap<NodeId, DisplayDataTextServer>,
-    media_servers_data: HashMap<NodeId, DisplayDataMediaServer>,
-    drones_data: HashMap<NodeId, DisplayDataDrone>,
-    topology: HashMap<NodeId, (Vec<NodeId>, SpecificNodeType)>,
 }
 
 pub struct SimulationController {
@@ -331,107 +320,27 @@ impl SimulationController {
         }
     }
 
-
-
-    fn update_and_send_data_to_gui(&mut self, sender_to_gui: &Sender<String>) {
-        //Drones
-        let mut drone_data: HashMap<NodeId, DisplayDataDrone> = HashMap::new();
-        for (drone_id, _) in self.command_senders_drones.iter() {
-            //Get drone's neighbors and pdr
-            let neighbors = self.state.topology.get(drone_id).cloned().unwrap_or_default();
-            let pdr = self.drones_pdr.get(drone_id).unwrap_or(&0.0);
-
-            // Insert drone data into the HashMap
-            drone_data.insert(
-                *drone_id,
-                DisplayDataDrone {
-                    node_id: *drone_id,
-                    node_type: SpecificNodeType::Drone,
-                    drone_brand: self.drones_data.get(drone_id).unwrap().drone_brand.clone(), //Get drone brand from drones_data
-                    connected_nodes_ids: neighbors,
-                    pdr: *pdr,
-                },
-            );
-        }
-        // Topology with types included in HashMap<NodeId, Vec<NodeId>>
+    pub(crate) fn create_topology_with_types(&self) -> HashMap<NodeId, (Vec<NodeId>, SpecificNodeType)> {
         let mut topology_with_types = HashMap::new();
-
-        for (node_id, connected_nodes) in self.state.topology.iter() {
-            // Determine SpecificNodeType efficiently:
-            let node_type = if let Some(node) = self.state.nodes.get(node_id) {
-                match node {
-                    NodeType::Client => {
-                        match self.command_senders_clients.get(node_id) {
-                            Some((_, client_type)) => match client_type {
-                                ClientType::Chat => SpecificNodeType::ChatClient,
-                                ClientType::Web => SpecificNodeType::WebBrowser,
-                            },
-                            None => {
-                                warn!("Client type not found for client ID {}", node_id); // Handle the unexpected case
-                                SpecificNodeType::Drone // Or another default or error handling
-                            }
-                        }
-                    }
-                    NodeType::Server => {
-                        match self.command_senders_servers.get(node_id) {
-                            Some((_, server_type)) => match server_type {
-                                ServerType::Communication => SpecificNodeType::CommunicationServer,
-                                ServerType::Media => SpecificNodeType::MediaServer,
-                                ServerType::Text => SpecificNodeType::TextServer,
-                                _ => {
-                                    warn!("Unexpected server type for server ID {}", node_id);
-                                    SpecificNodeType::Drone // Or another default or error handling
-                                }
-                            },
-                            None => {
-                                warn!("Server type not found for server ID {}", node_id);
-                                SpecificNodeType::Drone  // Or another default or error handling
-                            }
-                        }
-                    }
-                    NodeType::Drone => SpecificNodeType::Drone,
+        for (node_id, connected_nodes) in &self.state.topology {
+            let node_type = if self.command_senders_clients.contains_key(node_id) {
+                match self.command_senders_clients.get(node_id).unwrap().1 {
+                    ClientType::Chat => SpecificNodeType::ChatClient,
+                    ClientType::Web => SpecificNodeType::WebBrowser,
+                }
+            } else if self.command_senders_servers.contains_key(node_id) {
+                match self.command_senders_servers.get(node_id).unwrap().1 {
+                    ServerType::Communication => SpecificNodeType::CommunicationServer,
+                    ServerType::Media => SpecificNodeType::MediaServer,
+                    ServerType::Text => SpecificNodeType::TextServer,
+                    _ => SpecificNodeType::Drone, // Or handle other server types
                 }
             } else {
-                warn!("Node type not found for node ID {}", node_id); 
-                SpecificNodeType::Drone  // Or another default or error handling
+                SpecificNodeType::Drone
             };
             topology_with_types.insert(*node_id, (connected_nodes.clone(), node_type));
         }
-
-        let display_data = DisplayDataSimulationController {
-            data_title: "Network Data".to_string(),
-            web_clients_data: self.web_clients_data.clone(),
-            chat_clients_data: self.chat_clients_data.clone(),
-            comm_servers_data: self.comm_servers_data.clone(),
-            text_servers_data: self.text_servers_data.clone(),
-            media_servers_data: self.media_servers_data.clone(),
-            drones_data: drone_data,
-            topology: topology_with_types,
-        };
-        // Serialize and send display data
-        let json_string = serde_json::to_string(&display_data).unwrap();
-
-        sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
-
-        //Now, after sending data, request updates from clients and servers
-
-        //Clients
-        for (client_id, (client_com_sender, _)) in self.command_senders_clients.iter() {
-            self.updating_nodes.insert(*client_id);  //Add this client to the updating_nodes set
-
-            if let Err(err) = client_com_sender.send(ClientCommand::UpdateMonitoringData) {
-                warn!("Error sending UpdateMonitoringData to client {}: {:?}", client_id, err);
-            }
-        }
-
-        //Servers
-        for (server_id, (server_com_sender, _)) in self.command_senders_servers.iter() {
-            self.updating_nodes.insert(*server_id);    //Add this server to the updating_nodes set
-
-            if let Err(err) = server_com_sender.send(ServerCommand::UpdateMonitoringData) {
-                warn!("Error sending UpdateMonitoringData to server {}: {:?}", server_id, err);
-            }
-        }
+        topology_with_types
     }
 
     fn get_source_from_packet(&self, packet: &Packet) -> NodeId {
