@@ -706,6 +706,7 @@ function openPopup(fileName) {
     const fileContent = currentServer.files[fileName];
 
     popupTitle.textContent = fileName;
+    popupFileContent.innerHTML = '';
 
     if (fileContent) {
         // Determine the file extension.
