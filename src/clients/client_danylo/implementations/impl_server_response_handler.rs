@@ -22,7 +22,7 @@ impl ServerResponseHandler for ChatClientDanylo {
                     self.handle_clients_list(server_id, clients);
                 }
                 Response::MessageReceived(message) => {
-                    self.handle_message(message);
+                    self.handle_message(message, server_id);
                 }
                 Response::Err(error) =>
                     error!("Client {}: Error received from server {}: {:?}", self.id, server_id, error),
@@ -75,8 +75,20 @@ impl ServerResponseHandler for ChatClientDanylo {
 
     /// ###### Handles the message received from another client.
     /// Adds the message to the chat history with the sender.
-    fn handle_message(&mut self, message: Message) {
-        info!("Client {}: New message from {}: {:?}", self.id, message.get_sender(), message.get_content());
+    fn handle_message(&mut self, message: Message, server_id: ServerId) {
+        let sender = message.get_sender();
+        let content = message.get_content();
+
+        info!("Client {}: New message from {}: {:?}", self.id, sender, content);
+
+        // Add the sender to the clients list if it doesn't exist
+        if let Some(clients) = self.clients.get_mut(&server_id) {
+            if !clients.contains(&sender) {
+                clients.push(sender);
+            }
+        } else {
+            self.clients.insert(server_id, vec![sender]);
+        }
 
         let chat = self.chats.entry(message.get_sender()).or_insert_with(Vec::new);
         chat.push((HimOrHer, message.get_content().to_string()));

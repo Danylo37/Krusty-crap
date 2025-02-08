@@ -44,7 +44,7 @@ pub(super) trait ServerResponseHandler {
     fn handle_server_type(&mut self, server_id: ServerId, server_type: ServerType);
     fn handle_client_registered(&mut self, server_id: ServerId);
     fn handle_clients_list(&mut self, server_id: ServerId, clients: Vec<ClientId>);
-    fn handle_message(&mut self, message: Message);
+    fn handle_message(&mut self, message: Message, server_id: ServerId);
 }
 
 pub(super) trait Senders {
