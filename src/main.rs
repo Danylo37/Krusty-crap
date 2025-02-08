@@ -30,7 +30,7 @@ fn main() {
     thread::spawn(move || {
         // Initialize the network
         let mut my_net = network_initializer::NetworkInitializer::new(tx.clone(), receiver_from_ws);
-        my_net.initialize_from_file("input.toml");
+        my_net.initialize_from_file("topologies/tree.toml");
         // Clone the shared simulation controller
         let mut simulation_controller = my_net.simulation_controller;
         eprintln!("Simulation Controller is running");
