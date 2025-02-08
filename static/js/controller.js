@@ -337,3 +337,89 @@ function updatePanelContent(panel, fields) {
         fieldsContainer.appendChild(field);
     });
 }
+
+
+
+/* FILTERING MONITORING SECTION */
+
+// Global variable to keep track of sort order for node_id filtering.
+let nodeIdSortOrder = 'asc'; // 'asc' (ascending) by default
+
+// Helper function to get the currently visible section container.
+function getCurrentSectionContainer() {
+    const containerIds = ['clients-container', 'servers-container', 'drones-container'];
+    for (let id of containerIds) {
+        const el = document.getElementById(id);
+        // Assuming only one of these containers is visible (display not 'none')
+        if (el && el.style.display !== 'none') {
+            return el;
+        }
+    }
+    return null;
+}
+
+// Function to order panels by node_id.
+// 'order' should be either 'asc' for ascending or 'desc' for descending.
+function orderPanelsByNodeId(order = 'asc') {
+    const container = getCurrentSectionContainer();
+    if (!container) return;
+
+    // Get all panels in the container (panels are assumed to have class 'panel').
+    const panels = Array.from(container.getElementsByClassName('panel'));
+
+    // Sort panels by their dataset.nodeId numerically.
+    panels.sort((a, b) => {
+        const aId = parseInt(a.dataset.nodeId, 10);
+        const bId = parseInt(b.dataset.nodeId, 10);
+        return order === 'asc' ? aId - bId : bId - aId;
+    });
+
+    // Clear the container and reappend the sorted panels.
+    container.innerHTML = '';
+    panels.forEach(panel => container.appendChild(panel));
+}
+
+// When the DOM content is loaded, set up the first filter button.
+document.addEventListener('DOMContentLoaded', () => {
+    // Assume the first filter button is used for node_id ordering.
+    const filterButtons = document.querySelectorAll('#filters .filter-button');
+    if (filterButtons.length > 0) {
+        const orderButton = filterButtons[0];
+        // Set the initial sort order state on the button.
+        orderButton.dataset.sortOrder = 'asc';
+
+        orderButton.addEventListener('click', function () {
+            if (this.dataset.sortOrder === 'asc') {
+                // If current state is ascending, order descending.
+                orderPanelsByNodeId('desc');
+                this.dataset.sortOrder = 'desc';
+                // Rotate the image inside the button if present.
+                const img = this.querySelector('img');
+                if (img) {
+                    img.style.transform = 'rotate(180deg)';
+                }
+            } else {
+                // Otherwise, order ascending.
+                orderPanelsByNodeId('asc');
+                this.dataset.sortOrder = 'asc';
+                const img = this.querySelector('img');
+                if (img) {
+                    img.style.transform = 'rotate(0deg)';
+                }
+            }
+        });
+    }
+});
+
+// (Optional) When a new section is chosen (via your showSection function, for example),
+// reset the filter buttons (so that they appear in the starting state).
+function resetFilterButtons() {
+    const filterButtons = document.querySelectorAll('#filters .filter-button');
+    filterButtons.forEach(btn => {
+        btn.dataset.sortOrder = 'asc';
+        const img = btn.querySelector('img');
+        if (img) {
+            img.style.transform = 'rotate(0deg)';
+        }
+    });
+}
