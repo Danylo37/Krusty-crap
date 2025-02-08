@@ -421,22 +421,18 @@ function updateChatReceivers(HashListReceivers){
 function updateChats(ChatHistory) {
     console.log("updating chats, chatHistory: ");
     console.log(ChatHistory)
-    // Find the chat item with data-id equal to clientId.
-    const chatItem = document.querySelector(`.chat-item[data-id="${clientId}"]`);
-    if (!chatItem) {
-        // If there is no chat item for this clientId, do nothing.
-        return;
-    }
-    // Get the currently stored history from a custom data attribute (if any).
-    let currentHistory = chatItem.dataset.history ? JSON.parse(chatItem.dataset.history) : [];
-    // Get the new history from ChatHistory for this client.
-    let newHistory = ChatHistory[clientId] || [];
+    const old_histories = Array.from(document.getElementById('chat-list').children)
+        .reduce((acc, item) => {
+            acc[item.dataset.id] = item.dataset.history;
+            return acc;
+        }, {});
 
-
-    // Compare histories using JSON.stringify (for simple equality)
-    if (JSON.stringify(currentHistory) !== JSON.stringify(newHistory)) {
-        // Save the new history in the element's dataset.
-        chatItem.dataset.history = JSON.stringify(newHistory);
+    // Find the chat items that changed.
+    for (const clientId in ChatHistory){
+        const newHistory = ChatHistory[clientId];
+        if (JSON.stringify(newHistory) !== JSON.stringify(old_histories[clientId])){
+            const chatItem = document.querySelector(`.chat-item[data-id="${clientId}"]`);
+            chatItem.dataset.history = JSON.stringify(newHistory);
 
             if (chatItem.classList.contains('active')) {
                 // If active, update the chat window immediately.
