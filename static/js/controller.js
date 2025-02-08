@@ -44,7 +44,7 @@ function crashDrone(drone) {
     createExplosionGif(drone.x, drone.y, canvas);
     createAirplanes(drone.x, drone.y, canvas);
 
-    sendCrashController(drone.id);
+    sendCrashController(drone);
 
 
     const intervalId = setInterval(() => {
@@ -106,18 +106,8 @@ function createAirplanes(droneX, droneY, canvas){
     }
 }
 
-function sendCrashController(droneId){
-    if (ws.readyState === WebSocket.OPEN) {
-        const message = {
-            WsCrashDrone: {
-                drone_id: droneId.toString(),
-            }
-        };
-        ws.send(JSON.stringify(message));
-        console.log('Sent:', message);
-    } else {
-    console.error('WebSocket is not open. Unable to send update command.');
-    }
+function sendCrashController(){
+    //Chen crash drone
 }
 
 
@@ -439,7 +429,13 @@ function toggleDropdown() {
 
 
 
+function toggleTopologyAppearanceButton(){
 
+    toggleTopologyAppearance()
+    // Toggle the state.
+    topologyImagesToggled = !topologyImagesToggled;
+
+}
 
 // Global flag to know which appearance is active.
 let topologyImagesToggled = false;
@@ -448,23 +444,20 @@ let topologyImagesToggled = false;
 function toggleTopologyAppearance() {
     const canvas = document.getElementById("network-canvas");
     // Iterate over all drawn nodes (which you stored in drawn_nodes).
-
-    console.log("Changing appearance")
     drawn_nodes.forEach(node => {
 
         let currentElem = canvas.querySelector(`.node[data-node-id="${node.id}"]`);
-        console.log(currentElem)
         if (!currentElem) {
             return; // Nothing found? Skip.
         }
 
         if (!topologyImagesToggled) {
-            console.log("brah?")
             document.getElementById("img_appearance").src = "content_objects/drone_top.png"
             // --- Switch from circle to image ---
             const imgElem = document.createElementNS("http://www.w3.org/2000/svg", "image");
             imgElem.setAttribute("width", "30");
             imgElem.setAttribute("height", "30");
+            imgElem.setAttribute("border-radius", "15");
 
             // Choose an image source based on the node type.
             let src = "";
@@ -536,9 +529,6 @@ function toggleTopologyAppearance() {
             canvas.replaceChild(circle, imgElem);
         }
     });
-
-    // Toggle the state.
-    topologyImagesToggled = !topologyImagesToggled;
 }
 
 // Global variable to track the current layout mode.
@@ -548,10 +538,11 @@ function toggleTopologyLayout() {
     // Check the current layout mode and switch:
     if (currentLayout === "circle") {
         currentLayout = "grid";
+        document.getElementById("img_layout").src = "content_objects/grid_layout.png"
         createTopologyGrid(globalTopologyData);
     } else {
         currentLayout = "circle";
-        // Recreate the circle layout (your existing createTopology function)
+        document.getElementById("img_layout").src = "content_objects/decagram_layout.png"
         createTopology(globalTopologyData);
     }
 }
