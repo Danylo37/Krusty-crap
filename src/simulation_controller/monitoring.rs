@@ -246,7 +246,22 @@ impl SimulationController {
                         .expect("error in sending register to the websocket");
                 }
             }
-
+            WsCommand::WsCrashDrone {
+                drone_id
+            } => {
+                match self.request_drone_crash(drone_id){
+                    Ok(_) => {
+                        println!("*********************************\n\
+                        drone crashed\n\
+                        *********************************");
+                    }
+                    Err(e) => {
+                        println!("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\
+                        couldn't crash drone\n\
+                        <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                    }
+                }
+            }
             _ => {}
         }
     }

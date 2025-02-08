@@ -63,6 +63,11 @@ pub enum WsCommand {
         client_id: ClientId,
         media_ref: MediaRef,
     },
+
+    WsCrashDrone{
+        #[serde(with = "stringified_u8")]
+        drone_id: DroneId,
+    }
 }
 
 pub fn start_websocket_server(rx: Receiver<String>, cmd_tx: Sender<WsCommand>) {
