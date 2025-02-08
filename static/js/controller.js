@@ -318,3 +318,22 @@ function showSection(sectionId) {
 // Initialize the default view
 showSection('clients-container');
 
+function updatePanelContent(panel, fields) {
+    let fieldsContainer = panel.querySelector(".fields-container");
+
+    // If it doesn't exist, create one and append it to the panel
+    if (!fieldsContainer) {
+        fieldsContainer = document.createElement("div");
+        fieldsContainer.classList.add("fields-container");
+        panel.appendChild(fieldsContainer);
+    }
+    fieldsContainer.innerHTML = "";
+
+
+    Object.entries(fields).forEach(([key, value]) => {
+        const field = document.createElement("p");
+        field.style.overflowWrap = "break-word";  // Ensure long text wraps
+        field.textContent = `${key}: ${JSON.stringify(value)}`;
+        fieldsContainer.appendChild(field);
+    });
+}
