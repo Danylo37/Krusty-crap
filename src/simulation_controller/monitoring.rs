@@ -12,7 +12,7 @@ use crate::general_use::{ClientCommand, ClientEvent, ClientType, DataScope, Disp
 use crate::network_initializer::DroneBrand;
 
 impl SimulationControllerMonitoring for SimulationController {
-    fn send_display_data(&mut self, sender_to_gui: Sender<String>, data_scope: DataScope) {
+    fn send_display_data(&mut self, sender_to_gui: Sender<String>) {
         let topology_with_types = self.create_topology_with_types();
 
         let display_data = DisplayDataSimulationController{
@@ -31,6 +31,10 @@ impl SimulationControllerMonitoring for SimulationController {
     }
 
     fn run_with_monitoring(&mut self, sender_to_gui: Sender<String>) {
+        // Initiate discovery process for all clients
+        for (_, (sender, _)) in self.command_senders_clients.iter(){
+            sender.send(ClientCommand::StartFlooding).unwrap();
+        }
         ///Reminder: I put here the edge_nodes because I'm assuming the clients and the server must be fixed
         ///created from the network initializer
         let mut edge_nodes = self.command_senders_clients.keys().cloned().collect::<HashSet<NodeId>>();
@@ -86,7 +90,7 @@ impl SimulationControllerMonitoring for SimulationController {
                             _ =>{}
                         }
                         if self.updating_nodes.is_empty() && conditional_data_scope == DataScope::UpdateAll {
-                            self.send_display_data(sender_to_gui.clone(), DataScope::UpdateAll);
+                            self.send_display_data(sender_to_gui.clone());
                             self.updating_nodes = edge_nodes.clone();
                             //eprintln!("updating_node: {:?}", self.updating_nodes);
                         }
@@ -153,7 +157,7 @@ impl SimulationControllerMonitoring for SimulationController {
                         }
 
                         if self.updating_nodes.is_empty() && conditional_data_scope == DataScope::UpdateAll {
-                            self.send_display_data(sender_to_gui.clone(), DataScope::UpdateAll);
+                            self.send_display_data(sender_to_gui.clone());
                             self.updating_nodes = edge_nodes.clone();
                             //eprintln!("updating_node: {:?}", self.updating_nodes);
                         }
@@ -242,7 +246,22 @@ impl SimulationController {
                         .expect("error in sending register to the websocket");
                 }
             }
-
+            WsCommand::WsCrashDrone {
+                drone_id
+            } => {
+                match self.request_drone_crash(drone_id){
+                    Ok(_) => {
+                        println!("*********************************\n\
+                        drone crashed\n\
+                        *********************************");
+                    }
+                    Err(e) => {
+                        println!("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\
+                        couldn't crash drone\n\
+                        <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                    }
+                }
+            }
             _ => {}
         }
     }

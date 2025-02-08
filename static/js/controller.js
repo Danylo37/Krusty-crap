@@ -33,6 +33,110 @@ document.querySelector(".previewContainer").addEventListener("click", function()
 
 
 
+
+/* GENERAL FUNCTIONS FOR CONTROLLER */
+
+let droneCrashed = "false";
+function crashDrone(drone) {
+    const canvas = document.getElementById("network-canvas");
+
+    console.log(drone)
+    createExplosionGif(drone.x, drone.y, canvas);
+    createAirplanes(drone.x, drone.y, canvas);
+
+    console.log(drone.id)
+    sendCrashController(drone.id);
+
+
+    const intervalId = setInterval(() => {
+        // Check if the global variable "droneCrashed" is set to "droneCrashed".
+        if (droneCrashed === "droneCrashed") {
+            // Remove the explosion GIF.
+            if (canvas.contains(explosion)) {
+                canvas.removeChild(explosion);
+            }
+            // Remove all airplane elements.
+            airplaneElements.forEach(plane => {
+                if (canvas.contains(plane)) {
+                    canvas.removeChild(plane);
+                }
+            });
+            // Remove the drone from your topology and from the UI.
+            removeDroneFromTopology(drone);
+            removeDroneFromSection();
+            // Stop the interval.
+            clearInterval(intervalId);
+        }
+    }, 3000);
+}
+
+function createExplosionGif(droneX, droneY, canvas){
+
+    // Create an SVG image element for the explosion GIF.
+    const explosion = document.createElementNS("http://www.w3.org/2000/svg", "image");
+    explosion.setAttributeNS(null, "href", "content_objects/explosion.gif");
+    // Position the explosion so that it covers the drone (adjust the offset as needed).
+    explosion.setAttribute("x", droneX - 30);
+    explosion.setAttribute("y", droneY - 30);
+    explosion.setAttribute("width", "60");
+    explosion.setAttribute("height", "60");
+    explosion.classList.add("explosion");
+    canvas.appendChild(explosion);
+}
+
+function createAirplanes(droneX, droneY, canvas){
+    // Create 3 airplane elements that will orbit the drone.
+    const airplaneElements = [];
+    for (let i = 0; i < 3; i++) {
+        const airplane = document.createElementNS("http://www.w3.org/2000/svg", "image");
+        airplane.setAttributeNS(null, "href", "content_objects/airplane.png");
+        airplane.setAttribute("width", "60");
+        airplane.setAttribute("height", "60");
+        airplane.classList.add("airplane");
+        // Calculate an initial position offset for each airplane.
+        // For example, use angles 0, 120, and 240 degrees.
+        const angle = (2 * Math.PI * i) / 3;
+        const offsetX = 40 * Math.cos(angle) - 40;
+        const offsetY = 20 * Math.sin(angle) - 20;
+        airplane.setAttribute("x", droneX + offsetX);
+        airplane.setAttribute("y", droneY + offsetY);
+        // Add a CSS class to animate the airplane along an ellipse.
+        airplane.classList.add("ellipse-animation");
+        canvas.appendChild(airplane);
+        airplaneElements.push(airplane);
+    }
+}
+
+function sendCrashController(droneId){
+    if (ws.readyState === WebSocket.OPEN) {
+        const message = {
+            WsCrashDrone: {
+                drone_id: droneId.toString(),
+            }
+        };
+        ws.send(JSON.stringify(message));
+        console.log('Sent:', message);
+    } else {
+        console.error('WebSocket is not open. Unable to send update command.');
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*
 
     CONTROLLER VIEW
@@ -188,6 +292,7 @@ container.addEventListener("mousedown", (e) => {
 document.addEventListener("mousemove", (e) => {
     if (!isPanning) return;
 
+    if (e.target.closest("#drone-details")) return;
 
     // Calculate the difference between the current and starting mouse positions
     const dx = (e.clientX - startX) / scale; // Adjust for current zoom level
@@ -231,6 +336,75 @@ document.addEventListener("mouseup", () => {
 });
 
 
+function showDroneDetails(droneData) {
+
+    console.log(droneData)
+    // droneData is an object that might look like:
+    // { id: 17, type: 'Drone', x: 500, y: 300, ... }
+    document.getElementById('drone-id').textContent = droneData.id;
+    document.getElementById('drone-type').textContent = droneData.type;
+    document.getElementById('drone-coordinates').textContent = `(${droneData.x}, ${droneData.y})`;
+    // If you have more fields, update them here.
+
+    // Optionally, update the title or add additional content
+    document.getElementById('drone-title').textContent = `Drone ${droneData.id} Details`;
+    document.getElementById("crash-btn").onclick = () => crashDrone(droneData);
+
+    // Show the side tab
+    document.getElementById('drone-details').style.display = 'block';
+}
+
+function hideDroneDetails() {
+    document.getElementById('drone-details').style.display = 'none';
+}
+
+
+function removeDroneFromTopology(drone) {
+    // Remove the drone from the drawn_nodes array.
+    const index = drawn_nodes.findIndex(n => n.id === drone.id);
+    if (index !== -1) {
+        drawn_nodes.splice(index, 1);
+    }
+
+    // Get the SVG canvas.
+    const canvas = document.getElementById("network-canvas");
+
+    // Remove the corresponding circle.
+    const circles = canvas.getElementsByTagName("circle");
+    for (let i = circles.length - 1; i >= 0; i--) {
+        // Here, we check by position; if you can, add a data attribute (e.g., data-id) to the circle when creating it.
+        if (circles[i].getAttribute("cx") == drone.x && circles[i].getAttribute("cy") == drone.y) {
+            canvas.removeChild(circles[i]);
+        }
+    }
+
+    // Remove all lines (connections) associated with the drone.
+    const lines = canvas.getElementsByClassName("connection");
+    // Convert HTMLCollection to an array (since we'll be removing elements)
+    const linesArray = Array.from(lines);
+    linesArray.forEach(line => {
+        if (line.dataset.from === drone.id || line.dataset.to === drone.id) {
+            canvas.removeChild(line);
+        }
+    });
+
+    // Also remove connections from the array.
+    for (let i = connections.length - 1; i >= 0; i--) {
+        if (connections[i].from === drone.id || connections[i].to === drone.id) {
+            connections.splice(i, 1);
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -255,31 +429,143 @@ function toggleDropdown() {
         // Start slide-out animation
         dropdownMenu.classList.remove('active');
         dropdownMenu.classList.add('closing');
-
-        // After animation completes, hide the menu
-        dropdownMenu.addEventListener(
-            'animationend',
-            () => {
-                dropdownMenu.classList.remove('closing');
-                dropdownMenu.style.display = 'none';
-            },
-            { once: true } // Ensure the listener runs only once
-        );
     } else {
         // Start slide-in animation
         dropdownMenu.style.display = 'block'; // Ensure the content is displayed
         dropdownMenu.classList.add('active');
+        dropdownMenu.classList.remove('closing')
     }
 }
 
-// Close the dropdown if the user clicks outside
-document.addEventListener('click', (event) => {
-    const dropdownMenu = document.getElementById('dropdown-menu');
-    const dropdownButton = document.querySelector('.dropdown button');
-    if (!dropdownMenu.contains(event.target) && !dropdownButton.contains(event.target)) {
-        dropdownMenu.style.display = 'none';
+
+
+
+function toggleTopologyAppearanceButton(){
+
+    toggleTopologyAppearance()
+    // Toggle the state.
+    topologyImagesToggled = !topologyImagesToggled;
+
+}
+
+// Global flag to know which appearance is active.
+let topologyImagesToggled = false;
+
+// This function toggles the appearance of nodes on the SVG canvas.
+function toggleTopologyAppearance() {
+    const canvas = document.getElementById("network-canvas");
+    // Iterate over all drawn nodes (which you stored in drawn_nodes).
+    drawn_nodes.forEach(node => {
+
+        let currentElem = canvas.querySelector(`.node[data-node-id="${node.id}"]`);
+        if (!currentElem) {
+            return; // Nothing found? Skip.
+        }
+
+        if (!topologyImagesToggled) {
+            document.getElementById("img_appearance").src = "content_objects/drone_top.png"
+            // --- Switch from circle to image ---
+            const imgElem = document.createElementNS("http://www.w3.org/2000/svg", "image");
+            imgElem.setAttribute("width", "30");
+            imgElem.setAttribute("height", "30");
+            imgElem.setAttribute("border-radius", "15");
+
+            // Choose an image source based on the node type.
+            let src = "";
+            switch (node.type) {
+                case "Drone":
+                    src = "content_objects/drone_top.png";
+                    imgElem.setAttribute("width", "50")
+                    imgElem.setAttribute("height", "50");
+                    break;
+                case "CommunicationServer":
+                    src = "content_objects/comm_serv_top.png";
+                    break;
+                case "ChatClient":
+                    src = "content_objects/chat_client_top.png";
+                    break;
+                case "WebBrowser":
+                    src = "content_objects/web_browser_top.png";
+                    break;
+                case "TextServer":
+                    src = "content_objects/text_serv_top.png";
+                    break;
+                case "MediaServer":
+                    src = "content_objects/media_serv_top.png";
+                    break;
+                default:
+                    // Fallback image if needed.
+                    src = "content_objects/default_top.png";
+            }
+
+            imgElem.setAttribute("href", src);
+
+            // Position the image so that its center is at (node.x, node.y).
+            imgElem.setAttribute("x", node.x - 15);
+            imgElem.setAttribute("y", node.y - 15);
+
+            // Attaching data for easy handling
+            imgElem.dataset.nodeId = node.id;
+            imgElem.classList.add("node", node.type);
+
+            // Set up a click handler similar to what you had for circles.
+            if (node.type === "Drone") {
+                imgElem.addEventListener("click", () => showDroneDetails(node));
+            } else {
+                imgElem.addEventListener("click", () => alert(`Node: ${node.id}`));
+            }
+
+            // Replace the current circle with the image element.
+            canvas.replaceChild(imgElem, currentElem);
+        } else {
+            document.getElementById("img_appearance").src = "content_objects/preview_circle_form.png"
+            // --- Revert from image to circle ---
+            let imgElem = currentElem;
+
+            // Create a new circle element.
+            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circle.setAttribute("cx", node.x);
+            circle.setAttribute("cy", node.y);
+            circle.setAttribute("r", 15);
+            circle.classList.add("node", node.type);
+            circle.dataset.nodeId = node.id;
+
+            if (node.type === "Drone") {
+                circle.addEventListener("click", () => showDroneDetails(node));
+            } else {
+                circle.addEventListener("click", () => alert(`Node: ${node.id}`));
+            }
+
+            // Replace the image with the circle.
+            canvas.replaceChild(circle, imgElem);
+        }
+    });
+}
+
+// Global variable to track the current layout mode.
+let currentLayout = "circle"; // "circle" is the default layout
+
+function toggleTopologyLayout() {
+    // Check the current layout mode and switch:
+    if (currentLayout === "circle") {
+        currentLayout = "grid";
+        document.getElementById("img_layout").src = "content_objects/grid_layout.png"
+        createTopologyGrid(globalTopologyData);
+    } else {
+        currentLayout = "circle";
+        document.getElementById("img_layout").src = "content_objects/decagram_layout.png"
+        createTopology(globalTopologyData);
     }
-});
+}
+
+
+
+
+
+
+
+
+
 
 
 
@@ -302,21 +588,30 @@ document.addEventListener('click', (event) => {
  */
 
 function showSection(sectionId) {
-    const sections = document.querySelectorAll('.section');
-    sections.forEach(section => {
-        if (section.id == sectionId) {
-            section.style.display = 'block';
-            section.style.animation = 'slide-in 0.5s ease-out';
-        } else {
-            section.style.animation = 'slide-out 0.5s ease-out';
-            setTimeout(() => {
-                section.style.display = 'none';
-            }, 500); // Match the duration of the animation
-        }
-    });
+    const newSection = document.getElementById(sectionId);
+    const oldSection = document.querySelector('.section.active');
+
+    // If there's no active section or the new section is already active, do nothing.
+    if (!oldSection || oldSection === newSection) {
+        newSection.style.display = 'block';
+        newSection.classList.add('active');
+        return;
+    }
+
+    // Start closing animation on the old section.
+    oldSection.classList.add('closing');
+
+    // Wait until the closing animation is finished.
+    oldSection.addEventListener('animationend', function handleAnimationEnd() {
+        // Hide the old section and remove its classes.
+        oldSection.style.display = 'none';
+        oldSection.classList.remove('active', 'closing');
+
+        // Show and activate the new section.
+        newSection.style.display = 'block';
+        newSection.classList.add('active');
+    }, { once: true });
 }
-// Initialize the default view
-showSection('clients-container');
 
 function updatePanelContent(panel, fields) {
     let fieldsContainer = panel.querySelector(".fields-container");
@@ -338,6 +633,9 @@ function updatePanelContent(panel, fields) {
     });
 }
 
+function removeDroneFromSection(){
+    console.error("To fill drone from section removing")
+}
 
 
 /* FILTERING MONITORING SECTION */
@@ -356,27 +654,6 @@ function getCurrentSectionContainer() {
         }
     }
     return null;
-}
-
-// Function to order panels by node_id.
-// 'order' should be either 'asc' for ascending or 'desc' for descending.
-function orderPanelsByNodeId(order = 'asc') {
-    const container = getCurrentSectionContainer();
-    if (!container) return;
-
-    // Get all panels in the container (panels are assumed to have class 'panel').
-    const panels = Array.from(container.getElementsByClassName('panel'));
-
-    // Sort panels by their dataset.nodeId numerically.
-    panels.sort((a, b) => {
-        const aId = parseInt(a.dataset.nodeId, 10);
-        const bId = parseInt(b.dataset.nodeId, 10);
-        return order === 'asc' ? aId - bId : bId - aId;
-    });
-
-    // Clear the container and reappend the sorted panels.
-    container.innerHTML = '';
-    panels.forEach(panel => container.appendChild(panel));
 }
 
 // When the DOM content is loaded, set up the first filter button.
@@ -411,8 +688,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// (Optional) When a new section is chosen (via your showSection function, for example),
-// reset the filter buttons (so that they appear in the starting state).
+
+function orderPanelsByNodeId(order = 'asc') {
+    const container = getCurrentSectionContainer();
+    if (!container) return;
+
+    // Get all panels in the container (panels are assumed to have class 'panel').
+    const panels = Array.from(container.getElementsByClassName('panel'));
+
+    // Sort panels by their dataset.nodeId numerically.
+    panels.sort((a, b) => {
+        const aId = parseInt(a.dataset.nodeId, 10);
+        const bId = parseInt(b.dataset.nodeId, 10);
+        return order === 'asc' ? aId - bId : bId - aId;
+    });
+
+    // Clear the container and reappend the sorted panels.
+    container.innerHTML = '';
+    panels.forEach(panel => container.appendChild(panel));
+}
+
 function resetFilterButtons() {
     const filterButtons = document.querySelectorAll('#filters .filter-button');
     filterButtons.forEach(btn => {

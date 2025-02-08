@@ -77,21 +77,6 @@
     text-align: center;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
-.popup-content::-webkit-scrollbar {
-    width: 20px;
-}
-.popup-content::-webkit-scrollbar-track {
-    background: #FFFFFF;
-    border-radius: 10px;
-}
-.popup-content::-webkit-scrollbar-thumb {
-    background: #BCC1C8;
-    border-radius: 10px;
-    border: 2px solid #FFFFFF;
-}
-.popup-content::-webkit-scrollbar-thumb:hover {
-    background: #A5ACB5;
-}
 
 /* Receiver list styles */
 .receiver-list {
@@ -290,20 +275,6 @@
     display: flex;
     flex-direction: column;
 }
-#chat-window::-webkit-scrollbar {
-    width: 0;
-}
-#chat-window::-webkit-scrollbar-track {
-    background: transparent;
-    border-radius: 10px;
-}
-#chat-window::-webkit-scrollbar-thumb {
-    background: transparent;
-    border: 2px solid transparent;
-}
-#chat-window::-webkit-scrollbar-thumb:hover {
-    background: transparent;
-}
 
 #chat-messages {
     flex: 1 1 auto;
@@ -463,6 +434,7 @@
 
 /* CONTENT UI - HEADER */
 #header-content-ui {
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -591,10 +563,15 @@
 
 */
 
+#content-ui{
+    height:100%;
+}
+
 #body-content-ui {
+    flex: 1;
     box-sizing: border-box;
     display: flex;
-    height: 100%;
+    flex-direction: column;
     padding: 0 5px 20px 5px;
 }
 
@@ -606,30 +583,14 @@
 
 /* MAIN CONTENT CONTAINER */
 #content-container-content-ui {
+    flex: 0 0 auto;
     position: relative;
     box-sizing: border-box;
-    flex: 4;
     background: #FFFFFF;
     border-radius: 1rem;
     margin: 0 20px;
     padding: 20px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-#content-container-content-ui::-webkit-scrollbar {
-    width: 20px;
-}
-#content-container-content-ui::-webkit-scrollbar-track {
-    background: #FFFFFF;
-    border-radius: 10px;
-}
-#content-container-content-ui::-webkit-scrollbar-thumb {
-    background: #BCC1C8;
-    border-radius: 10px;
-    border: 2px solid #FFFFFF;
-}
-#content-container-content-ui::-webkit-scrollbar-thumb:hover {
-    background: #A5ACB5;
 }
 
 
@@ -837,4 +798,71 @@
     width:30px;
     height:30px;
     animation: spin 2s linear infinite;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* scrollbars webkits */
+
+.file-list::-webkit-scrollbar {
+    width: 20px;
+}
+.file-list::-webkit-scrollbar-track {
+    background: #FFFFFF;
+    border-radius: 10px;
+}
+.file-list::-webkit-scrollbar-thumb {
+    background: #BCC1C8;
+    border-radius: 10px;
+    border: 2px solid #FFFFFF;
+}
+.file-list::-webkit-scrollbar-thumb:hover {
+    background: #A5ACB5;
+}
+
+
+#chat-messages::-webkit-scrollbar {
+    width: 0;
+}
+#chat-messages::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 10px;
+}
+#chat-messages::-webkit-scrollbar-thumb {
+    background: transparent;
+    border: 2px solid transparent;
+}
+#chat-messages::-webkit-scrollbar-thumb:hover {
+    background: transparent;
+}
+
+
+.popup-content::-webkit-scrollbar {
+    width: 20px;
+}
+.popup-content::-webkit-scrollbar-track {
+    background: #FFFFFF;
+    border-radius: 10px;
+}
+.popup-content::-webkit-scrollbar-thumb {
+    background: #BCC1C8;
+    border-radius: 10px;
+    border: 2px solid #FFFFFF;
+}
+.popup-content::-webkit-scrollbar-thumb:hover {
+    background: #A5ACB5;
 }

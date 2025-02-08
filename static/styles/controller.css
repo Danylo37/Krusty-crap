@@ -27,6 +27,7 @@
     position: relative;
     transform-style: preserve-3d;
     transition: transform 2s;
+    cursor: pointer;
 }
 .box__face {
     border:1px black solid;
@@ -98,18 +99,57 @@
     transform: scale(1);
 }
 
+.side-tab {
+    position: fixed; /* or absolute if you prefer coordinates relative to a container */
+    top: 30%;
+    right: 20px;
+    padding: 20px;
+    width: 300px;
+    background: #f0f0f0;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.3);
+    z-index: 2000;
+    overflow-y: auto;
+    cursor: move;  /* indicates that the element is draggable */
+}
+
 .node {
-    fill: #007bff;
     stroke: #0056b3;
     stroke-width: 2;
     cursor: pointer;
 }
 
-.client {
-    fill: #28a745;
+/* Default fallback if no type-specific style is given */
+.node.default {
+    fill: #007bff;
 }
-.server {
-    fill: #dc3545;
+
+/* Type-specific styles */
+.ChatClient {
+    fill: #9b59b6;  /* a purple tone */
+}
+
+.Drone {
+    fill: #f39c12;  /* an orange tone */
+}
+.explosion {
+    /* Optionally, add any CSS animations or effects here */
+    pointer-events: none;
+}
+
+.WebBrowser {
+    fill: #3498db;  /* a blue tone */
+}
+
+.TextServer {
+    fill: #2ecc71;  /* a green tone */
+}
+
+.CommunicationServer {
+    fill: #e74c3c;  /* a red tone */
+}
+
+.MediaServer {
+    fill: #e67e22;  /* an orange/red tone */
 }
 
 .connection {
@@ -152,7 +192,17 @@
     height: 24px;
 }
 
+@keyframes ellipseMotion {
+    0%   { transform: translate(0, 0); }
+    25%  { transform: translate(10px, -15px); }
+    50%  { transform: translate(20px, 0); }
+    75%  { transform: translate(10px, 15px); }
+    100% { transform: translate(0, 0); }
+}
 
+.ellipse-animation {
+    animation: ellipseMotion 3s linear infinite;
+}
 
 
 
@@ -217,19 +267,32 @@
 }
 
 .dropdown-content button {
+    display:flex;
+    align-items: center;
+    gap: 10px;
     padding: 10px 20px;
     background-color: white;
     color: #007bff;
     border: none;
-    font-size: 14px;
+    font-size: 18px;
     cursor: pointer;
     text-align: left;
     width: 100%;
+    min-width: max-content;
 }
 .dropdown-content button:hover {
     background-color: #f1f1f1;
 }
 
+#img_appearance{
+    width: 50px;
+    border-radius: 10px;
+}
+
+#img_layout{
+    width: 50px;
+    border-radius: 10px;
+}
 
 
 
@@ -286,24 +349,16 @@
     overflow: scroll;
     height:100%;
     padding: 20px;
-    display: none;
-    animation: slide-in 0.5s ease-out;
+    transform: translateX(-100px); /* Start hidden on the left */
 }
 
-#section::-webkit-scrollbar {
-    width: 10px;
+.section.active{
+    display:block;
+    animation: slide-in-section 0.7s ease-out forwards;
 }
-#section::-webkit-scrollbar-track {
-    background: #FFFFFF;
-    border-radius: 10px;
-}
-#section::-webkit-scrollbar-thumb {
-    background: #BCC1C8;
-    border-radius: 10px;
-    border: 2px solid #FFFFFF;
-}
-#section::-webkit-scrollbar-thumb:hover {
-    background: #A5ACB5;
+
+.section.closing {
+    animation: slide-out-section 0.4s ease-out forwards;
 }
 
 /* Filters on the right */
@@ -311,7 +366,7 @@
     position: absolute;
     top: 50%; /* Centered vertically */
     right: 7px;
-    transform: translateY(-50%);
+    transform: translateY(-100%);
     display: flex;
     flex-direction: column;
     gap: 15px;
@@ -332,29 +387,16 @@
     color: white;
 }
 
-/* Animations */
-@keyframes slide-in {
-    from {
-        opacity: 0;
-        transform: translateX(-50%);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-@keyframes slide-out {
-    from {
-        opacity: 1;
-        transform: translateX(0);
-    }
-    to {
-        opacity: 0;
-        transform: translateX(50%);
-    }
-}
 
-/* DROPDOWN CSS */
+
+
+
+
+
+
+
+
+/* Animations CSS */
 @keyframes slide-in {
     from {
         transform: translateX(-200px);
@@ -376,6 +418,27 @@
     }
 }
 
+@keyframes slide-in-section {
+    from {
+        opacity: 0;
+        transform: translateX(-100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slide-out-section {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-100%);
+    }
+}
 
 
 
@@ -389,3 +452,21 @@
 
 
 
+/* scroll bars */
+
+
+.section::-webkit-scrollbar {
+    width: 10px;
+}
+.section::-webkit-scrollbar-track {
+    background: #FFFFFF;
+    border-radius: 10px;
+}
+.section::-webkit-scrollbar-thumb {
+    background: #BCC1C8;
+    border-radius: 10px;
+    border: 2px solid #FFFFFF;
+}
+.section::-webkit-scrollbar-thumb:hover {
+    background: #A5ACB5;
+}

@@ -306,8 +306,11 @@ function askListRegisteredClientsToServer(clientId, serverId){
     }
 }
 
-
-
+document.getElementById('message-input').addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        sendMessage();
+    }
+});
 
 function sendMessage() {
     console.log("message sent html")
@@ -610,25 +613,33 @@ let currentSearchValue = "";
 
 // FUNCTION TO NAVIGATE SERVERS
 function navigateServer(direction) {
-    // Get an array of server IDs (as numbers) from file_lists,
-    // and sort them numerically.
-    const serverKeys = Object.keys(file_lists).map(Number).sort((a, b) => a - b);
 
+    const serverKeys = Object.keys(file_lists);
 
-    // currentServerIndex now is an index into this serverKeys array.
-    let newIndex = currentServerIndex + direction;
-    if (newIndex < 0) {
-        newIndex = serverKeys.length - 1;
-    } else if (newIndex >= serverKeys.length) {
-        newIndex = 0;
+    if (direction>0){
+        if ((currentServerIndex+1) === serverKeys.length){
+            currentServerIndex = 0;
+        }else{
+            currentServerIndex = currentServerIndex + 1;
+        }
+    }else{
+
+        if ((currentServerIndex-1) < 0){
+            console.log(
+                serverKeys.length -1
+            )
+            currentServerIndex = serverKeys.length -1;
+        }else{
+            currentServerIndex = currentServerIndex -1;
+        }
     }
-    currentServerIndex = newIndex;
     updateServerDisplay();
 }
 
 
 function get_server_id_from_current_server_index(){
     const serverKeys = Object.keys(file_lists);
+
     return serverKeys[currentServerIndex];
 }
 
@@ -637,11 +648,11 @@ function get_server_id_from_current_server_index(){
 
 // FUNCTION TO UPDATE UI WHEN SWITCHING SERVERS
 function updateServerDisplay() {
-    const serverKeys = Object.keys(file_lists).map(Number).sort((a, b) => a - b);
-    // Get the actual server ID for the current index.
-    const currentServerId = serverKeys[currentServerIndex];
+    const currentServerId = get_server_id_from_current_server_index()
+    console.log(currentServerId)
     const currentServer = file_lists[currentServerId];
 
+    console.log(currentServer)
 
     // Update Server Name
     document.getElementById("current-server").textContent = currentServer.name;
@@ -705,7 +716,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // FUNCTION TO OPEN POP-UP WITH FILE CONTENT
-function openPopup(fileName) {
+function  openPopup(fileName) {
     const popup = document.getElementById("file-popup");
     const popupTitle = document.getElementById("file-popup-title");
     const popupFileContent = document.getElementById("file-popup-file-content");
@@ -739,8 +750,19 @@ function openPopup(fileName) {
             });
             // Insert the processed HTML into the popup.
             popupFileContent.innerHTML = processedContent;
+        } else if (extension === "mp3") {
+            // For audio files, embed an HTML5 audio element.
+            popupFileContent.innerHTML = `
+              <audio controls style="width:100%;">
+                <source src="${fileContent}" type="audio/mpeg">
+                Your browser does not support the audio element.
+              </audio>
+            `;
+        } else if (extension === "jpg" || extension === "jpeg" || extension === "png" || extension === "gif") {
+            // For images, use an img element.
+            popupFileContent.innerHTML = `<img src="${fileContent}" alt="${fileName}" style="max-width:100%;" />`;
         } else {
-            // For other file types, just display the content as text.
+            // For all other types, simply display the content as text.
             popupFileContent.textContent = fileContent;
         }
     } else {
@@ -868,13 +890,11 @@ function updateFileList(files) {
     const fileListTable = document.querySelector(".file-list");
     fileListTable.innerHTML = ""; // Clear existing content
 
-    // Get the sorted array of server IDs from file_lists.
-    const serverKeys = Object.keys(file_lists).map(Number).sort((a, b) => a - b);
     // Get the current server ID from the sorted array.
-    const currentServerId = serverKeys[currentServerIndex];
+    const currentServerId = get_server_id_from_current_server_index();
 
     console.log(`Received files: ${files}`);
-
+    console.log(files);
     // Update the file list for the current server.
     if (file_lists[currentServerId]) {
         file_lists[currentServerId].files = files;
@@ -882,32 +902,34 @@ function updateFileList(files) {
         console.error("No server found for ID", currentServerId);
     }
 
-    // Populate the new file list filtering by the currentFilterType and currentSearchValue.
-    files.forEach(fileName => {
-        // If a filter is set, check the file extension.
-        if (currentFilterType) {
-            const extension = fileName.split('.').pop().toLowerCase();
-            if (extension !== currentFilterType.toLowerCase()) {
-                return;  // Skip files that don't match the filter.
+    if (Object.keys(files).length !== 0){
+        // Populate the new file list filtering by the currentFilterType and currentSearchValue.
+        files.forEach(fileName => {
+            // If a filter is set, check the file extension.
+            if (currentFilterType) {
+                const extension = fileName.split('.').pop().toLowerCase();
+                if (extension !== currentFilterType.toLowerCase()) {
+                    return;  // Skip files that don't match the filter.
+                }
             }
-        }
 
-        // Check if the file name contains the search term.
-        if (currentSearchValue) {
-            if (!fileName.toLowerCase().includes(currentSearchValue.toLowerCase())) {
-                return; // Skip if the file name doesn't match.
+            // Check if the file name contains the search term.
+            if (currentSearchValue) {
+                if (!fileName.toLowerCase().includes(currentSearchValue.toLowerCase())) {
+                    return; // Skip if the file name doesn't match.
+                }
             }
-        }
 
-        const row = document.createElement("tr");
-        row.innerHTML = `
-           <td>${fileName}</td>
-           <td style="text-align:right;">${file_lists[get_server_id_from_current_server_index()].name}</td>
-        `;
-        // When the row is clicked, open the popup with that file.
-        row.addEventListener("click", () => openPopup(fileName));
-        fileListTable.appendChild(row);
-    });
+            const row = document.createElement("tr");
+            row.innerHTML = `
+               <td>${fileName}</td>
+               <td style="text-align:right;">${file_lists[get_server_id_from_current_server_index()].name}</td>
+            `;
+            // When the row is clicked, open the popup with that file.
+            row.addEventListener("click", () => openPopup(fileName));
+            fileListTable.appendChild(row);
+        });
+    }
 
     // Stop and hide the loading popup.
     const loadingPopup = document.getElementById("loading-popup");

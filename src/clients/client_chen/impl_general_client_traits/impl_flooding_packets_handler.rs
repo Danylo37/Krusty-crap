@@ -3,12 +3,11 @@ use crate::clients::client_chen::prelude::*;
 use crate::clients::client_chen::general_client_traits::*;
 
 impl FloodingPacketsHandler for ClientChen {
-    fn handle_flood_request(&mut self, _packet: Packet, request: &mut FloodRequest) {
+    fn handle_flood_request(&mut self, session_id: SessionId, request: &mut FloodRequest) {
         //println!("{:?} Client {} has received flood request that contains the path: {:?}", self.metadata.client_type ,self.metadata.node_id , request.path_trace);
         // Prepare the flood response.
-        self.status.session_id += 1;
-        request.path_trace.push((self.metadata.node_id, self.metadata.node_type));
-        let mut response = request.generate_response(self.status.session_id);
+        request.increment(self.metadata.node_id, self.metadata.node_type);
+        let mut response = request.generate_response(session_id);
 
         //you send directly because the source routing header is there
         self.send(response.clone());
@@ -16,7 +15,7 @@ impl FloodingPacketsHandler for ClientChen {
 
     /// When you receive a flood response, you need first to update the topology with the elements of the path_traces
     /// everyone's connected_node_ids (using the hashset's methods).
-    fn handle_flood_response(&mut self, _packet: Packet, response: &FloodResponse) {
+    fn handle_flood_response(&mut self, response: &FloodResponse) {
         // Debugging: Print the received path trace
         //println!("{:?} Client {} has received flood response with the path: {:?}", self.metadata.client_type ,self.metadata.node_id , response.path_trace);
         // Check if path_trace is empty

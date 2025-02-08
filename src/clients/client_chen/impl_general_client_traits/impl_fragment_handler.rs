@@ -1,3 +1,4 @@
+use rouille::session::Session;
 use serde::de::DeserializeOwned;
 use crate::clients::client_chen::{ClientChen, FragmentsHandler, PacketCreator, PacketsReceiver, Sending, SpecificInfo};
 use crate::clients::client_chen::prelude::*;
@@ -8,26 +9,6 @@ use crate::general_use::DataScope;
 use crate::ui_traits::Monitoring;
 
 impl FragmentsHandler for ClientChen {
-    fn handle_fragment(&mut self, msg_packet: Packet, fragment: &Fragment) {
-        self.storage.fragment_assembling_buffer
-            .entry(msg_packet.session_id)
-            .or_insert_with(HashMap::new)
-            .insert(fragment.fragment_index, msg_packet.clone());
-        // Send an ACK instantly
-        if let Some(destination) = msg_packet.routing_header.destination() {
-            if destination != self.metadata.node_id{
-                let nack = self.create_nack_packet_from_receiving_packet(msg_packet.clone(), NackType::UnexpectedRecipient(self.metadata.node_id));
-                self.send(nack);
-                return;
-            } else{
-                let ack_packet = self.create_ack_packet_from_receiving_packet(msg_packet.clone());
-                self.send(ack_packet);
-            }
-        } else{
-            panic!("The fragment has no destination, so the fragment is sent casually");
-        }
-    }
-
     fn get_total_n_fragments(&self, session_id: SessionId) -> Option<u64> {
         self.storage
             .fragment_assembling_buffer
