@@ -84,11 +84,10 @@ impl PacketCreator for ClientChen{
     }
 
     fn create_ack_packet_from_receiving_packet(&mut self, packet: Packet) -> Packet{
-        self.status.session_id +=1 ;
         let hops = packet.routing_header.hops.iter().rev().copied().collect();
         let routing_header= SourceRoutingHeader::initialize(hops);
         let ack_packet = Packet::new_ack(routing_header,
-                                         self.status.session_id,
+                                         packet.session_id,
                                          match packet.clone().pack_type{
                                              PacketType::MsgFragment(fragment)=> fragment.fragment_index,
                                              _=> 0,
@@ -97,7 +96,6 @@ impl PacketCreator for ClientChen{
         ack_packet
     }
     fn create_nack_packet_from_receiving_packet(&mut self, packet: Packet, nack_type: NackType) -> Packet{
-        self.status.session_id += 1;
         let hops = packet.routing_header.hops.iter().rev().copied().collect();
         let routing_header= SourceRoutingHeader::initialize(hops);
         let nack = Nack{
@@ -106,7 +104,7 @@ impl PacketCreator for ClientChen{
                 _=> 0 },
             nack_type,
         };
-        let nack_packet = Packet::new_nack(routing_header, self.status.session_id, nack);
+        let nack_packet = Packet::new_nack(routing_header, packet.session_id, nack);
         nack_packet
     }
     fn get_hops_from_path_trace(&mut self, path_trace: Vec<(NodeId, NodeType)>) -> Vec<NodeId> {

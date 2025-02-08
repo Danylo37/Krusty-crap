@@ -36,12 +36,13 @@ impl Router for ClientChen {
     fn update_routing_for_server(&mut self, destination_id: NodeId, path_trace: Vec<(NodeId, NodeType)>) {
         // Step 1: Extract hops from the path trace
         let hops = self.get_hops_from_path_trace(path_trace);
-        // Step 2: Update the routing table
+        // Step 2: Update the routing table of the route of the server
         self.communication.routing_table.insert(destination_id, hops.clone());
 
         // Step 3: Create a SourceRoutingHeader
         let srh = SourceRoutingHeader::initialize(hops);
-        // Step 4: Update session_id
+
+        // Step 4: Update session_id before sending the query
         self.status.session_id += 1;
         // Step 5: Check server type and send query if necessary
         let should_send_query = {

@@ -31,6 +31,10 @@ impl SimulationControllerMonitoring for SimulationController {
     }
 
     fn run_with_monitoring(&mut self, sender_to_gui: Sender<String>) {
+        // Initiate discovery process for all clients
+        for (_, (sender, _)) in self.command_senders_clients.iter(){
+            sender.send(ClientCommand::StartFlooding).unwrap();
+        }
         ///Reminder: I put here the edge_nodes because I'm assuming the clients and the server must be fixed
         ///created from the network initializer
         let mut edge_nodes = self.command_senders_clients.keys().cloned().collect::<HashSet<NodeId>>();

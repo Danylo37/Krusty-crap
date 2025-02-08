@@ -174,11 +174,6 @@ impl NetworkInitializer {
 
         //Connecting the network
         self.connect_nodes(topology);
-
-        // Initiate discovery process for all clients
-        for (_, (sender, _)) in self.simulation_controller.command_senders_clients.iter(){
-            sender.send(ClientCommand::StartFlooding).unwrap();
-        }
     }
 
     ///DRONES GENERATION
