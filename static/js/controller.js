@@ -44,7 +44,7 @@ function crashDrone(drone) {
     createExplosionGif(drone.x, drone.y, canvas);
     createAirplanes(drone.x, drone.y, canvas);
 
-    sendCrashController(drone);
+    sendCrashController(drone.id);
 
 
     const intervalId = setInterval(() => {
@@ -106,8 +106,18 @@ function createAirplanes(droneX, droneY, canvas){
     }
 }
 
-function sendCrashController(){
-    //Chen crash drone
+function sendCrashController(droneId){
+    if (ws.readyState === WebSocket.OPEN) {
+        const message = {
+            WsCrashDrone: {
+                drone_id: droneId.toString(),
+            }
+        };
+        ws.send(JSON.stringify(message));
+        console.log('Sent:', message);
+    } else {
+        console.error('WebSocket is not open. Unable to send update command.');
+    }
 }
 
 
