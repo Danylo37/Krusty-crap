@@ -127,6 +127,9 @@ impl Monitoring for MediaServer {
                             ServerCommand::ShortcutPacket(packet) => {
                                 self.handle_packet(packet);
                                 self.send_display_data(UpdateSelf);
+                            },
+                            ServerCommand::DroneFixed(_) => {
+                                todo!();
                             }
                         }
                     }

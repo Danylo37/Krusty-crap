@@ -1,5 +1,5 @@
 use crossbeam_channel::{unbounded, Receiver, Sender};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::thread::sleep;
 use std::time::Duration;
 use log::{info, warn};
@@ -15,8 +15,7 @@ use crate::general_use::{ClientCommand, ClientEvent, ClientType,
                          Query,
                          DisplayDataWebBrowser, DisplayDataCommunicationServer, DisplayDataMediaServer,
                          DisplayDataChatClient, DisplayDataTextServer, DisplayDataDrone, DisplayDataSimulationController,
-                         SpecificNodeType,
-                         DroneId};
+                         SpecificNodeType, DroneId, DataScope};
 use crate::websocket::WsCommand;
 use std::collections::hash_map::Entry;
 use rand::Rng;
@@ -286,15 +285,60 @@ impl SimulationController {
         }
     }
 
-    fn fix_drone(&mut self, drone_id: DroneId) {
+    fn does_server_know_drone(&self, server_id: NodeId, drone_id: NodeId) -> bool {
+        self.check_server_type(server_id, ServerType::Communication, drone_id) ||
+            self.check_server_type(server_id, ServerType::Text, drone_id) ||
+            self.check_server_type(server_id, ServerType::Media, drone_id)
+    }
+    fn check_server_type(&self, server_id: NodeId, server_type: ServerType, drone_id: NodeId) -> bool{
+        match server_type{
+            ServerType::Communication => {
+                self.comm_servers_data.get(&server_id).map_or(false, |data| data.connected_node_ids.contains(&drone_id))
+            },
+            ServerType::Text =>{
+                self.text_servers_data.get(&server_id).map_or(false, |data| data.connected_node_ids.contains(&drone_id))
+            },
+            ServerType::Media =>{
+                self.media_servers_data.get(&server_id).map_or(false, |data| data.connected_node_ids.contains(&drone_id))
+            },
+            _=> false,
+        }
+    }
+
+    fn fix_drone(&mut self, drone_id: DroneId, data_scope: Option<DataScope>) {
         let mut rng = rand::thread_rng();
         let new_pdr = rng.gen_range(0.0..=0.1); // Generate random PDR between 0 and 0.1
         self.set_packet_drop_rate(drone_id, new_pdr); // Update the drone's PDR
         info!("Drone {} has been fixed! New PDR: {}", drone_id, new_pdr);
 
-        if let Some((command_sender, _)) = self.command_senders_clients.get(&drone_id){
-            command_sender.send(ClientCommand::DroneFixed(drone_id))
-                .expect("Error sending DroneFixed");
+        // Send DroneFixed command to clients
+        for (client_id, (client_command_sender, _)) in self.command_senders_clients.iter() {
+            if let Some(web_client) = self.web_clients_data.get(&client_id) {
+                if web_client.connected_node_ids.contains(&drone_id) {
+                    if let Err(e) = client_command_sender.send(ClientCommand::DroneFixed(drone_id)) {
+                        warn!("Failed to send DroneFixed to client {}: {:?}", client_id, e);
+                    }
+                }
+            }
+            if let Some(chat_client) = self.chat_clients_data.get(&client_id) {
+                if chat_client.neighbours.contains(&drone_id) {
+                    if let Err(e) = client_command_sender.send(ClientCommand::DroneFixed(drone_id)) {
+                        warn!("Failed to send DroneFixed to client {}: {:?}", client_id, e);
+                    }
+                }
+            }
+        }
+
+        // Send DroneFixed command to servers (only if initiated by server, to avoid infinite loop)
+        if let Some(DataScope::UpdateAll) = data_scope {
+            for (server_id, (server_command_sender, _)) in &self.command_senders_servers {
+                // Use a helper function to check if the server knows the drone.
+                if self.does_server_know_drone(*server_id, drone_id) {
+                    if let Err(e) = server_command_sender.send(ServerCommand::DroneFixed(drone_id)) {
+                        warn!("Failed to send DroneFixed to server {}: {:?}", server_id, e);
+                    }
+                }
+            }
         }
     }
 
@@ -308,7 +352,7 @@ impl SimulationController {
                     self.chat_clients_data.insert(id, data);
                 },
                 ClientEvent::CallTechniciansToFixDrone(drone_id) => {
-                    self.fix_drone(drone_id);
+                    self.fix_drone(drone_id, Some(DataScope::UpdateSelf));
                 },
                 other => {
                     warn!("Unexpected client event: {:?}", other);
@@ -330,7 +374,7 @@ impl SimulationController {
                     self.media_servers_data.insert(id, data);
                 },
                 ServerEvent::CallTechniciansToFixDrone(drone_id) => {
-                    self.fix_drone(drone_id);
+                    self.fix_drone(drone_id, Some(DataScope::UpdateAll));
                 },
                 other => {
                     warn!("Unexpected server event: {:?}", other);
@@ -503,6 +547,11 @@ impl SimulationController {
 It uses the command_senders map to find the appropriate sender channel.
 */
     pub fn request_drone_crash(&mut self, drone_id: NodeId) -> Result<(), String> {
+
+        if self.is_drone_critical(drone_id) {
+            return Err(format!("Cannot crash drone {}: critical for connectivity", drone_id));
+        }
+
         let neighbors = self.state.topology.get(&drone_id).cloned(); // Get drone's neighbors
 
         if let Some(command_sender) = self.command_senders_drones.get(&drone_id) {
@@ -544,6 +593,58 @@ It uses the command_senders map to find the appropriate sender channel.
         self.command_senders_drones.remove(&drone_id);
 
         Ok(())
+    }
+
+    fn is_drone_critical(&self, drone_id: NodeId) -> bool {
+        // Create a copy of the topology without the drone and its connections
+        let mut temp_topology = self.state.topology.clone();
+        temp_topology.remove(&drone_id);
+        for (_, neighbors) in temp_topology.iter_mut() {
+            neighbors.retain(|&n| n != drone_id);
+        }
+
+        // Iterate through all clients and check their reachability to at least one server.
+        for (client_id, _) in &self.command_senders_clients {
+            if !self.check_client_reachability(*client_id, &temp_topology) {
+                return true; // Drone is critical if any client loses all server connections.
+            }
+        }
+        false // Drone is not critical.
+    }
+
+    fn check_client_reachability(&self, client_id: NodeId, topology: &HashMap<NodeId, Vec<NodeId>>) -> bool{
+
+        let mut reachable_servers = HashSet::new();    //To store all reachable servers
+
+        //Check reachability for every server
+        for (server_id, _) in &self.command_senders_servers{
+            if self.is_reachable(client_id, *server_id, topology) {
+                reachable_servers.insert(*server_id);
+            }
+        }
+        !reachable_servers.is_empty()  //Returns true if there is at least one reachable server.
+    }
+
+    fn is_reachable(&self, start_node: NodeId, end_node: NodeId, topology: &HashMap<NodeId, Vec<NodeId>>) -> bool {
+        let mut visited = HashSet::new();
+        let mut queue = VecDeque::new();
+        queue.push_back(start_node);
+
+        while let Some(current_node) = queue.pop_front() {
+            if current_node == end_node {
+                return true;
+            }
+            visited.insert(current_node);
+
+            if let Some(neighbors) = topology.get(&current_node) {
+                for &neighbor in neighbors {
+                    if !visited.contains(&neighbor) {
+                        queue.push_back(neighbor);
+                    }
+                }
+            }
+        }
+        false
     }
 
     pub fn get_list_clients(&self) -> Vec<(ClientType, NodeId)> {

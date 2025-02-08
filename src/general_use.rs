@@ -181,6 +181,9 @@ pub enum ServerCommand {
     RemoveSender(NodeId),
     AddSender(NodeId, Sender<Packet>),
     ShortcutPacket(Packet),
+
+    //drone fixing
+    DroneFixed(NodeId),
 }
 
 ///Server-Controller
