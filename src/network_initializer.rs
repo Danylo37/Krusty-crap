@@ -80,7 +80,7 @@ impl DroneBrand {
             DroneBrand::RustEze,
             DroneBrand::SkyLink,
             DroneBrand::RollingDrones,
-            //DroneBrand::BobryWLucie,
+            DroneBrand::BobryWLucie,
         ]
             .into_iter()
     }
