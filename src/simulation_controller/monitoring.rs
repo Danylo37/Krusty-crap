@@ -167,7 +167,7 @@ impl SimulationController {
     fn handle_ws_command(&mut self, command: WsCommand) {
         match command {
             WsCommand::WsUpdateData => {
-                println!("CONTROLLER RECEIVED NETWORK DATA UPDATE COMMAND");
+                //println!("CONTROLLER RECEIVED NETWORK DATA UPDATE COMMAND");
                 // Update data from the simulation controller
                 let clients: Vec<NodeId> = self.command_senders_clients.keys().cloned().collect();
                 let servers: Vec<NodeId> = self.command_senders_servers.keys().cloned().collect();

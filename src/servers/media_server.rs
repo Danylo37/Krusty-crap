@@ -13,6 +13,7 @@ use wg_2024::{
     network::NodeId,
     packet::Packet,
 };
+use crate::servers::content::{get_media};
 
 type FloodId = u64;
 type SessionId = u64;
@@ -194,42 +195,39 @@ impl MainTrait for MediaServer{
 
 impl CharTrait for MediaServer{
     fn give_media_back(&mut self, client_id: NodeId, reference: String) {
-
         //Get media
-        let media = self.media.get(&reference);
+        println!("media in the server {:?}", self.media);
+        if let Some(media) = self.media.get(&reference).cloned() {
+            //Checking if present
+            let response = Response::Media(media);
 
-        //Checking if present
-        let response: Response;
-        if let Some(media) = media {
-            response = Response::Media(media.clone());
-        }else{
-            response = Response::Err("Media not found".to_string());
+            //Serializing message to send
+            let response_as_string = serde_json::to_string(&response).unwrap();
+            let response_in_vec_bytes = response_as_string.as_bytes();
+            let length_response = response_in_vec_bytes.len();
+
+            //Counting fragments
+            let mut n_fragments = length_response / 128+1;
+            if n_fragments == 0 {
+                n_fragments -= 1;
+            }
+
+            // Finding route
+            let Some(route) = self.find_path_to(client_id) else {
+                error!("Server {}: No route found to the client {}", self.get_id(), client_id);
+                return;
+            };
+
+            //Generating header
+            let header = Self::create_source_routing(route);
+
+            // Generating ids
+            let session_id = self.generate_unique_session_id();
+
+            //Send fragments
+            self.send_fragments(session_id, n_fragments,response_in_vec_bytes, header);
         }
-
-        //Serializing message to send
-        let response_as_string = serde_json::to_string(&response).unwrap();
-        let response_in_vec_bytes = response_as_string.as_bytes();
-        let length_response = response_in_vec_bytes.len();
-
-        //Counting fragments
-        let mut n_fragments = length_response / 128+1;
-        if n_fragments == 0 {
-            n_fragments -= 1;
-        }
-
-        // Finding route
-        let Some(route) = self.find_path_to(client_id) else {
-            error!("Server {}: No route found to the client {}", self.get_id(), client_id);
-            return;
-        };
-
-        //Generating header
-        let header = Self::create_source_routing(route);
-
-        // Generating ids
-        let session_id = self.generate_unique_session_id();
-
-        //Send fragments
-        self.send_fragments(session_id, n_fragments,response_in_vec_bytes, header);
     }
+
+
 }

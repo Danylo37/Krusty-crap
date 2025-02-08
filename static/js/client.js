@@ -687,56 +687,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
-
-function openPopup(fileName) {
-    const popup = document.getElementById("file-popup");
-    const popupTitle = document.getElementById("file-popup-title");
-    const popupFileContent = document.getElementById("file-popup-file-content");
-
-
-    // Get the current server and file content.
-    const currentServer = file_lists[get_server_id_from_current_server_index()];
-    const fileContent = currentServer.files[fileName];
-
-
-    popupTitle.textContent = fileName;
-
-
-    if (fileContent) {
-
-
-        // Determine the file extension.
-        const extension = fileName.split('.').pop().toLowerCase();
-        if (extension === "html") {
-            // Use a regular expression to find all occurrences of #Media[...] in the content.
-            const processedContent = fileContent.replace(/#Media\[(.*?)\]/g, (match, p1) => {
-                const found = media.find(item => item.reference === p1);
-                console.error("not sure if there can be not the reference inside media when fileContent is present");
-                if (found && found.media) {
-                    // Use the already loaded media image.
-                    return `<img src="${found.media}" id="reference-${p1}" alt="Media loaded" />`;
-                } else {
-                    // Otherwise, request the media and show a loading image.
-                    askMedia(p1);
-                    return `<img src="content_objects/reload.png" id="reference-${p1}" alt="Loading..." />`;
-                }
-            });
-            // Insert the processed HTML into the popup.
-            popupFileContent.innerHTML = processedContent;
-        } else {
-            // For other file types, just display the content as text.
-            popupFileContent.textContent = fileContent;
-        }
-    }else{
-        popupFileContent.innerHTML = '';
-        console.log("qua")
-        askFileContent(currentClientId,get_server_id_from_current_server_index(), fileName);
-    }
-
-
-    popup.style.display = "flex";
-}
-
 // FUNCTION TO OPEN POP-UP WITH FILE CONTENT
 function openPopup(fileName) {
     const popup = document.getElementById("file-popup");
@@ -749,23 +699,23 @@ function openPopup(fileName) {
 
     popupTitle.textContent = fileName;
 
-
     if (fileContent) {
-
-
         // Determine the file extension.
         const extension = fileName.split('.').pop().toLowerCase();
         if (extension === "html") {
             // Use a regular expression to find all occurrences of #Media[...] in the content.
             const processedContent = fileContent.replace(/#Media\[(.*?)\]/g, (match, p1) => {
                 const found = media.find(item => item.reference === p1);
-                console.error("not sure if there can be not the reference inside media when fileContent is present");
                 if (found && found.media) {
                     // Use the already loaded media image.
                     return `<img src="${found.media}" id="reference-${p1}" alt="Media loaded" />`;
+                } else if (!requestedMedia.has(p1)) {
+                    // Request the media only if it hasn't been requested yet.
+                    requestedMedia.add(p1); // Mark as requested
+                    askMedia(currentClientId, p1); // Request the media
+                    return `<img src="content_objects/reload.png" id="reference-${p1}" alt="Loading..." />`;
                 } else {
-                    // Otherwise, request the media and show a loading image.
-                    askMedia(p1);
+                    // Media has already been requested but is not yet loaded.
                     return `<img src="content_objects/reload.png" id="reference-${p1}" alt="Loading..." />`;
                 }
             });
@@ -775,15 +725,14 @@ function openPopup(fileName) {
             // For other file types, just display the content as text.
             popupFileContent.textContent = fileContent;
         }
-    }else{
+    } else {
         popupFileContent.innerHTML = '';
-        console.log("qua")
-        askFileContent(currentClientId,get_server_id_from_current_server_index(), fileName);
+        console.log("Requesting file content...");
+        askFileContent(currentClientId, get_server_id_from_current_server_index(), fileName);
     }
 
     popup.style.display = "flex";
 }
-
 
 // Close the Pop-Up
 function closePopup() {
@@ -975,9 +924,15 @@ function updateFile(file_content) {
                 const reference = mediaMatch[1];
                 const found = media.find(item => item.reference === reference);
                 if (found && found.media) {
+                    // Media is already loaded.
                     return `<img src="${found.media}" id="reference-${reference}" alt="Media loaded" />`;
+                } else if (!requestedMedia.has(reference)) {
+                    // Request the media only if it hasn't been requested yet.
+                    requestedMedia.add(reference); // Mark as requested
+                    askMedia(currentClientId, reference); // Request the media
+                    return `<img src="content_objects/reload.png" class="loading_image" id="reference-${reference}" alt="Loading..." />`;
                 } else {
-                    askMedia(reference);
+                    // Media has already been requested but is not yet loaded.
                     return `<img src="content_objects/reload.png" class="loading_image" id="reference-${reference}" alt="Loading..." />`;
                 }
             } else {
@@ -993,20 +948,21 @@ function updateFile(file_content) {
 
 function updateMedia(mediaRef) {
     // mediaRef is expected to be an array: [reference, base64ImageString]
-
-
-    console.log(mediaRef);
-    console.log(mediaRef[0]);
-    console.log(mediaRef[1]);
-
     const reference = mediaRef[0];
     const base64Image = mediaRef[1];
 
+    // Add the media to the media array.
+    const existingMedia = media.find(item => item.reference === reference);
+    if (!existingMedia) {
+        media.push({ reference, media: base64Image });
+    } else {
+        existingMedia.media = base64Image;
+    }
 
     // Find the image element with the corresponding id.
     const imgElem = document.getElementById("reference-" + reference);
     if (imgElem) {
-        imgElem.src = base64Image;
+        imgElem.src = base64Image; // Update the image source
     } else {
         console.warn("No element found with id:", "reference-" + reference);
     }
