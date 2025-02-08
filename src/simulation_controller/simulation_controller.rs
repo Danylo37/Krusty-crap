@@ -2,7 +2,7 @@ use crossbeam_channel::{unbounded, Receiver, Sender};
 use std::collections::{HashMap, HashSet};
 use std::thread::sleep;
 use std::time::Duration;
-use log::warn;
+use log::{info, warn};
 use serde::Serialize;
 use wg_2024::{
     controller::{DroneCommand, DroneEvent},
@@ -15,10 +15,11 @@ use crate::general_use::{ClientCommand, ClientEvent, ClientType,
                          Query,
                          DisplayDataWebBrowser, DisplayDataCommunicationServer, DisplayDataMediaServer,
                          DisplayDataChatClient, DisplayDataTextServer, DisplayDataDrone, DisplayDataSimulationController,
-                         SpecificNodeType};
+                         SpecificNodeType,
+                         DroneId};
 use crate::websocket::WsCommand;
 use std::collections::hash_map::Entry;
-
+use rand::Rng;
 use crate::ui_traits::SimulationControllerMonitoring;
 
 pub struct SimulationState {
@@ -285,6 +286,18 @@ impl SimulationController {
         }
     }
 
+    fn fix_drone(&mut self, drone_id: DroneId) {
+        let mut rng = rand::thread_rng();
+        let new_pdr = rng.gen_range(0.0..=0.1); // Generate random PDR between 0 and 0.1
+        self.set_packet_drop_rate(drone_id, new_pdr); // Update the drone's PDR
+        info!("Drone {} has been fixed! New PDR: {}", drone_id, new_pdr);
+
+        if let Some(command_sender) = self.command_senders_clients.get(&drone_id){
+            command_sender.send(ClientCommand::DroneFixed(drone_id))
+                .expect("Error sending DroneFixed");
+        }
+    }
+
     fn process_client_events(&mut self){
         while let Ok(event) = self.client_event_receiver.try_recv(){
             match event {
@@ -293,6 +306,9 @@ impl SimulationController {
                 },
                 ClientEvent::ChatClientData(id, data, data_scope) => {
                     self.chat_clients_data.insert(id, data);
+                },
+                ClientEvent::CallTechniciansToFixDrone(drone_id) => {
+                    self.fix_drone(drone_id);
                 },
                 other => {
                     warn!("Unexpected client event: {:?}", other);
@@ -312,6 +328,9 @@ impl SimulationController {
                 },
                 ServerEvent::MediaServerData(id, data, data_scope) =>{
                     self.media_servers_data.insert(id, data);
+                },
+                ServerEvent::CallTechniciansToFixDrone(drone_id) => {
+                    self.fix_drone(drone_id);
                 },
                 other => {
                     warn!("Unexpected server event: {:?}", other);
