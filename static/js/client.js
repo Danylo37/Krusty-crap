@@ -44,6 +44,9 @@ function openChat(chatName, clientId) {
         if (chatItem.dataset.history) {
             const history = JSON.parse(chatItem.dataset.history);
             updateChatWindow(history);
+        } else {
+            // Optionally display a placeholder if no history exists.
+            chatMessages.innerHTML = `<div style="text-align:center; padding:20px;">No messages yet.</div>`;
         }
     }
 }
@@ -943,6 +946,8 @@ function updateMedia(mediaRef) {
     // mediaRef is expected to be an array: [reference, base64ImageString]
     const reference = mediaRef[0];
     const base64Image = mediaRef[1];
+
+    console.log(mediaRef)
 
     // Add the media to the media array.
     const existingMedia = media.find(item => item.reference === reference);
