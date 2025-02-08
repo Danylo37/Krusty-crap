@@ -292,7 +292,7 @@ impl SimulationController {
         self.set_packet_drop_rate(drone_id, new_pdr); // Update the drone's PDR
         info!("Drone {} has been fixed! New PDR: {}", drone_id, new_pdr);
 
-        if let Some(command_sender) = self.command_senders_clients.get(&drone_id){
+        if let Some((command_sender, _)) = self.command_senders_clients.get(&drone_id){
             command_sender.send(ClientCommand::DroneFixed(drone_id))
                 .expect("Error sending DroneFixed");
         }
