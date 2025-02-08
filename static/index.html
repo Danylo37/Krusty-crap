@@ -388,7 +388,7 @@
         <!-- Logout Button -->
 
 
-        <div class="flex-center-all" style="height:100%">
+        <div class="flex-center-all" style="flex: 1; height: 20%">
             <!-- Sidebar for Chats -->
             <div id="chat-sidebar" style="width: 30%; display: flex; flex-direction: column;">
                 <div id="sidebar-header">
@@ -662,6 +662,8 @@
 
     function chooseClient(nodeId) {
         currentClientId = nodeId;
+        document.querySelector('.whatsapp-title').textContent = `WhatsApp - Current Client Id: ${currentClientId}`;
+
         console.log(`Client chosen: Node ${nodeId}`);
 
         // Find the panel corresponding to the selected nodeId
@@ -905,12 +907,15 @@
                             // For other node types (like servers), we assume they go in the servers container.
                             container = document.getElementById("servers-container");
                         }
+                        //Destructing data in more easy to use data
+                        const { node_id, ...fields } = parsedData;
+
                         // Locate the panel for this node_id:
-                        const panel = container.querySelector(`.panel[data-node-id="${parsedData.node_id}"]`);
+                        const panel = container.querySelector(`.panel[data-node-id="${node_id}"]`);
                         if (panel) {
                             // If the panel exists, update its inner content.
                             // Assume the new fields are contained in parsedData.fields.
-                            updatePanelContent(panel, parsedData.fields);
+                            updatePanelContent(panel, fields);
                         } else {
                             // If no panel is found, you might choose to create it:
                             // const newPanel = createPanel(parsedData.node_id, parsedData.node_type, parsedData.fields);
@@ -1118,6 +1123,7 @@
 
             // Display all fields
             const fieldsContainer = document.createElement("div");
+            fieldsContainer.className=
             Object.entries(fields).forEach(([key, value]) => {
                 const field = document.createElement("p");
                 field.style= "overflow-wrap: break-word";
