@@ -208,21 +208,31 @@ function confirmSelection() {
     }
 
 
+    createChatItem(selectedReceiver);
+
+    // Optionally, open the new chat immediately
+    openChat(selectedReceiver, selectedReceiver);
+
+    // Close the chat pop-up
+    closeChatPopup();
+}
+
+function createChatItem(clientId){
     // Create a new chat item in the chat list (sidebar)
     const chatList = document.getElementById('chat-list');
     const chatItem = document.createElement('div');
     chatItem.className = 'chat-item';
-    chatItem.dataset.id = selectedReceiver; // assign the data-id attribute
+    chatItem.dataset.id = clientId; // assign the data-id attribute
 
 
     // Include both the chat name and the update dot
-    chatItem.innerHTML = `<span class="chat-name">${selectedReceiver}</span>
+    chatItem.innerHTML = `<span class="chat-name">${clientId}</span>
                          <span class="update-dot" style="display: none;"></span>`;
 
 
     // Set the onclick handler to open the chat and remove the notification dot
     chatItem.onclick = () => {
-        openChat(selectedReceiver, selectedReceiver);
+        openChat(clientId, clientId);
         // Remove the update dot when the chat is selected:
         const dot = chatItem.querySelector('.update-dot');
         if (dot) dot.style.display = 'none';
@@ -230,14 +240,6 @@ function confirmSelection() {
 
 
     chatList.appendChild(chatItem);
-
-
-    // Optionally, open the new chat immediately
-    openChat(selectedReceiver, selectedReceiver);
-
-
-    // Close the chat pop-up
-    closeChatPopup();
 }
 
 
@@ -430,7 +432,17 @@ function updateChats(ChatHistory) {
     // Find the chat items that changed.
     for (const clientId in ChatHistory){
         const newHistory = ChatHistory[clientId];
-        if (JSON.stringify(newHistory) !== JSON.stringify(old_histories[clientId])){
+        if (!old_histories[clientId]){
+            createChatItem(clientId)
+            const chatItem = document.querySelector(`.chat-item[data-id="${clientId}"]`);
+            const updateDot = chatItem.querySelector('.update-dot');
+            if (updateDot) {
+                updateDot.style.display = 'inline-block';
+            }
+        }
+        console.log(JSON.stringify(newHistory))
+        console.log(old_histories[clientId])
+        if (JSON.stringify(newHistory) !== old_histories[clientId]){
             const chatItem = document.querySelector(`.chat-item[data-id="${clientId}"]`);
             chatItem.dataset.history = JSON.stringify(newHistory);
 
