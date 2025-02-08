@@ -86,7 +86,7 @@ impl SimulationControllerMonitoring for SimulationController {
                             _ =>{}
                         }
                         if self.updating_nodes.is_empty() && conditional_data_scope == DataScope::UpdateAll {
-                            self.send_display_data(sender_to_gui.clone(), DataScope::UpdateAll);
+                            self.send_display_data(sender_to_gui.clone());
                             self.updating_nodes = edge_nodes.clone();
                             //eprintln!("updating_node: {:?}", self.updating_nodes);
                         }
@@ -153,7 +153,7 @@ impl SimulationControllerMonitoring for SimulationController {
                         }
 
                         if self.updating_nodes.is_empty() && conditional_data_scope == DataScope::UpdateAll {
-                            self.send_display_data(sender_to_gui.clone(), DataScope::UpdateAll);
+                            self.send_display_data(sender_to_gui.clone());
                             self.updating_nodes = edge_nodes.clone();
                             //eprintln!("updating_node: {:?}", self.updating_nodes);
                         }
