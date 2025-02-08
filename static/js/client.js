@@ -20,11 +20,13 @@ function openChat(chatName, clientId) {
     // Remove the update dot from the clicked chat item and mark it as active.
     const chatItem = document.querySelector(`.chat-item[data-id="${clientId}"]`);
     if (chatItem) {
+        console.log("updatingChat")
         const chatMessages = document.getElementById('chat-messages');
-        chatMessages.style.background = 'url("content_objects/whatsapp_bg.jpg")';
-        chatMessages.style.backgroundSize = 'cover';
-        chatMessages.style.backgroundPosition = 'center';
-
+        if (chatMessages.style.background != 'url("content_objects/whatsapp_bg.jpg")'){
+            chatMessages.style.background = 'url("content_objects/whatsapp_bg.jpg")';
+            chatMessages.style.backgroundSize = 'cover';
+            chatMessages.style.backgroundPosition = 'center';
+        }
 
         // Hide the update dot.
         const updateDot = chatItem.querySelector('.update-dot');
@@ -143,10 +145,10 @@ function createNewChat() {
         const existingChats = Array.from(document.getElementById('chat-list').children)
             .map(item => item.dataset.id);
 
-
+        console.log(existingChats)
         if (Array.isArray(phonebooks[serverId])) {
             phonebooks[serverId].forEach((receiver) => {
-                if (existingChats.includes(receiver)) {
+                if (existingChats.includes(receiver.toString())) {
                     // Skip if a chat with this receiver already exists
                     return;
                 }
@@ -305,10 +307,11 @@ function askListRegisteredClientsToServer(clientId, serverId){
 
 
 function sendMessage() {
+    console.log("message sent html")
     const messageInput = document.getElementById('message-input');
     const chatMessages = document.getElementById('chat-messages');
     const messageText = messageInput.value.trim();
-
+    const activeChatItem = document.querySelector('.chat-item.active');
 
     if (!messageText) {
         alert("Insert something in input");
@@ -334,7 +337,6 @@ function sendMessage() {
 
 
     // Update the history of the active chat.
-    const activeChatItem = document.querySelector('.chat-item.active');
     if (activeChatItem) {
         // Read the current history or start with an empty array.
         let history = [];
@@ -416,6 +418,8 @@ function updateChatReceivers(HashListReceivers){
 
 
 function updateChats(clientId, ChatHistory) {
+    console.log("updating chats, chatHistory: ");
+    console.log(ChatHistory)
     // Find the chat item with data-id equal to clientId.
     const chatItem = document.querySelector(`.chat-item[data-id="${clientId}"]`);
     if (!chatItem) {
@@ -450,17 +454,27 @@ function updateChats(clientId, ChatHistory) {
 
 
 function updateChatWindow(history) {
+    console.log("ciao")
     const chatMessages = document.getElementById('chat-messages');
     chatMessages.innerHTML = ""; // Clear current messages
 
-
     history.forEach(msg => {
+        let speaker, message;
+        if (Array.isArray(msg)) {
+            // If msg is an array, assume the first element is the speaker and the second is the message.
+            speaker = msg[0];
+            message = msg[1];
+        } else {
+            // Otherwise, assume it's an object.
+            speaker = msg.Speaker;
+            message = msg.Message;
+        }
         const messageDiv = document.createElement('div');
-        // Choose the class based on who the speaker is.
-        messageDiv.className = (msg.Speaker === "Me") ? "message sent" : "message received";
-        messageDiv.textContent = msg.Message;
+        messageDiv.className = (speaker === "Me") ? "message sent" : "message received";
+        messageDiv.textContent = message;
         chatMessages.appendChild(messageDiv);
     });
+
     // Scroll to the bottom of the chat messages container.
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
