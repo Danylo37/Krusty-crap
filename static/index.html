@@ -23,6 +23,18 @@
             overflow: hidden;
         }
 
+        img {
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
+            user-select: none;
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
+
 
         /* PRE-DONE CLASSes */
 
@@ -34,6 +46,13 @@
 
         .rounded{
             border-radius: 0.25rem;
+        }
+
+        .select-user-none{
+            user-select: none;
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
         }
 
 
@@ -333,10 +352,10 @@
         <!-- Drone Details Side Tab -->
         <div id="drone-details" class="side-tab" style="display: none;">
             <div class="side-tab-header">
-                <h2 id="drone-title">Drone Details</h2>
+                <h2 id="drone-title" class="select-user-none">Drone Details</h2>
                 <button id="close-drone-details" onclick="hideDroneDetails()">×</button>
             </div>
-            <div id="drone-info">
+            <div id="drone-info" class="select-user-none">
                 <p><strong>ID:</strong> <span id="drone-id"></span></p>
                 <p><strong>Type:</strong> <span id="drone-type"></span></p>
                 <p><strong>Coordinates:</strong> <span id="drone-coordinates"></span></p>
@@ -350,19 +369,22 @@
 
         <div class="dropdown">
             <button onclick="toggleDropdown()">Menu</button>
-            <div class="dropdown-content" id="dropdown-menu">
-                <button onclick="toggleTopologyAppearance()">
-                    <p> Appearance - 1 </p>
+            <div class="dropdown-content select-user-none" id="dropdown-menu">
+                <button onclick="toggleTopologyAppearanceButton()">
+                    <p> Appearance <b>-</b> </p>
                     <img src="content_objects/preview_circle_form.png" alt="prev_circle" id="img_appearance">
                 </button>
-                <button onclick="toggleTopologyLayout()">Select</button>
+                <button onclick="toggleTopologyLayout()">
+                    <p> Layout <b>-</b> </p>
+                    <img src="content_objects/decagram_layout.png" alt="prev_circle" id="img_layout">
+                </button>
                 <button class="confirm-button" onclick="confirmSelection()" style="display: none;">Confirm</button>
                 <button class="back-button" onclick="goBackToAllNodes()" style="display: none;">Back</button>
             </div>
         </div>
         <svg id="network-canvas"></svg>
 
-        <div id="instructions-container">
+        <div id="instructions-container" class="select-user-none">
             <div class="instruction">
                 <img src="content_objects/move-arrows.png" alt="Move the mouse" class="instruction-icon" />
                 <span>Move the mouse</span>
@@ -1142,6 +1164,13 @@
             }
             canvas.appendChild(circle);
         });
+
+        console.log(topologyImagesToggled)
+        if (topologyImagesToggled !== false){
+            topologyImagesToggled = !topologyImagesToggled
+            toggleTopologyAppearance()
+            topologyImagesToggled = !topologyImagesToggled
+        }
     }
 
     function createTopologyGrid(topologyData) {
@@ -1209,6 +1238,7 @@
             circle.setAttribute("cy", node.y);
             circle.setAttribute("r", 15);
             circle.classList.add("node", node.type);
+            circle.dataset.nodeId = node.id;
             // For a drone, use a special click handler; otherwise a generic one.
             if (node.type === "Drone") {
                 circle.addEventListener("click", () => showDroneDetails(node));
@@ -1217,6 +1247,15 @@
             }
             canvas.appendChild(circle);
         });
+
+        console.log(topologyImagesToggled)
+        console.log(topologyImagesToggled !== false)
+        if (topologyImagesToggled !== false){
+            topologyImagesToggled = !topologyImagesToggled
+            toggleTopologyAppearance()
+            topologyImagesToggled = !topologyImagesToggled
+        }
+
     }
 
 
