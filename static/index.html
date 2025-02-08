@@ -895,52 +895,39 @@
 
                 case "controller":
                     console.log(parsedData);
-                    // Handle updates for individual nodes
                     if (parsedData.hasOwnProperty("node_type")) {
-                        if (parsedData.node_type === "Web Browser" || parsedData.node_type === "Chat Client"){
-
-                        }else if (parsedData.node_type === "Drone"){
-
-                        }else{
-
+                        let container;
+                        if (parsedData.node_type === "WebBrowser" || parsedData.node_type === "ChatClient") {
+                            container = document.getElementById("clients-container");
+                        } else if (parsedData.node_type === "Drone") {
+                            container = document.getElementById("drones-container");
+                        } else {
+                            // For other node types (like servers), we assume they go in the servers container.
+                            container = document.getElementById("servers-container");
                         }
-                        console.log("Processing node update for controller...");
-                        switch (parsedData.node_type) {
-                            case "Web Browser":
-                                console.log("Updating Web Browser section...");
-                                // Add logic to update the Web Browser section
-                                break;
-                            case "Chat Client":
-                                console.log("Updating Chat Client section...");
-                                // Add logic to update the Chat Client section
-                                break;
-                            case "Communication Server":
-                                console.log("Updating Communication Server section...");
-                                // Add logic to update the Communication Server section
-                                break;
-                            case "Media Server":
-                                console.log("Updating Media Server section...");
-                                // Add logic to update the Media Server section
-                                break;
-                            case "Text Server":
-                                console.log("Updating Text Server section...");
-                                // Add logic to update the Text Server section
-                                break;
-                            default:
-                                console.warn(`Unknown node type: ${parsedData.node_type}`);
-                                break;
+                        // Locate the panel for this node_id:
+                        const panel = container.querySelector(`.panel[data-node-id="${parsedData.node_id}"]`);
+                        if (panel) {
+                            // If the panel exists, update its inner content.
+                            // Assume the new fields are contained in parsedData.fields.
+                            updatePanelContent(panel, parsedData.fields);
+                        } else {
+                            // If no panel is found, you might choose to create it:
+                            // const newPanel = createPanel(parsedData.node_id, parsedData.node_type, parsedData.fields);
+                            // container.appendChild(newPanel);
                         }
                     } else {
                         console.warn("Discarded data without 'node_type' for controller role.");
                     }
                     break;
 
+
                 case "chat_client":
 
                     if (parsedData.hasOwnProperty("chats")){
                         console.log(parsedData.available_clients)
                         if (parsedData.node_id == currentClientId){
-                            updateChats(parsedData.node_id, parsedData.chats);
+                            updateChats(parsedData.chats);
                             updateChatReceivers(parsedData.available_clients);
                         }
                     }else{
@@ -1191,10 +1178,6 @@
 
         console.log("Monitoring sections updated!");
     }
-    function updateNode(){
-
-    }
-
 
 
 
