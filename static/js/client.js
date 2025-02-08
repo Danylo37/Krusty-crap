@@ -400,21 +400,30 @@ function updateChatReceivers(HashListReceivers){
             // Clear existing options.
             listBox.innerHTML = "";
 
-
-            // Create and append the default "Not Choosed" option.
             const defaultOption = document.createElement('option');
             defaultOption.value = '';
             defaultOption.textContent = 'Not Choosed';
             listBox.appendChild(defaultOption);
 
+            // Gather existing chats (assuming each chat item’s text is the receiver id)
+            const existingChats = Array.from(document.getElementById('chat-list').children)
+                .map(item => item.dataset.id);
 
-            // Populate options with each receiver from listReceivers.
-            listReceivers.forEach(receiver => {
-                const option = document.createElement('option');
-                option.value = receiver;
-                option.textContent = receiver;
-                listBox.appendChild(option);
-            });
+            console.log(existingChats)
+            if (Array.isArray(phonebooks[serverId])) {
+                phonebooks[serverId].forEach((receiver) => {
+                    if (existingChats.includes(receiver.toString())) {
+                        // Skip if a chat with this receiver already exists
+                        return;
+                    }
+                    const option = document.createElement('option');
+                    option.value = receiver;
+                    option.textContent = receiver;
+                    listBox.appendChild(option);
+                });
+            } else {
+                console.error("Expected an array for phonebooks[" + serverId + "], but got", phonebooks[serverId]);
+            }
         }
     }
 }
@@ -706,6 +715,7 @@ function openPopup(fileName) {
     const fileContent = currentServer.files[fileName];
 
     popupTitle.textContent = fileName;
+    popupFileContent.innerHTML = '';
 
     if (fileContent) {
         // Determine the file extension.
