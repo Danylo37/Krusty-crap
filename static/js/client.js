@@ -33,6 +33,7 @@ function openChat(chatName, clientId) {
         if (updateDot) {
             updateDot.style.display = 'none';
         }
+
         // Remove 'active' class from any other chat items.
         document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
         // Mark this chat as active.
@@ -417,7 +418,7 @@ function updateChatReceivers(HashListReceivers){
 }
 
 
-function updateChats(clientId, ChatHistory) {
+function updateChats(ChatHistory) {
     console.log("updating chats, chatHistory: ");
     console.log(ChatHistory)
     // Find the chat item with data-id equal to clientId.
@@ -437,16 +438,15 @@ function updateChats(clientId, ChatHistory) {
         // Save the new history in the element's dataset.
         chatItem.dataset.history = JSON.stringify(newHistory);
 
-
-        // Check if this chat item is active (has class "active").
-        if (chatItem.classList.contains('active')) {
-            // If active, update the chat window immediately.
-            updateChatWindow(newHistory);
-        } else {
-            // If not active, show the update dot.
-            const updateDot = chatItem.querySelector('.update-dot');
-            if (updateDot) {
-                updateDot.style.display = 'inline-block';
+            if (chatItem.classList.contains('active')) {
+                // If active, update the chat window immediately.
+                updateChatWindow(newHistory);
+            } else {
+                // If not active, show the update dot.
+                const updateDot = chatItem.querySelector('.update-dot');
+                if (updateDot) {
+                    updateDot.style.display = 'inline-block';
+                }
             }
         }
     }
@@ -950,6 +950,8 @@ function updateMedia(mediaRef) {
     // mediaRef is expected to be an array: [reference, base64ImageString]
     const reference = mediaRef[0];
     const base64Image = mediaRef[1];
+
+    console.log(mediaRef)
 
     // Add the media to the media array.
     const existingMedia = media.find(item => item.reference === reference);
