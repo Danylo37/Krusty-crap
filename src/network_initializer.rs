@@ -70,16 +70,16 @@ impl DroneBrand {
     // Returns an iterator over all variants of DroneBrand
     pub fn iter() -> impl Iterator<Item = DroneBrand> {
         [
-            //DroneBrand::KrustyDrone,
+            // DroneBrand::KrustyDrone,
             DroneBrand::RustyDrone,
-            //DroneBrand::Rustable,
+            DroneBrand::Rustable,
             DroneBrand::BagelBomber,
             DroneBrand::RustAndFurious,
             DroneBrand::Fungi,
-            //DroneBrand::RustBusters,
+            DroneBrand::RustBusters,
             DroneBrand::RustEze,
             DroneBrand::SkyLink,
-            //DroneBrand::RollingDrones,
+            DroneBrand::RollingDrones,
             //DroneBrand::BobryWLucie,
         ]
             .into_iter()
@@ -245,7 +245,7 @@ impl NetworkInitializer {
                         pdr: drone_params.5,
                     });
                 },
-                /*DroneBrand::RustBusters => {
+                DroneBrand::RustBusters => {
                     self.create_and_spawn_drone::<RustBustersDrone>(drone_params.clone());
                     self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone{
                         node_id: drone_params.0,
@@ -254,7 +254,7 @@ impl NetworkInitializer {
                         connected_nodes_ids: Vec::new(),
                         pdr: drone_params.5,
                     });
-                },*/
+                },
                 DroneBrand::RustEze => {
                     self.create_and_spawn_drone::<RustezeDrone>(drone_params.clone());
                     self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone {
