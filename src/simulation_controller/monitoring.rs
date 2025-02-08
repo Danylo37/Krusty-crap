@@ -12,7 +12,7 @@ use crate::general_use::{ClientCommand, ClientEvent, ClientType, DataScope, Disp
 use crate::network_initializer::DroneBrand;
 
 impl SimulationControllerMonitoring for SimulationController {
-    fn send_display_data(&mut self, sender_to_gui: Sender<String>, data_scope: DataScope) {
+    fn send_display_data(&mut self, sender_to_gui: Sender<String>) {
         let topology_with_types = self.create_topology_with_types();
 
         let display_data = DisplayDataSimulationController{
