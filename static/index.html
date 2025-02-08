@@ -682,7 +682,7 @@
         if (nodeType === 'Chat Client') {
             //Set role & change Icon
             current_role_chosen = roles_vector[2];
-            changeIconSite("content_objects/controller_icon.png")
+            changeIconSite("content_objects/whatsapp_logo.png")
 
 
             // Add placeholder image and text in chat messages
@@ -706,7 +706,7 @@
         } else {
             //Set role & change Icon
             current_role_chosen = roles_vector[3];
-            changeIconSite("content_objects/controller_icon.png")
+            changeIconSite("content_objects/chrome_logo.png")
 
             communicationUI.style.display = 'none';
             contentUI.style.display = 'flex';
@@ -738,6 +738,8 @@
             }
         }
 
+        console.log(history)
+
         // Clear the existing chat list.
         const chatList = document.getElementById('chat-list');
         chatList.innerHTML = "";
@@ -747,6 +749,8 @@
             const chatItem = document.createElement('div');
             chatItem.className = 'chat-item';
             chatItem.dataset.id = partnerId;
+            chatItem.dataset.history = JSON.stringify(history[partnerId]);
+
             // Use the partnerId as the chat name (or look it up if you have a mapping).
             chatItem.innerHTML = `<span class="chat-name">${partnerId}</span><span class="update-dot" style="display: none;"></span>`;
 
@@ -932,9 +936,13 @@
                     break;
 
                 case "chat_client":
+
                     if (parsedData.hasOwnProperty("chats")){
-                        updateChats(parsedData.node_id, parsedData.chats);
-                        updateChatReceivers(parsedData.available_clients);
+                        console.log(parsedData.available_clients)
+                        if (parsedData.node_id == currentClientId){
+                            updateChats(parsedData.node_id, parsedData.chats);
+                            updateChatReceivers(parsedData.available_clients);
+                        }
                     }else{
                         console.warn("Discarded not chat Client.");
                     }
@@ -1145,6 +1153,7 @@
         Object.entries(data.chat_clients_data).forEach(([nodeId, fields]) => {
             const panel = createPanel(nodeId, "Chat Client", fields);
             panel.dataset.history = JSON.stringify(fields.chats);
+            console.log(panel.dataset.history)
             panel.dataset.hash_list_receivers = JSON.stringify(fields.available_clients)
             clientsContainer.appendChild(panel);
         });
