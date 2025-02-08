@@ -11,7 +11,7 @@
 
         /* GENERAL CSS */
 
-        html, body, #controller-view, #monitoring-container {
+        html, body, #controller-view, #monitoring-container, #client-view{
             margin: 0;
             padding: 0;
             height: 100%; /* Ensure the body fits within the viewport */
@@ -328,11 +328,34 @@
 
     <!-- Clients Display -->
     <div id="network-container">
+
+
+        <!-- Drone Details Side Tab -->
+        <div id="drone-details" class="side-tab" style="display: none;">
+            <div class="side-tab-header">
+                <h2 id="drone-title">Drone Details</h2>
+                <button id="close-drone-details" onclick="hideDroneDetails()">×</button>
+            </div>
+            <div id="drone-info">
+                <p><strong>ID:</strong> <span id="drone-id"></span></p>
+                <p><strong>Type:</strong> <span id="drone-type"></span></p>
+                <p><strong>Coordinates:</strong> <span id="drone-coordinates"></span></p>
+                <!-- Other fields can be added here -->
+            </div>
+            <div class="side-tab-footer">
+                <button id="crash-btn">Crash Drone</button>
+            </div>
+        </div>
+
+
         <div class="dropdown">
             <button onclick="toggleDropdown()">Menu</button>
             <div class="dropdown-content" id="dropdown-menu">
-                <button onclick="orderPanelsByNodeId()">Ordering</button>
-                <button onclick="toggleSelectionMode()">Select</button>
+                <button onclick="toggleTopologyAppearance()">
+                    <p> Appearance - 1 </p>
+                    <img src="content_objects/preview_circle_form.png" alt="prev_circle" id="img_appearance">
+                </button>
+                <button onclick="toggleTopologyLayout()">Select</button>
                 <button class="confirm-button" onclick="confirmSelection()" style="display: none;">Confirm</button>
                 <button class="back-button" onclick="goBackToAllNodes()" style="display: none;">Back</button>
             </div>
@@ -359,9 +382,9 @@
         </div>
 
         <!-- Sections -->
-        <div id="clients-container" class="section" style="display: block;"></div>
-        <div id="servers-container" class="section" style="display: none;"></div>
-        <div id="drones-container" class="section" style="display: none;"></div>
+        <div id="clients-container" class="section active"></div>
+        <div id="servers-container" class="section"></div>
+        <div id="drones-container" class="section"></div>
 
         <!-- Filters on the right -->
         <div id="filters">
@@ -886,21 +909,27 @@
 
             const text = event.data; // Removed unnecessary `await`
             const parsedData = JSON.parse(text);
-            console.log(parsedData)
             switch (current_role_chosen) {
                 case "undefined":
                     // Handle only data with "data_title" field
                     if (parsedData.hasOwnProperty("data_title")) {
                         console.log("Processing full dataset for undefined role...");
                         createMonitoringSections(parsedData);
-                        createTopology(parsedData.topology);
+
+                        if (parsedData.topology) {
+                            globalTopologyData = parsedData.topology;
+                            // Draw the default circle layout:
+                            currentLayout = "circle";
+                            createTopology(globalTopologyData);
+                        }else{
+                            console.error("Fuck topology")
+                        }
                     } else {
                         console.log("Discarded data without 'data_title' for undefined role.");
                     }
                     break;
 
                 case "controller":
-                    console.log(parsedData);
                     if (parsedData.hasOwnProperty("node_type")) {
                         let container;
                         if (parsedData.node_type === "WebBrowser" || parsedData.node_type === "ChatClient") {
@@ -934,7 +963,6 @@
                 case "chat_client":
 
                     if (parsedData.hasOwnProperty("chats")){
-                        console.log(parsedData.available_clients)
                         if (parsedData.node_id == currentClientId){
                             updateChats(parsedData.chats);
                             updateChatReceivers(parsedData.available_clients);
@@ -1037,6 +1065,7 @@
 
      */
 
+    let globalTopologyData = {}; // Will hold the latest topology data from the server
     function createTopology(topologyData) {
         // Clear any previous data
         drawn_nodes.length = 0;
@@ -1053,15 +1082,22 @@
 
         // Position each node on a circle.
         nodeIds.forEach((nodeId, i) => {
+            // Expect each value to be a tuple: [targetNodes, specificNodeType]
+            const data = topologyData[nodeId];
+            const targetNodes = data[0]; // not used for positioning but later for connections
+            const specificType = data[1]; // e.g., "ChatClient", "Drone", etc.
+
             const angle = (2 * Math.PI * i) / totalNodes;
             const x = centerX + radius * Math.cos(angle);
             const y = centerY + radius * Math.sin(angle);
-            // For simplicity, set type to "node" (or you can decide based on nodeId)
-            drawn_nodes.push({ id: nodeId, type: "node", x: x, y: y });
+
+            // Use the specific type provided by the server
+            drawn_nodes.push({ id: nodeId, type: specificType, x: x, y: y });
         });
 
-        // Build connections from topologyData.
-        for (const [nodeId, targetNodes] of Object.entries(topologyData)) {
+        // Build connections using the targetNodes from each node's data.
+        for (const [nodeId, data] of Object.entries(topologyData)) {
+            const targetNodes = data[0]; // an array of node IDs
             targetNodes.forEach(targetId => {
                 connections.push({ from: nodeId, to: targetId });
             });
@@ -1074,7 +1110,6 @@
             canvas.removeChild(canvas.firstChild);
         }
 
-        // Draw connections (lines).
         connections.forEach(conn => {
             const fromNode = drawn_nodes.find(n => n.id == conn.from);
             const toNode = drawn_nodes.find(n => n.id == conn.to);
@@ -1085,22 +1120,117 @@
                 line.setAttribute("x2", toNode.x);
                 line.setAttribute("y2", toNode.y);
                 line.classList.add("connection");
+                // Add data attributes for easy identification later.
+                line.dataset.from = conn.from;
+                line.dataset.to = conn.to;
                 canvas.appendChild(line);
             }
         });
 
-        // Draw nodes (circles).
         drawn_nodes.forEach(node => {
             const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             circle.setAttribute("cx", node.x);
             circle.setAttribute("cy", node.y);
             circle.setAttribute("r", 15);
-            console.log(node.type)
             circle.classList.add("node", node.type);
-            circle.addEventListener("click", () => alert(`Node: ${node.id}`));
+            circle.dataset.nodeId = node.id;
+            // If the node is a Drone, set up a custom click handler.
+            if (node.type === "Drone") {
+                circle.addEventListener("click", () => showDroneDetails(node));
+            } else {
+                circle.addEventListener("click", () => alert(`Node: ${node.id}`));
+            }
             canvas.appendChild(circle);
         });
     }
+
+    function createTopologyGrid(topologyData) {
+        // Clear any previous data
+        drawn_nodes.length = 0;
+        connections.length = 0;
+
+        const nodeIds = Object.keys(topologyData);
+        const totalNodes = nodeIds.length;
+
+        // Grid layout parameters:
+        const margin = 100;
+        const cellWidth = 100;
+        const cellHeight = 100;
+        const cols = Math.ceil(Math.sqrt(totalNodes));
+
+        // Position each node in a grid.
+        nodeIds.forEach((nodeId, i) => {
+            const data = topologyData[nodeId];
+            const targetNodes = data[0];
+            const specificType = data[1]; // e.g., "ChatClient", "Drone", etc.
+
+            const col = i % cols;
+            const row = Math.floor(i / cols);
+            const x = margin + col * cellWidth;
+            const y = margin + row * cellHeight;
+
+            drawn_nodes.push({ id: nodeId, type: specificType, x: x, y: y });
+        });
+
+        // Build connections (same as before)
+        for (const [nodeId, data] of Object.entries(topologyData)) {
+            const targetNodes = data[0];
+            targetNodes.forEach(targetId => {
+                connections.push({ from: nodeId, to: targetId });
+            });
+        }
+
+        // Redraw the SVG canvas:
+        const canvas = document.getElementById("network-canvas");
+        while (canvas.firstChild) {
+            canvas.removeChild(canvas.firstChild);
+        }
+
+        connections.forEach(conn => {
+            const fromNode = drawn_nodes.find(n => n.id == conn.from);
+            const toNode = drawn_nodes.find(n => n.id == conn.to);
+            if (fromNode && toNode) {
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute("x1", fromNode.x);
+                line.setAttribute("y1", fromNode.y);
+                line.setAttribute("x2", toNode.x);
+                line.setAttribute("y2", toNode.y);
+                line.classList.add("connection");
+                // (Optionally) store data attributes for later
+                line.dataset.from = conn.from;
+                line.dataset.to = conn.to;
+                canvas.appendChild(line);
+            }
+        });
+
+        drawn_nodes.forEach(node => {
+            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circle.setAttribute("cx", node.x);
+            circle.setAttribute("cy", node.y);
+            circle.setAttribute("r", 15);
+            circle.classList.add("node", node.type);
+            // For a drone, use a special click handler; otherwise a generic one.
+            if (node.type === "Drone") {
+                circle.addEventListener("click", () => showDroneDetails(node));
+            } else {
+                circle.addEventListener("click", () => alert(`Node: ${node.id}`));
+            }
+            canvas.appendChild(circle);
+        });
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     function createMonitoringSections(data) {
         // Sections for monitoring
@@ -1150,7 +1280,6 @@
         Object.entries(data.chat_clients_data).forEach(([nodeId, fields]) => {
             const panel = createPanel(nodeId, "Chat Client", fields);
             panel.dataset.history = JSON.stringify(fields.chats);
-            console.log(panel.dataset.history)
             panel.dataset.hash_list_receivers = JSON.stringify(fields.available_clients)
             clientsContainer.appendChild(panel);
         });
@@ -1184,9 +1313,6 @@
         clientsContainer.appendChild(panel_padding.cloneNode(true));
         serversContainer.appendChild(panel_padding.cloneNode(true));
         dronesContainer.appendChild(panel_padding.cloneNode(true));
-
-
-        console.log("Monitoring sections updated!");
     }
 
 
@@ -1215,30 +1341,6 @@
       EXTRA FOR NOW
 
     */
-
-
-
-    // Function to order panels by node_id
-    function orderPanelsByNodeId() {
-        const panelsArray = Object.values(panels);
-        panelsArray.sort((a, b) => {
-            const nodeIdA = parseInt(a.dataset.nodeId, 10);
-            const nodeIdB = parseInt(b.dataset.nodeId, 10);
-            return nodeIdA - nodeIdB;
-        });
-
-        // Clear the container and re-append panels in sorted order
-        panelsContainer.innerHTML = '';
-        panelsArray.forEach(panel => panelsContainer.appendChild(panel));
-    }
-
-    // Function to toggle selection mode
-    function toggleSelectionMode() {
-        isSelectionMode = !isSelectionMode;
-        document.querySelector('.confirm-button').style.display = isSelectionMode ? 'block' : 'none';
-        document.querySelector('.back-button').style.display = 'none'; // Hide back button in selection mode
-        updateSelectionSquaresVisibility();
-    }
 
     // Function to update the visibility of selection squares
     function updateSelectionSquaresVisibility() {
@@ -1300,6 +1402,48 @@
 
 
 
+
+
+
+
+    (function makeDraggable() {
+        const sideTab = document.getElementById('drone-details');
+
+        // Variables to store the offset between mouse position and the element's top-left corner
+        let offsetX = 0;
+        let offsetY = 0;
+        let isDragging = false;
+
+        // When the mouse button is pressed down on the side tab, start dragging
+        sideTab.addEventListener('mousedown', function(e) {
+            // Prevent text selection and other default actions
+            e.preventDefault();
+            isDragging = true;
+            // Calculate the initial offset between the mouse position and the element's position
+            const rect = sideTab.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+
+            // Optionally, you can add a class to change the appearance while dragging
+            sideTab.classList.add('dragging');
+        });
+
+        // Update the element's position as the mouse moves
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            // Calculate the new position: since sideTab is fixed, use viewport coordinates
+            sideTab.style.left = (e.clientX - offsetX) + 'px';
+            sideTab.style.top = (e.clientY - offsetY) + 'px';
+        });
+
+        // When the mouse button is released, stop dragging
+        document.addEventListener('mouseup', function() {
+            if (isDragging) {
+                isDragging = false;
+                sideTab.classList.remove('dragging');
+            }
+        });
+    })();
 
 </script>
 <script src="js/client.js"></script>
