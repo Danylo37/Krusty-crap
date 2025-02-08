@@ -54,7 +54,7 @@ impl TraitClient for ClientChen {
             // Status
             status: NodeStatus {
                 flood_id: 0, // Initial value to be 0 for every new client
-                session_id:  (id as u64) * 10u64.pow(18), //(id as u64) << 56, not human-readable but more efficient and reserves more space for the sessions for each id.
+                session_id: (id as u64) * 10u64.pow(9),
             },
 
             // Communication-related data

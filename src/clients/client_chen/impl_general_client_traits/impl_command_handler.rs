@@ -86,7 +86,6 @@ impl CommandHandler for ClientChen{
             },
             _=> {
                 self.handle_controller_command(command);
-                self.send_display_data(UpdateSelf);
             },
         }
     }

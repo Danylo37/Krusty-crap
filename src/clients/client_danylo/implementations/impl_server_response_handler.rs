@@ -17,12 +17,15 @@ impl ServerResponseHandler for ChatClientDanylo {
                 },
                 Response::ClientRegistered => {
                     self.handle_client_registered(server_id);
+                    self.send_display_data(DataScope::UpdateSelf);
                 }
                 Response::ListClients(clients) => {
                     self.handle_clients_list(server_id, clients);
+                    self.send_display_data(DataScope::UpdateSelf);
                 }
                 Response::MessageReceived(message) => {
                     self.handle_message(message, server_id);
+                    self.send_display_data(DataScope::UpdateSelf);
                 }
                 Response::Err(error) =>
                     error!("Client {}: Error received from server {}: {:?}", self.id, server_id, error),

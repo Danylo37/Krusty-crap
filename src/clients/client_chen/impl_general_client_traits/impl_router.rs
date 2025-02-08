@@ -41,8 +41,9 @@ impl Router for ClientChen {
 
         // Step 3: Create a SourceRoutingHeader
         let srh = SourceRoutingHeader::initialize(hops);
-
-        // Step 4: Check server type and send query if necessary
+        // Step 4: Update session_id
+        self.status.session_id += 1;
+        // Step 5: Check server type and send query if necessary
         let should_send_query = {
             if let Some(node_info) = self.network_info.topology.get_mut(&destination_id) {
                 if let ServerInfo(server_info) = &mut node_info.specific_info {

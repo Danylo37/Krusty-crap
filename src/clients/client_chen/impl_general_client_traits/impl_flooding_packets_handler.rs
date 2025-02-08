@@ -91,7 +91,6 @@ impl FloodingPacketsHandler for ClientChen {
                     }
                 }
             }
-
             // Update previous_node safely
             previous_node = Some(node_id);
         }

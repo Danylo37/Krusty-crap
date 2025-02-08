@@ -25,7 +25,6 @@ impl PacketCreator for ClientChen{
         let number_of_fragments = msg_slices.len();
 
         if let Some(source_routing_header) = self.get_source_routing_header(destination_id){
-            self.status.session_id += 1;
             //the i is counted from 0 so it's perfect suited in our case
             for (i, slice) in msg_slices.into_iter().enumerate() {
                 //Convert each slice of the message into the same format of the field data of the struct Fragment.
