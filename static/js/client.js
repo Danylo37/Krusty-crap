@@ -33,7 +33,6 @@ function openChat(chatName, clientId) {
         if (updateDot) {
             updateDot.style.display = 'none';
         }
-
         // Remove 'active' class from any other chat items.
         document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
         // Mark this chat as active.
@@ -44,6 +43,9 @@ function openChat(chatName, clientId) {
         if (chatItem.dataset.history) {
             const history = JSON.parse(chatItem.dataset.history);
             updateChatWindow(history);
+        } else {
+            // Optionally display a placeholder if no history exists.
+            chatMessages.innerHTML = `<div style="text-align:center; padding:20px;">No messages yet.</div>`;
         }
     }
 }
@@ -415,31 +417,36 @@ function updateChatReceivers(HashListReceivers){
 }
 
 
-function updateChats(ChatHistory) {
+function updateChats(clientId, ChatHistory) {
     console.log("updating chats, chatHistory: ");
     console.log(ChatHistory)
-    const old_histories = Array.from(document.getElementById('chat-list').children)
-        .reduce((acc, item) => {
-            acc[item.dataset.id] = item.dataset.history;
-            return acc;
-        }, {});
+    // Find the chat item with data-id equal to clientId.
+    const chatItem = document.querySelector(`.chat-item[data-id="${clientId}"]`);
+    if (!chatItem) {
+        // If there is no chat item for this clientId, do nothing.
+        return;
+    }
+    // Get the currently stored history from a custom data attribute (if any).
+    let currentHistory = chatItem.dataset.history ? JSON.parse(chatItem.dataset.history) : [];
+    // Get the new history from ChatHistory for this client.
+    let newHistory = ChatHistory[clientId] || [];
 
-    // Find the chat items that changed.
-    for (const clientId in ChatHistory){
-        const newHistory = ChatHistory[clientId];
-        if (JSON.stringify(newHistory) !== JSON.stringify(old_histories[clientId])){
-            const chatItem = document.querySelector(`.chat-item[data-id="${clientId}"]`);
-            chatItem.dataset.history = JSON.stringify(newHistory);
 
-            if (chatItem.classList.contains('active')) {
-                // If active, update the chat window immediately.
-                updateChatWindow(newHistory);
-            } else {
-                // If not active, show the update dot.
-                const updateDot = chatItem.querySelector('.update-dot');
-                if (updateDot) {
-                    updateDot.style.display = 'inline-block';
-                }
+    // Compare histories using JSON.stringify (for simple equality)
+    if (JSON.stringify(currentHistory) !== JSON.stringify(newHistory)) {
+        // Save the new history in the element's dataset.
+        chatItem.dataset.history = JSON.stringify(newHistory);
+
+
+        // Check if this chat item is active (has class "active").
+        if (chatItem.classList.contains('active')) {
+            // If active, update the chat window immediately.
+            updateChatWindow(newHistory);
+        } else {
+            // If not active, show the update dot.
+            const updateDot = chatItem.querySelector('.update-dot');
+            if (updateDot) {
+                updateDot.style.display = 'inline-block';
             }
         }
     }
