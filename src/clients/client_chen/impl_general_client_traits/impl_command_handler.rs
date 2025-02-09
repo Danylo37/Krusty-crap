@@ -54,6 +54,10 @@ impl CommandHandler for ClientChen{
                 self.ask_media(media_ref);
             }
             ClientCommand::DroneFixed(drone_id) => {
+                println!("
+                ******************************************\n
+                Client [{}] is processing the drone fixed command\n
+                ******************************************", self.metadata.node_id);
                 // Collect (session_id, fragment_index) pairs where the status is WaitingForFixing(drone_id)
                 let filtered_pairs: Vec<(SessionId, FragmentIndex)> = self
                     .storage
@@ -76,12 +80,12 @@ impl CommandHandler for ClientChen{
                     match self.storage.output_buffer.get(&session_id) {
                         Some(output_buffer_map) => match output_buffer_map.get(&fragment_index) {
                             Some(packet) => self.send(packet.clone()), // Consider removing .clone() if not needed
-                            None => warn!(
+                            None => println!(
                     "Packet not found in output buffer | session_id: {}, fragment_index: {}",
                     session_id, fragment_index
                 ),
                         },
-                        None => warn!(
+                        None => println!(
                 "Output buffer not found | session_id: {}",
                 session_id
             ),

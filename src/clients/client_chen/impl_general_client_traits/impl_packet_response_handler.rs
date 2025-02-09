@@ -127,7 +127,7 @@ impl PacketResponseHandler for ClientChen {
 
                 self.storage
                     .packets_status
-                    .entry(self.status.session_id)
+                    .entry(session_id)
                     .or_insert_with(HashMap::new)
                     .insert(nack.fragment_index, WaitingForFixing(drone));
 
