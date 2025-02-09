@@ -167,7 +167,7 @@ pub enum PacketStatus{
     InProgress,             //When we have no ack or nack confirmation
 
     //
-    WaitingForFixing,
+    WaitingForFixing(DroneId),
 }
 
 /// From controller to Server

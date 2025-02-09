@@ -53,27 +53,42 @@ impl CommandHandler for ClientChen{
             ClientCommand::RequestMedia(media_ref) => {
                 self.ask_media(media_ref);
             }
-            ClientCommand::DroneFixed(_drone_id) => {
-                let packet_status_map = self.storage.packets_status.get(&self.status.session_id).cloned();
-
-                if let Some(packet_status_map) = packet_status_map {
-                    for (fragment_index, status) in packet_status_map {
-                        if matches!(status, PacketStatus::WaitingForFixing) {   // this is considering that we are sending packets one session at time.
-                            if let Some(output_buffer_map) = self.storage.output_buffer.get(&self.status.session_id) {
-                                if let Some(packet) = output_buffer_map.get(&fragment_index) {
-                                    self.send(packet.clone());
-                                } else {
-                                    warn!("Packet not found in output buffer for fragment index: {}", fragment_index);
+            ClientCommand::DroneFixed(drone_id) => {
+                // Collect (session_id, fragment_index) pairs where the status is WaitingForFixing(drone_id)
+                let filtered_pairs: Vec<(SessionId, FragmentIndex)> = self
+                    .storage
+                    .packets_status
+                    .iter()
+                    .flat_map(|(session_id, packet_status_map)| {
+                        packet_status_map.iter().filter_map(move |(&fragment_index, status)| {
+                            if let PacketStatus::WaitingForFixing(dr) = status {
+                                if *dr == drone_id {
+                                    return Some((*session_id, fragment_index));
                                 }
-                            } else {
-                                warn!("Output buffer not found for session ID: {}", self.status.session_id);
                             }
-                        }
+                            None
+                        })
+                    })
+                    .collect();
+
+                // Process the filtered packets
+                for (session_id, fragment_index) in filtered_pairs {
+                    match self.storage.output_buffer.get(&session_id) {
+                        Some(output_buffer_map) => match output_buffer_map.get(&fragment_index) {
+                            Some(packet) => self.send(packet.clone()), // Consider removing .clone() if not needed
+                            None => warn!(
+                    "Packet not found in output buffer | session_id: {}, fragment_index: {}",
+                    session_id, fragment_index
+                ),
+                        },
+                        None => warn!(
+                "Output buffer not found | session_id: {}",
+                session_id
+            ),
                     }
-                } else {
-                    warn!("Packet status map not found for session ID: {}", self.status.session_id);
                 }
             }
+
             _ => {}
         }
     }
