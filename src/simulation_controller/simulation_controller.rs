@@ -1,9 +1,6 @@
-use crossbeam_channel::{unbounded, Receiver, Sender};
+use crossbeam_channel::{Receiver, Sender};
 use std::collections::{HashMap, HashSet, VecDeque};
-use std::thread::sleep;
-use std::time::Duration;
 use log::{debug, info, warn};
-use serde::Serialize;
 use wg_2024::{
     controller::{DroneCommand, DroneEvent},
     drone::Drone,
@@ -14,12 +11,11 @@ use crate::general_use::{ClientCommand, ClientEvent, ClientType,
                          ServerCommand, ServerEvent, ServerType, ServerId,
                          Query,
                          DisplayDataWebBrowser, DisplayDataCommunicationServer, DisplayDataMediaServer,
-                         DisplayDataChatClient, DisplayDataTextServer, DisplayDataDrone, DisplayDataSimulationController,
-                         SpecificNodeType, DroneId, DataScope};
+                         DisplayDataChatClient, DisplayDataTextServer, DisplayDataDrone,
+                         SpecificNodeType, DroneId};
 use crate::websocket::WsCommand;
 use std::collections::hash_map::Entry;
 use rand::Rng;
-use crate::ui_traits::SimulationControllerMonitoring;
 
 pub struct SimulationState {
     pub nodes: HashMap<NodeId, NodeType>,
@@ -108,16 +104,59 @@ impl SimulationController {
         }
     }
 
-    /// Runs the main simulation loop.
-    /// This function continuously processes events, updates the GUI (not implemented), and sleeps briefly.
-    pub fn run(&mut self) {  // Note: &mut self since we're modifying state directly
-        loop {
-            self.process_packet_sent_events();
-            self.process_packet_dropped_events();
-            self.process_controller_shortcut_events();
-            self.process_client_events();
-            self.process_server_events();
-            sleep(Duration::from_millis(100));
+    pub(crate) fn process_packet_sent_events(&mut self) {
+        if let Ok(event) = self.drone_event_receiver.try_recv() {
+            if let DroneEvent::PacketSent(packet) = event {
+                self.handle_packet_sent(packet);
+            }
+        }
+    }
+
+    pub(crate) fn process_packet_dropped_events(&mut self) {
+        if let Ok(event) = self.drone_event_receiver.try_recv() {
+            if let DroneEvent::PacketDropped(packet) = event {
+                self.handle_packet_dropped(packet);
+            }
+        }
+    }
+
+    pub(crate) fn process_controller_shortcut_events(&mut self) {
+        if let Ok(event) = self.drone_event_receiver.try_recv() {  // Receive event or continue if none is available
+            if let DroneEvent::ControllerShortcut(packet) = event {   // Check event type
+
+                match packet.pack_type {
+                    PacketType::Ack(_) | PacketType::Nack(_) | PacketType::FloodResponse(_) => {
+                        if let Some(destination) = self.get_destination_from_packet(&packet) {  // Try to get destination
+
+                            // Determine where to send the packet based on the destination ID and node type
+                            if self.command_senders_clients.contains_key(&destination) {          //If it's client
+
+                                if let Some((client_sender, _)) = self.command_senders_clients.get(&destination) {
+                                    if let Err(e) = client_sender.send(ClientCommand::ShortcutPacket(packet.clone())) {
+                                        warn!("Error sending to client {}: {:?}", destination, e);
+                                    }
+                                } else {
+
+                                    warn!("No sender found for client {}", destination);
+                                }
+                            } else if self.command_senders_servers.contains_key(&destination) {   // If it's server
+                                if let Some((server_sender, _)) = self.command_senders_servers.get(&destination) {
+                                    if let Err(e) = server_sender.send(ServerCommand::ShortcutPacket(packet.clone())) {
+                                        warn!("Error sending to server {}: {:?}", destination, e);
+                                    }
+                                } else {
+                                    warn!("No sender found for server {}", destination);
+                                }
+                            } else {
+                                warn!("Invalid destination or unknown node type: {}", destination);
+                            }
+                        } else {
+                            warn!("Could not determine destination for ControllerShortcut");
+                        }
+                    }
+                    _ => warn!("Unexpected packet type in ControllerShortcut: {:?}", packet.pack_type),
+                }
+            }
         }
     }
 
@@ -229,84 +268,6 @@ impl SimulationController {
         Ok(drone)
     }
 
-    /// Processes incoming events from drones.
-    /// This function handles `PacketSent`, `PacketDropped`, and `ControllerShortcut` events.
-    fn process_packet_sent_events(&mut self) {
-        if let Ok(event) = self.drone_event_receiver.try_recv() {
-            if let DroneEvent::PacketSent(packet) = event {
-                self.handle_packet_sent(packet);
-            }
-        }
-    }
-
-    fn process_packet_dropped_events(&mut self) {
-        if let Ok(event) = self.drone_event_receiver.try_recv() {
-            if let DroneEvent::PacketDropped(packet) = event {
-                self.handle_packet_dropped(packet);
-            }
-        }
-    }
-
-    fn process_controller_shortcut_events(&mut self) {
-        if let Ok(event) = self.drone_event_receiver.try_recv() {  // Receive event or continue if none is available
-            if let DroneEvent::ControllerShortcut(packet) = event {   // Check event type
-
-                match packet.pack_type {
-                    PacketType::Ack(_) | PacketType::Nack(_) | PacketType::FloodResponse(_) => {
-                        if let Some(destination) = self.get_destination_from_packet(&packet) {  // Try to get destination
-
-                            // Determine where to send the packet based on the destination ID and node type
-                            if self.command_senders_clients.contains_key(&destination) {          //If it's client
-
-                                if let Some((client_sender, _)) = self.command_senders_clients.get(&destination) {
-                                    if let Err(e) = client_sender.send(ClientCommand::ShortcutPacket(packet.clone())) {
-                                        warn!("Error sending to client {}: {:?}", destination, e);
-                                    }
-                                } else {
-
-                                    warn!("No sender found for client {}", destination);
-                                }
-                            } else if self.command_senders_servers.contains_key(&destination) {   // If it's server
-                                if let Some((server_sender, _)) = self.command_senders_servers.get(&destination) {
-                                    if let Err(e) = server_sender.send(ServerCommand::ShortcutPacket(packet.clone())) {
-                                        warn!("Error sending to server {}: {:?}", destination, e);
-                                    }
-                                } else {
-                                    warn!("No sender found for server {}", destination);
-                                }
-                            } else {
-                                warn!("Invalid destination or unknown node type: {}", destination);
-                            }
-                        } else {
-                            warn!("Could not determine destination for ControllerShortcut");
-                        }
-                    }
-                    _ => warn!("Unexpected packet type in ControllerShortcut: {:?}", packet.pack_type),
-                }
-            }
-        }
-    }
-
-    fn does_server_know_drone(&self, server_id: NodeId, drone_id: NodeId) -> bool {
-        self.check_server_type(server_id, ServerType::Communication, drone_id) ||
-            self.check_server_type(server_id, ServerType::Text, drone_id) ||
-            self.check_server_type(server_id, ServerType::Media, drone_id)
-    }
-    fn check_server_type(&self, server_id: NodeId, server_type: ServerType, drone_id: NodeId) -> bool{
-        match server_type{
-            ServerType::Communication => {
-                self.comm_servers_data.get(&server_id).map_or(false, |data| data.connected_node_ids.contains(&drone_id))
-            },
-            ServerType::Text =>{
-                self.text_servers_data.get(&server_id).map_or(false, |data| data.connected_node_ids.contains(&drone_id))
-            },
-            ServerType::Media =>{
-                self.media_servers_data.get(&server_id).map_or(false, |data| data.connected_node_ids.contains(&drone_id))
-            },
-            _=> false,
-        }
-    }
-
     pub(super) fn fix_drone(&mut self, drone_id: DroneId, sender: (NodeId, NodeType)) {
         if self.fixed_drones.contains(&drone_id) {
             debug!("Drone {} is already fixed", drone_id);
@@ -335,44 +296,6 @@ impl SimulationController {
                 }
             },
             _ => {}
-        }
-    }
-
-    fn process_client_events(&mut self){
-        while let Ok(event) = self.client_event_receiver.try_recv(){
-            match event {
-                ClientEvent::WebClientData(id, data, data_scope) => {
-                    self.web_clients_data.insert(id, data);
-                },
-                ClientEvent::ChatClientData(id, data, data_scope) => {
-                    self.chat_clients_data.insert(id, data);
-                },
-                ClientEvent::CallTechniciansToFixDrone(drone_id, sender) => {
-                    self.fix_drone(drone_id, sender);
-                },
-                other => {
-                    warn!("Unexpected client event: {:?}", other);
-                }
-            }
-        }
-    }
-
-    fn process_server_events(&mut self){
-        while let Ok(event) = self.server_event_receiver.try_recv() {
-            match event{
-                ServerEvent::CommunicationServerData(id, data, data_scope) => {
-                    self.comm_servers_data.insert(id, data);
-                },
-                ServerEvent::TextServerData(id, data, data_scope) =>{
-                    self.text_servers_data.insert(id, data);
-                },
-                ServerEvent::MediaServerData(id, data, data_scope) =>{
-                    self.media_servers_data.insert(id, data);
-                },
-                ServerEvent::CallTechniciansToFixDrone(drone_id, sender) => {
-                    self.fix_drone(drone_id, sender);
-                },
-            }
         }
     }
 
@@ -652,70 +575,6 @@ It uses the command_senders map to find the appropriate sender channel.
             .iter()
             .map(|(&id, (_, server_type))| (*server_type, id))
             .collect()
-    }
-
-    pub fn request_known_servers(&mut self, client_id: NodeId) -> Result<Vec<(ServerType, NodeId)>, String> {
-        if let Some((client_command_sender, _)) = self.command_senders_clients.get(&client_id) {
-
-            if client_command_sender.send(ClientCommand::GetKnownServers).is_err() {
-                return Err(format!("Client {} disconnected", client_id));
-            }
-
-            //wait for KnownServers event
-            let timeout = Duration::from_secs(1);
-
-            //Using recv_client_event_timeout
-            if let Some(event) = self.recv_client_event_timeout(timeout) {
-                match event {
-                    ClientEvent::KnownServers(servers) => {
-                        self.update_known_servers(servers);
-                        let server_options: Vec<(ServerType, NodeId)> = self.command_senders_servers   //Clone servers
-                            .clone()   // Clone the servers vector to avoid the move
-                            .iter()
-                            .map(|(&id, &(_, server_type))| (server_type, id))
-                            .collect();
-                        // Update known servers in the controller and return the list for UI
-                        return Ok(server_options); // Return the processed server list
-                    },
-                    _ => return Err("Unexpected client event".to_string()),
-                }
-            } else {
-                return Err(format!("Timeout waiting for KnownServers from client {}", client_id))
-            }
-        } else {
-            return Err(format!("Client with ID {} not found", client_id))
-        }
-    }
-
-
-    fn recv_client_event_timeout(&self, timeout: Duration) -> Option<ClientEvent> {
-        let start = std::time::Instant::now();
-
-        loop {
-            if let Ok(event) = self.client_event_receiver.try_recv() {
-                return Some(event);
-            }
-
-            if start.elapsed() >= timeout {
-                return None; // Timeout
-            }
-            sleep(Duration::from_millis(10));
-        }
-
-    }
-
-
-
-    fn update_known_servers(&mut self, servers: Vec<(NodeId, ServerType, bool)>) {
-        for (server_id, server_type, _) in servers { // Iterate over servers and their types
-
-            if let Some((sender, _)) = self.command_senders_servers.get(&server_id) { // Check if server already exists in controller
-                self.command_senders_servers.insert(server_id, (sender.clone(), server_type)); //Update server type
-            } else {                                                                           //If server not found create it
-                let (sender, receiver) = unbounded();        //Create channels for server
-                self.command_senders_servers.insert(server_id, (sender, server_type));           //Insert server in controller
-            }
-        }
     }
 
     pub fn get_server_type(&self, node_id: NodeId) -> ServerType {

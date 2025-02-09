@@ -2,7 +2,6 @@ pub mod network_initializer;
 pub mod servers;
 pub mod simulation_controller;
 pub mod general_use;
-pub mod ui;
 pub mod clients;
 pub mod ui_traits;
 pub mod websocket;

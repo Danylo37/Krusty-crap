@@ -1,15 +1,11 @@
-use std::cmp::PartialEq;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashSet};
 use crossbeam_channel::{select_biased, Sender};
-use log::{debug, info, warn};
-use tungstenite::client;
-use wg_2024::controller::DroneCommand;
+use log::{debug, info};
 use crate::clients::client_chen::{NodeId, Serialize};
 use crate::simulation_controller::SimulationController;
 use crate::ui_traits::{SimulationControllerMonitoring};
 use crate::websocket::{WsCommand};
-use crate::general_use::{ClientCommand, ClientEvent, ClientType, DataScope, DisplayDataChatClient, DisplayDataCommunicationServer, DisplayDataMediaServer, DisplayDataSimulationController, DisplayDataTextServer, DisplayDataWebBrowser, ServerCommand, ServerEvent, ServerType, SpecificNodeType};
-use crate::network_initializer::DroneBrand;
+use crate::general_use::{ClientCommand, ClientEvent, DataScope, DisplayDataSimulationController, ServerCommand, ServerEvent};
 
 impl SimulationControllerMonitoring for SimulationController {
     fn send_display_data(&mut self, sender_to_gui: Sender<String>) {
@@ -42,6 +38,9 @@ impl SimulationControllerMonitoring for SimulationController {
 
         self.updating_nodes = edge_nodes.clone();
         loop {
+            self.process_packet_sent_events();
+            self.process_packet_dropped_events();
+            self.process_controller_shortcut_events();
             select_biased! {
                 recv(self.ws_command_receiver) -> command_res => {
                     debug!("Controller received command {:?}", command_res);
