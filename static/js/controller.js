@@ -121,6 +121,118 @@ function sendCrashController(droneId){
     }
 }
 
+// Toggle the legend container open/closed
+function toggleLegend() {
+    const legendContainer = document.getElementById('legend-container');
+    legendContainer.classList.toggle('expanded');
+
+    // Optionally, rotate the down arrow for visual feedback:
+    const downArrow = document.getElementById('down-arrow-btn');
+    if (legendContainer.classList.contains('expanded')) {
+        downArrow.style.transform = 'rotate(180deg)';
+    } else {
+        downArrow.style.transform = 'rotate(0deg)';
+    }
+}
+
+// Update the legend images based on the current topology appearance mode
+function updateLegend() {
+    const legendItems = document.querySelectorAll('#legend-container .legend-item');
+    legendItems.forEach(item => {
+        const label = item.querySelector('span').textContent.trim();
+        // Get the first child element which is either an <img> or a div (for the circle)
+        let iconElem = item.querySelector('.legend-icon, .legend-circle');
+
+        if (topologyImagesToggled) {
+            // When topologyImagesToggled is TRUE, show a circle with a fill color.
+            let fillColor = '';
+            switch(label) {
+                case "Drone":
+                    fillColor = "#f39c12";
+                    break;
+                case "Communication Server":
+                    fillColor = "#e74c3c";
+                    break;
+                case "Chat Client":
+                    fillColor = "#9b59b6";
+                    break;
+                case "Web Browser":
+                    fillColor = "#3498db";
+                    break;
+                case "Text Server":
+                    fillColor = "#2ecc71";
+                    break;
+                case "Media Server":
+                    fillColor = "#e67e22";
+                    break;
+                default:
+                    fillColor = "#007bff";
+            }
+            // If the current element is not already a circle div, replace it.
+            if (!iconElem || iconElem.tagName.toLowerCase() !== 'div') {
+                // If an image exists, remove it and create a div.
+                const newDiv = document.createElement('div');
+                newDiv.classList.add('legend-circle');
+                // Replace the old element (if any) with the new div.
+                if (iconElem) {
+                    iconElem.parentNode.replaceChild(newDiv, iconElem);
+                } else {
+                    // If no icon element exists, just prepend it.
+                    item.insertBefore(newDiv, item.firstChild);
+                }
+                iconElem = newDiv;
+            }
+            // Apply the circle styling inline (or you can use CSS)
+            iconElem.style.backgroundColor = fillColor;
+            iconElem.style.width = "30px";
+            iconElem.style.height = "30px";
+            iconElem.style.borderRadius = "50%";
+            iconElem.style.display = "inline-block";
+            iconElem.style.marginRight = "10px";
+        } else {
+            // When topologyImagesToggled is FALSE, show images.
+            let src = "";
+            switch(label) {
+                case "Drone":
+                    src = "content_objects/drone_top.png";
+                    break;
+                case "Communication Server":
+                    src = "content_objects/comm_serv_top.png";
+                    break;
+                case "Chat Client":
+                    src = "content_objects/chat_client_top.png";
+                    break;
+                case "Web Browser":
+                    src = "content_objects/web_browser_top.png";
+                    break;
+                case "Text Server":
+                    src = "content_objects/text_serv_top.png";
+                    break;
+                case "Media Server":
+                    src = "content_objects/media_serv_top.png";
+                    break;
+                default:
+                    src = "content_objects/default_top.png";
+            }
+            // If the current element is not an <img>, replace it.
+            if (!iconElem || iconElem.tagName.toLowerCase() !== 'img') {
+                const newImg = document.createElement('img');
+                newImg.classList.add('legend-icon');
+                newImg.src = src;
+                // Replace the current element (if exists) or insert it.
+                if (iconElem) {
+                    iconElem.parentNode.replaceChild(newImg, iconElem);
+                } else {
+                    item.insertBefore(newImg, item.firstChild);
+                }
+                iconElem = newImg;
+            } else {
+                // If it is already an image, simply update its src.
+                iconElem.src = src;
+            }
+        }
+    });
+}
 
 
 
@@ -183,32 +295,6 @@ const connections = [
 */
 
 
-//!!!!! CONNECTING NODES FOR TESTING for now !!!!
-connections.forEach(({ from, to }) => {
-    const fromNode = drawn_nodes.find((n) => n.id == from);
-    const toNode = drawn_nodes.find((n) => n.id == to);
-
-    if (fromNode && toNode) {
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        line.setAttribute("x1", fromNode.x);
-        line.setAttribute("y1", fromNode.y);
-        line.setAttribute("x2", toNode.x);
-        line.setAttribute("y2", toNode.y);
-        line.classList.add("connection");
-        canvas.appendChild(line);
-    }
-});
-
-//!!!!! DRAWING NODES FOR TESTING for now !!!!
-drawn_nodes.forEach(({ id, type, x, y }) => {
-    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    circle.setAttribute("cx", x);
-    circle.setAttribute("cy", y);
-    circle.setAttribute("r", 15);
-    circle.classList.add("node", type);
-    circle.addEventListener("click", () => alert(`Node: ${id}`));
-    canvas.appendChild(circle);
-});
 
 
 // Zoom in/out
@@ -437,12 +523,12 @@ function toggleDropdown() {
     }
 }
 
-
-
-
 function toggleTopologyAppearanceButton(){
 
+
     toggleTopologyAppearance()
+    updateLegend();
+
     // Toggle the state.
     topologyImagesToggled = !topologyImagesToggled;
 
@@ -512,7 +598,7 @@ function toggleTopologyAppearance() {
             if (node.type === "Drone") {
                 imgElem.addEventListener("click", () => showDroneDetails(node));
             } else {
-                imgElem.addEventListener("click", () => alert(`Node: ${node.id}`));
+                imgElem.addEventListener("click", () => alert(`Node: ${node.id}, Type: ${node.type}`));
             }
 
             // Replace the current circle with the image element.
@@ -533,7 +619,7 @@ function toggleTopologyAppearance() {
             if (node.type === "Drone") {
                 circle.addEventListener("click", () => showDroneDetails(node));
             } else {
-                circle.addEventListener("click", () => alert(`Node: ${node.id}`));
+                circle.addEventListener("click", () => alert(`Node: ${node.id}, Type: ${node.type}`));
             }
 
             // Replace the image with the circle.
