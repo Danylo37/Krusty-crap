@@ -248,7 +248,7 @@ impl SimulationController {
     /// Spawns a new drone.
     pub fn create_drone<T: Drone + Send + 'static>(&mut self,
                                                    drone_id: NodeId,
-                                                   event_sender: Sender<DroneEvent>,
+                                                   _event_sender: Sender<DroneEvent>,
                                                    command_receiver: Receiver<DroneCommand>,
                                                    packet_receiver: Receiver<Packet>,
                                                    connected_nodes: HashMap<NodeId, Sender<Packet>>,

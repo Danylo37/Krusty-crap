@@ -13,7 +13,6 @@ use std::thread;
 use std::time::Duration;
 use crossbeam_channel::{unbounded};
 use crate::ui_traits::{SimulationControllerMonitoring};
-use crate::clients::client_chen::functionality_test;
 
 // Modified main function
 fn main() {
@@ -27,7 +26,7 @@ fn main() {
     // Run the simulation controller
     thread::spawn(move || {
         // Initialize the network
-        let mut my_net = network_initializer::NetworkInitializer::new(tx.clone(), receiver_from_ws);
+        let mut my_net = network_initializer::NetworkInitializer::new(receiver_from_ws);
         my_net.initialize_from_file("topologies/tree.toml");
         // Clone the shared simulation controller
         let mut simulation_controller = my_net.simulation_controller;

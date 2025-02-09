@@ -1,6 +1,5 @@
 use crate::clients::client_chen::{ClientChen, PacketCreator};
 use crate::clients::client_chen::prelude::*;
-use crate::clients::client_chen::general_client_traits::*;
 impl PacketCreator for ClientChen{
     fn divide_string_into_slices(&mut self, string: String, max_slice_length: usize) -> Vec<String> {
         let mut slices = Vec::new();
