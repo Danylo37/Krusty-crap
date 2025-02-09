@@ -278,6 +278,9 @@ impl SimulationController {
             info!("Drone {} has been fixed! New PDR: {}", drone_id, new_pdr);
 
             self.fixed_drones.insert(drone_id);
+            if let Some(drone_data) = self.drones_data.get_mut(&drone_id) {
+                drone_data.pdr = new_pdr;
+            }
         }
 
         match sender.1 {
