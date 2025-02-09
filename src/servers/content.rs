@@ -129,15 +129,21 @@ Its symbols remain undeciphered to this day. #Media[ancient_artifact]"#),
 ];
 
 
-pub const IMAGE_PATHS: [(&str, &str, &str); 10] = [
-    ("the_banana.html", "banana", "path/to/banana.jpeg"),
-    ("forbidden_text.html", "do_not_search_this", "path/to/do_not_search_this.jpeg"),
-    ("mountain_panoramas.html", "sparkling_snow", "path/to/sparkling_snow.jpeg"),
-    ("bigfoot_sighting.html", "big_foot", "path/to/big_foot.jpeg"),
-    ("famous_quote.html", "shakespeare", "path/to/shakespeare.jpeg"),
-    ("travel_dream.html", "tropical_paradise", "path/to/tropical_paradise.jpeg"),
-    ("astronomy_facts.html", "sunlight", "path/to/sunlight.jpeg"),
-    ("forest_mysteries.html", "forest_story", "path/to/forest_story.jpeg"),
-    ("city_lights.html", "city_night", "path/to/city_night.jpeg"),
-    ("lost_artifact.html", "ancient_artifact", "path/to/ancient_artifact.jpeg")
+pub const IMAGE_PATHS: [(&str, &str, &str); 15] = [
+    ("the_banana.html", "banana", "\static\content_objects\content_images\banana.png"),
+    ("forbidden_text.html", "do_not_search_this", "\static\content_objects\content_images\do_not_search_this.jpg"),
+    ("mountain_panoramas.html", "sparkling_snow", "\static\content_objects\content_images\do_not_search_this.jpg"),
+    ("bigfoot_sighting.html", "big_foot", "\static\content_objects\content_images\big_foot.png"),
+    ("famous_quote.html", "shakespeare", "\static\content_objects\content_images\shakespeare.png"),
+    ("travel_dream.html", "tropical_paradise", "\static\content_objects\content_images\tropical_paradise.jpg"),
+    ("astronomy_facts.html", "sunlight", "\static\content_objects\content_images\sunlight.jpg"),
+    ("forest_mysteries.html", "forest_story", "\static\content_objects\content_images\forest_story.jpg"),
+    ("city_lights.html", "city_night", "\static\content_objects\content_images\city_night.jpg"),
+    ("lost_artifact.html", "ancient_artifact", "\static\content_objects\content_images\ancient_artifact.jpg"),
+    // New content -----------------------
+    ("forgotten_poem.html", "library_wonder", "\static\content_objects\content_images\library_wonder.jpg"),
+    ("old_map.html", "hidden_cave", "\static\content_objects\content_images\hidden_cave.jpg"),
+    ("desert_whispers.html", "desert_oasis", "\static\content_objects\content_images\desert_oasis.jpg"),
+    ("cyber_rebellion.html", "futuristic_city", "\static\content_objects\content_images\futuristic_city.jpg"),
+    ("abandoned_castle.jpeg", "abandoned_castle","\static\content_objects\content_images\abandoned_castle.jpg"),
 ];
