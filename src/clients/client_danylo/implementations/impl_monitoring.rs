@@ -1,4 +1,3 @@
-use crossbeam_channel::Sender;
 use log::info;
 
 use crate::{
@@ -44,7 +43,7 @@ impl Monitoring for ChatClientDanylo {
                     if let Ok(packet) = packet_res {
                         info!("Client {}: Received packet: {:?}", self.id, packet);
                         self.handle_packet(packet);
-                        self.send_display_data(DataScope::UpdateSelf);
+                        self.send_display_data(UpdateSelf);
                     }
                 },
             }

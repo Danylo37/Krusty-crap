@@ -24,7 +24,6 @@ pub type ChatHistory = Vec<(Speaker, String)>;
 pub type Node = (NodeId, NodeType);
 
 
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Message {
     from: NodeId,
@@ -194,7 +193,9 @@ pub enum ServerEvent {
     TextServerData(InitiatorId, DisplayDataTextServer, DataScope),
     MediaServerData(InitiatorId, DisplayDataMediaServer, DataScope),
 
-    CallTechniciansToFixDrone(DroneId),
+    // DroneId - id of the drone to be fixed.
+    // Node - the node that sent the event.
+    CallTechniciansToFixDrone(DroneId, Node),
 }
 
 #[derive(Debug, Clone, PartialEq, Copy)]
@@ -241,7 +242,9 @@ pub enum ClientEvent {
     PacketSent(Packet),
     KnownServers(Vec<(NodeId, ServerType, bool)>),
 
-    CallTechniciansToFixDrone(DroneId),
+    // DroneId - id of the drone to be fixed.
+    // Node - the node that sent the event.
+    CallTechniciansToFixDrone(DroneId, Node),
 }
 
 //Queries (Client -> Server)

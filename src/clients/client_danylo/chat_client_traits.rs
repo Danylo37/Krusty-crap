@@ -15,6 +15,7 @@ pub(super) trait PacketHandler {
     fn handle_ack(&mut self, fragment_index: FragmentIndex, session_id: SessionId);
     fn handle_nack(&mut self, nack: Nack, session_id: SessionId, last_node_id: NodeId);
     fn handle_nack_dropped(&mut self, session_id: SessionId, fragment_index: FragmentIndex, last_node_id: NodeId);
+    fn wait_for_drone_fix(&mut self, last_node_id: NodeId);
     fn update_topology_and_routes(&mut self, error_node: NodeId);
     fn find_route_to(&self, server_id: ServerId) -> Option<Vec<NodeId>>;
     fn update_message_route_and_resend(&mut self, fragment_index: FragmentIndex, session_id: SessionId);

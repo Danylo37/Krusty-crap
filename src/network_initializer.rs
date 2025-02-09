@@ -72,7 +72,7 @@ impl DroneBrand {
         [
             // DroneBrand::KrustyDrone,
             DroneBrand::RustyDrone,
-            DroneBrand::Rustable,
+            // DroneBrand::Rustable,
             DroneBrand::BagelBomber,
             DroneBrand::RustAndFurious,
             DroneBrand::Fungi,

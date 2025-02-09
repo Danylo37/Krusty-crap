@@ -47,25 +47,7 @@ pub trait Server{
                 recv(self.get_from_controller_command()) -> command_res => {
                     if let Ok(command) = command_res {
                         info!("Server {}: Received command: {:?}", self.get_id(), command);
-                        match command {
-                            ServerCommand::AddSender(id, sender) => {
-                                self.get_packet_send().insert(id, sender);
-                                info!("Server {}: Added sender for node {}", self.get_id(), id);
-                            }
-                            ServerCommand::StartFlooding => {
-                                self.discover();
-                            }
-                            ServerCommand::RemoveSender(id) => {
-                                self.get_packet_send().remove(&id);
-                                self.update_topology_and_routes(id);
-                                info!("Server {}: Removed sender for node {}", self.get_id(), id);
-                            }
-                            ServerCommand::ShortcutPacket(packet) => {
-                                info!("Server {}: Shortcut packet received from SC: {:?}", self.get_id(), packet);
-                                self.handle_packet(packet);
-                            }
-                            _ => {},
-                        }
+                        self.handle_command(command);
                     }
                 },
                 recv(self.get_packet_recv()) -> packet_res => {
@@ -75,6 +57,28 @@ pub trait Server{
                     }
                 },
             }
+        }
+    }
+
+    fn handle_command(&mut self, command: ServerCommand) {
+        match command {
+            ServerCommand::AddSender(id, sender) => {
+                self.get_packet_send().insert(id, sender);
+                info!("Server {}: Added sender for node {}", self.get_id(), id);
+            }
+            ServerCommand::StartFlooding => {
+                self.discover();
+            }
+            ServerCommand::RemoveSender(id) => {
+                self.get_packet_send().remove(&id);
+                self.update_topology_and_routes(id);
+                info!("Server {}: Removed sender for node {}", self.get_id(), id);
+            }
+            ServerCommand::ShortcutPacket(packet) => {
+                info!("Server {}: Shortcut packet received from SC: {:?}", self.get_id(), packet);
+                self.handle_packet(packet);
+            }
+            _ => {},
         }
     }
 
@@ -232,15 +236,34 @@ pub trait Server{
 
         // If the counter reaches 10, send an event to call technicians to fix the drone.
         if *counter == 10 {
-            self.get_event_sender().send(ServerEvent::CallTechniciansToFixDrone(last_node_id)).unwrap();
-
-            // Wait for the technicians to fix the drone.
-            // thread::sleep(Duration::from_millis(100));
+            *counter = 0;
+            let me = (self.get_id(), NodeType::Server);
+            self.get_event_sender().send(ServerEvent::CallTechniciansToFixDrone(last_node_id, me)).unwrap();
+            self.wait_for_drone_fix(last_node_id);
         }
 
         self.send_again_fragment(session_id, fragment_index);
     }
 
+    fn wait_for_drone_fix(&mut self, last_node_id: NodeId) {
+        loop {
+            match self.get_from_controller_command().recv() {
+                Ok(command) => {
+                    match command {
+                        ServerCommand::DroneFixed(node_id) => {
+                            if node_id == last_node_id {
+                                break;
+                            }
+                        }
+                        _ => { self.handle_command(command) }
+                    }
+                }
+                Err(err) => {
+                    error!("Server {}: Error receiving command from the controller: {}", self.get_id(), err);
+                }
+            }
+        }
+    }
 
     fn send_nack(&self, nack: Nack, routing_header: SourceRoutingHeader, session_id: u64){
         let packet= Self::create_packet(PacketType::Nack(nack), routing_header, session_id);

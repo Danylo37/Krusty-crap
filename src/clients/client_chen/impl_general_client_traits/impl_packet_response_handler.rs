@@ -120,7 +120,9 @@ impl PacketResponseHandler for ClientChen {
             *counter += 1;
 
             if *counter == 10 {
-                self.send_event(ClientEvent::CallTechniciansToFixDrone(drone));
+                *counter = 0;
+                let me = (self.metadata.node_id, NodeType::Client);
+                self.send_event(ClientEvent::CallTechniciansToFixDrone(drone, me));
 
                 self.storage
                     .packets_status

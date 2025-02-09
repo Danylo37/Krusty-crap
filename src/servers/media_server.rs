@@ -13,7 +13,6 @@ use wg_2024::{
     network::NodeId,
     packet::Packet,
 };
-use crate::servers::content::{get_media};
 
 type FloodId = u64;
 type SessionId = u64;
@@ -128,9 +127,7 @@ impl Monitoring for MediaServer {
                                 self.handle_packet(packet);
                                 self.send_display_data(UpdateSelf);
                             },
-                            ServerCommand::DroneFixed(_) => {
-                                todo!();
-                            }
+                            _ => {}
                         }
                     }
                 },

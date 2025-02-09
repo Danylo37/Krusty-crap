@@ -1,8 +1,4 @@
-use std::{
-    collections::{HashSet, VecDeque},
-    thread,
-    time::Duration,
-};
+use std::collections::{HashSet, VecDeque};
 use log::{debug, error, info};
 
 use wg_2024::{
@@ -10,7 +6,7 @@ use wg_2024::{
     network::NodeId,
 };
 
-use crate::general_use::{FragmentIndex, ServerId, ServerType, SessionId, Node, ClientEvent};
+use crate::general_use::{FragmentIndex, ServerId, ServerType, SessionId, Node, ClientEvent, ClientCommand};
 use super::{PacketHandler, ChatClientDanylo, Senders, ServerResponseHandler, Reassembler, CommandHandler};
 
 impl PacketHandler for ChatClientDanylo {
@@ -101,14 +97,37 @@ impl PacketHandler for ChatClientDanylo {
 
         // If the counter reaches 10, send an event to call technicians to fix the drone.
         if *counter == 10 {
-            self.send_event(ClientEvent::CallTechniciansToFixDrone(last_node_id));
-
-            // Wait for the technicians to fix the drone.
-            thread::sleep(Duration::from_millis(100));
+            *counter = 0;
+            let me = (self.id, NodeType::Client);
+            self.send_event(ClientEvent::CallTechniciansToFixDrone(last_node_id, me));
+            self.wait_for_drone_fix(last_node_id);
         }
 
         // Resend the fragment that was dropped.
         self.resend_fragment(fragment_index, session_id);
+    }
+
+    /// ###### Waits for the drone to be fixed.
+    /// If the command received is a `DroneFixed` command for the last node ID, it stops waiting.
+    /// Otherwise, it processes the received command.
+    fn wait_for_drone_fix(&mut self, last_node_id: NodeId) {
+        loop {
+            match self.controller_recv.recv() {
+                Ok(command) => {
+                    match command {
+                        ClientCommand::DroneFixed(node_id) => {
+                            if node_id == last_node_id {
+                                break;
+                            }
+                        }
+                        _ => { self.handle_command(command) }
+                    }
+                }
+                Err(err) => {
+                    error!("Client {}: Error receiving command from the controller: {}", self.id, err);
+                }
+            }
+        }
     }
 
     /// ###### Updates the network topology and routes.

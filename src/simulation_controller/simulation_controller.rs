@@ -305,41 +305,59 @@ impl SimulationController {
         }
     }
 
-    fn fix_drone(&mut self, drone_id: DroneId, data_scope: Option<DataScope>) {
+    pub(super) fn fix_drone(&mut self, drone_id: DroneId, sender: (NodeId, NodeType)) {
         let mut rng = rand::thread_rng();
         let new_pdr = rng.gen_range(0.0..=0.1); // Generate random PDR between 0 and 0.1
         self.set_packet_drop_rate(drone_id, new_pdr); // Update the drone's PDR
         info!("Drone {} has been fixed! New PDR: {}", drone_id, new_pdr);
 
-        // Send DroneFixed command to clients
-        for (client_id, (client_command_sender, _)) in self.command_senders_clients.iter() {
-            if let Some(web_client) = self.web_clients_data.get(&client_id) {
-                if web_client.connected_node_ids.contains(&drone_id) {
+        match sender.1 {
+            NodeType::Client => {
+                if let Some((client_command_sender, _)) = self.command_senders_clients.get(&sender.0) {
                     if let Err(e) = client_command_sender.send(ClientCommand::DroneFixed(drone_id)) {
-                        warn!("Failed to send DroneFixed to client {}: {:?}", client_id, e);
+                        warn!("Failed to send DroneFixed to client {}: {:?}", sender.0, e);
                     }
                 }
-            }
-            if let Some(chat_client) = self.chat_clients_data.get(&client_id) {
-                if chat_client.neighbours.contains(&drone_id) {
-                    if let Err(e) = client_command_sender.send(ClientCommand::DroneFixed(drone_id)) {
-                        warn!("Failed to send DroneFixed to client {}: {:?}", client_id, e);
+            },
+            NodeType::Server => {
+                if let Some((server_command_sender, _)) = self.command_senders_servers.get(&sender.0) {
+                    if let Err(e) = server_command_sender.send(ServerCommand::DroneFixed(drone_id)) {
+                        warn!("Failed to send DroneFixed to server {}: {:?}", sender.0, e);
                     }
                 }
-            }
+            },
+            _ => {}
         }
 
-        // Send DroneFixed command to servers (only if initiated by server, to avoid infinite loop)
-        if let Some(DataScope::UpdateAll) = data_scope {
-            for (server_id, (server_command_sender, _)) in &self.command_senders_servers {
-                // Use a helper function to check if the server knows the drone.
-                if self.does_server_know_drone(*server_id, drone_id) {
-                    if let Err(e) = server_command_sender.send(ServerCommand::DroneFixed(drone_id)) {
-                        warn!("Failed to send DroneFixed to server {}: {:?}", server_id, e);
-                    }
-                }
-            }
-        }
+        // // Send DroneFixed command to clients
+        // for (client_id, (client_command_sender, _)) in self.command_senders_clients.iter() {
+        //     if let Some(web_client) = self.web_clients_data.get(&client_id) {
+        //         if web_client.connected_node_ids.contains(&drone_id) {
+        //             if let Err(e) = client_command_sender.send(ClientCommand::DroneFixed(drone_id)) {
+        //                 warn!("Failed to send DroneFixed to client {}: {:?}", client_id, e);
+        //             }
+        //         }
+        //     }
+        //     if let Some(chat_client) = self.chat_clients_data.get(&client_id) {
+        //         if chat_client.neighbours.contains(&drone_id) {
+        //             if let Err(e) = client_command_sender.send(ClientCommand::DroneFixed(drone_id)) {
+        //                 warn!("Failed to send DroneFixed to client {}: {:?}", client_id, e);
+        //             }
+        //         }
+        //     }
+        // }
+        //
+        // // Send DroneFixed command to servers (only if initiated by server, to avoid infinite loop)
+        // if let Some(DataScope::UpdateAll) = data_scope {
+        //     for (server_id, (server_command_sender, _)) in &self.command_senders_servers {
+        //         // Use a helper function to check if the server knows the drone.
+        //         if self.does_server_know_drone(*server_id, drone_id) {
+        //             if let Err(e) = server_command_sender.send(ServerCommand::DroneFixed(drone_id)) {
+        //                 warn!("Failed to send DroneFixed to server {}: {:?}", server_id, e);
+        //             }
+        //         }
+        //     }
+        // }
     }
 
     fn process_client_events(&mut self){
@@ -351,8 +369,8 @@ impl SimulationController {
                 ClientEvent::ChatClientData(id, data, data_scope) => {
                     self.chat_clients_data.insert(id, data);
                 },
-                ClientEvent::CallTechniciansToFixDrone(drone_id) => {
-                    self.fix_drone(drone_id, Some(DataScope::UpdateSelf));
+                ClientEvent::CallTechniciansToFixDrone(drone_id, sender) => {
+                    self.fix_drone(drone_id, sender);
                 },
                 other => {
                     warn!("Unexpected client event: {:?}", other);
@@ -373,12 +391,9 @@ impl SimulationController {
                 ServerEvent::MediaServerData(id, data, data_scope) =>{
                     self.media_servers_data.insert(id, data);
                 },
-                ServerEvent::CallTechniciansToFixDrone(drone_id) => {
-                    self.fix_drone(drone_id, Some(DataScope::UpdateAll));
+                ServerEvent::CallTechniciansToFixDrone(drone_id, sender) => {
+                    self.fix_drone(drone_id, sender);
                 },
-                other => {
-                    warn!("Unexpected server event: {:?}", other);
-                }
             }
         }
     }

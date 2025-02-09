@@ -87,7 +87,13 @@ impl SimulationControllerMonitoring for SimulationController {
                                     }
                                 }
                             },
-                            _ =>{}
+                            ClientEvent::PacketSent(_packet) => {
+                                // todo
+                            },
+                            ClientEvent::CallTechniciansToFixDrone(id, sender) => {
+                                self.fix_drone(id, sender);
+                            },
+                            _ => {}
                         }
                         if self.updating_nodes.is_empty() && conditional_data_scope == DataScope::UpdateAll {
                             self.send_display_data(sender_to_gui.clone());
@@ -153,7 +159,9 @@ impl SimulationControllerMonitoring for SimulationController {
                                 }
 
                             },
-                            _=> {},
+                            ServerEvent::CallTechniciansToFixDrone(id, sender) => {
+                                self.fix_drone(id, sender);
+                            }
                         }
 
                         if self.updating_nodes.is_empty() && conditional_data_scope == DataScope::UpdateAll {
@@ -255,14 +263,13 @@ impl SimulationController {
                         drone crashed\n\
                         *********************************");
                     }
-                    Err(e) => {
+                    Err(_) => {
                         println!("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\
                         couldn't crash drone\n\
                         <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
                     }
                 }
             }
-            _ => {}
         }
     }
 }
