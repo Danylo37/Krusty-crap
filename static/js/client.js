@@ -614,6 +614,7 @@ let currentSearchValue = "";
 // FUNCTION TO NAVIGATE SERVERS
 function navigateServer(direction) {
 
+    console.log(currentServerIndex)
     const serverKeys = Object.keys(file_lists);
 
     if (direction>0){
@@ -633,6 +634,8 @@ function navigateServer(direction) {
             currentServerIndex = currentServerIndex -1;
         }
     }
+    console.log(currentServerIndex)
+    console.log(file_lists)
     updateServerDisplay();
 }
 
