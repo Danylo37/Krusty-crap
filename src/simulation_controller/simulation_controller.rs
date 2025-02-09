@@ -1,6 +1,6 @@
 use crossbeam_channel::{Receiver, Sender};
 use std::collections::{HashMap, HashSet, VecDeque};
-use log::{debug, info, warn};
+use log::{info, warn};
 use wg_2024::{
     controller::{DroneCommand, DroneEvent},
     drone::Drone,

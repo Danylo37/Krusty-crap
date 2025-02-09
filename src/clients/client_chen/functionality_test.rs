@@ -2,10 +2,9 @@ use std::collections::HashMap;
 use std::io::{self, Write};
 use crossbeam_channel::Sender;
 use wg_2024::network::NodeId;
-use crate::clients::Client;
 use crate::general_use::ClientCommand;
 use crate::simulation_controller::SimulationController;
-
+#[allow(dead_code)]
 pub(crate) fn start_testing(mut controller: SimulationController, sender_to_gui: &Sender<String>) {
     let mut clients: HashMap<i32, NodeId> = HashMap::new();
     let mut counter = 0;

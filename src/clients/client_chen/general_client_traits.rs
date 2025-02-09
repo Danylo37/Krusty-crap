@@ -1,8 +1,5 @@
-use std::{eprintln, matches};
 use serde::de::DeserializeOwned;
 use crate::clients::client_chen::prelude::*;
-use crate::clients::client_chen::SpecificInfo;
-use crate::general_use::DataScope;
 
 pub trait Sending{
     fn send_packets_in_buffer_with_checking_status(&mut self);//when you run the client

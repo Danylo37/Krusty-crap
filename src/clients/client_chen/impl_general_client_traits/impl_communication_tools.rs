@@ -1,7 +1,6 @@
 use crate::clients::client_chen::{ClientChen, SpecificInfo};
 use crate::clients::client_chen::general_client_traits::*;
 use crate::clients::client_chen::prelude::*;
-use crate::clients::client_chen::SpecificInfo::ServerInfo;
 
 impl CommunicationTrait for ClientChen{
     fn get_discovered_servers_from_topology(&mut self) -> HashSet<ServerId> {

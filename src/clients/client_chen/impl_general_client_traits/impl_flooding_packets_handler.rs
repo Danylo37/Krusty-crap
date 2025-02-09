@@ -1,6 +1,5 @@
 use crate::clients::client_chen::{ClientChen, ClientInformation, DroneInformation, FloodingPacketsHandler, NodeInfo, Router, Sending, ServerInformation, SpecificInfo};
 use crate::clients::client_chen::prelude::*;
-use crate::clients::client_chen::general_client_traits::*;
 
 impl FloodingPacketsHandler for ClientChen {
     fn handle_flood_request(&mut self, session_id: SessionId, request: &mut FloodRequest) {

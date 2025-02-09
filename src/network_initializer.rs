@@ -431,7 +431,7 @@ impl NetworkInitializer {
         //Shouldn't happen
         ClientType::Web
     }
-
+    #[allow(dead_code)]
     fn create_and_spawn_client<T>(   //without gui monitoring
         &mut self,
         client_params: (

@@ -11,9 +11,8 @@ use crate::clients::Client as TraitClient;
 /// Note: when you send the packet with routing the hop_index is increased in the receiving by a drone
 
 use crate::clients::client_chen::prelude::*;
-use crate::clients::client_chen::{CommandHandler, CommunicationTrait, FragmentsHandler, PacketsReceiver, Router, Sending};
-use crate::general_use::{ClientType, DataScope, DisplayDataWebBrowser, DroneId, MediaRef, SpecificNodeType};
-use crate::general_use::ClientEvent::WebClientData;
+use crate::clients::client_chen::{CommandHandler, CommunicationTrait, FragmentsHandler, PacketsReceiver, Sending};
+use crate::general_use::{DroneId, MediaRef};
 
 #[derive(Clone)]
 pub(crate) struct ClientChen {

@@ -1,8 +1,8 @@
 use crate::clients::client_chen::{ClientChen, CommandHandler, SpecificInfo};
 use crate::clients::client_chen::prelude::*;
 use crate::clients::client_chen::general_client_traits::*;
-use crate::general_use::{DataScope, ServerType};
-use crate::general_use::DataScope::{UpdateAll, UpdateSelf};
+use crate::general_use::{ServerType};
+use crate::general_use::DataScope::{UpdateAll};
 use crate::ui_traits::Monitoring;
 
 impl CommandHandler for ClientChen{

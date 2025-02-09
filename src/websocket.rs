@@ -1,4 +1,4 @@
-use crossbeam_channel::{select, select_biased, unbounded, Receiver, Sender};
+use crossbeam_channel::{select, unbounded, Receiver, Sender};
 use serde::{Deserialize, Serialize};
 use std::net::{TcpListener};
 use std::thread;
