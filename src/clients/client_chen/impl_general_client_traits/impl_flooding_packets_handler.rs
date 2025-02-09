@@ -7,7 +7,7 @@ impl FloodingPacketsHandler for ClientChen {
         //println!("{:?} Client {} has received flood request that contains the path: {:?}", self.metadata.client_type ,self.metadata.node_id , request.path_trace);
         // Prepare the flood response.
         request.increment(self.metadata.node_id, self.metadata.node_type);
-        let mut response = request.generate_response(session_id);
+        let response = request.generate_response(session_id);
 
         //you send directly because the source routing header is there
         self.send(response.clone());

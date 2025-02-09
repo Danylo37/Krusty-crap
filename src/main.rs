@@ -12,7 +12,6 @@ extern crate rouille;
 use std::thread;
 use std::time::Duration;
 use crossbeam_channel::{unbounded};
-use log::info;
 use crate::ui_traits::{SimulationControllerMonitoring};
 use crate::clients::client_chen::functionality_test;
 

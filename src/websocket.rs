@@ -6,7 +6,6 @@ use std::thread;
 use log::{debug, info, warn};
 use tungstenite::{accept, Message};
 use tungstenite::error::Error as WsError;
-use serde_json::Value;
 use crate::general_use::{ClientId, DroneId, FileRef, MediaRef, ServerId};
 
 // Helper module for handling u64 as strings in JSON
@@ -160,27 +159,4 @@ pub fn start_websocket_server(rx: Receiver<String>, cmd_tx: Sender<WsCommand>) {
             }
         }
     });
-}
-
-
-fn parse_message(json_str: &str) {
-    let parsed: Result<Value, _> = serde_json::from_str(json_str);
-
-    match parsed {
-        Ok(value) => {
-            if let Some(args) = value.get("WsAskFileList") {
-                if let Some(arr) = args.as_array() {
-                    let parsed_numbers: Result<Vec<u64>, _> = arr.iter()
-                        .map(|v| v.as_str().unwrap_or("").parse::<u64>())
-                        .collect();
-
-                    match parsed_numbers {
-                        Ok(numbers) => println!("Parsed numbers: {:?}", numbers),
-                        Err(e) => println!("Failed to parse numbers: {}", e),
-                    }
-                }
-            }
-        }
-        Err(e) => println!("JSON parsing error: {}", e),
-    }
 }

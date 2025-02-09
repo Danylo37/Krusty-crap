@@ -45,7 +45,6 @@ pub struct SimulationController {
     pub command_senders_servers: HashMap<NodeId, (Sender<ServerCommand>, ServerType)>,
     pub packet_senders: HashMap<NodeId, Sender<Packet>>,
 
-    drones_pdr: HashMap<NodeId, f32>,
     fixed_drones: HashSet<NodeId>,
 
     //for the monitoring
@@ -89,7 +88,6 @@ impl SimulationController {
             server_event_receiver,
             packet_senders: HashMap::new(),
 
-            drones_pdr: HashMap::new(),
             fixed_drones: HashSet::new(),
 
             //for the monitoring
