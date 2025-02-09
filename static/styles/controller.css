@@ -192,20 +192,60 @@
     height: 24px;
 }
 
-@keyframes ellipseMotion {
-    0%   { transform: translate(0, 0); }
-    25%  { transform: translate(10px, -15px); }
-    50%  { transform: translate(20px, 0); }
-    75%  { transform: translate(10px, 15px); }
-    100% { transform: translate(0, 0); }
+/* Legend container styling */
+#legend-container {
+    position: absolute;
+    bottom: 60px;           /* adjust vertical position as needed */
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.5s ease-out, padding 0.5s ease-out;
+    width: 300px;           /* adjust width as needed */
+    z-index: 1500;
+    padding: 0 10px;
 }
 
-.ellipse-animation {
-    animation: ellipseMotion 3s linear infinite;
+/* When expanded, give it a height that fits the legend items */
+#legend-container.expanded {
+    max-height: 250px;        /* change to a value that fits your content */
+    padding: 10px;
 }
 
+/* Legend toggle button (down arrow) styling */
+#instructions-container:after {
+    position: absolute;
+    bottom: 20px;           /* adjust to position the arrow relative to the legend */
+    left: 50%;
+    transform: translateX(-50%);
+    cursor: pointer;
+    z-index: 1600;
+}
 
+#down-arrow-btn{
+    width:30px;
+}
 
+/* Legend items */
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+}
+
+.legend-icon {
+    width: 30px;
+    height: 30px;
+    margin-right: 10px;
+}
+
+.legend-circle {
+    display: inline-block;
+    margin-right: 10px;
+}
 
 
 
@@ -438,6 +478,19 @@
         opacity: 0;
         transform: translateX(-100%);
     }
+}
+
+
+@keyframes ellipseMotion {
+    0%   { transform: translate(0, 0); }
+    25%  { transform: translate(10px, -15px); }
+    50%  { transform: translate(20px, 0); }
+    75%  { transform: translate(10px, 15px); }
+    100% { transform: translate(0, 0); }
+}
+
+.ellipse-animation {
+    animation: ellipseMotion 3s linear infinite;
 }
 
 
