@@ -1,7 +1,7 @@
 use std::collections::{HashSet};
 use crossbeam_channel::{select_biased, Sender};
 use log::{debug, info};
-use crate::clients::client_chen::{NodeId, Serialize};
+use crate::clients::client_chen::{NodeId};
 use crate::simulation_controller::SimulationController;
 use crate::ui_traits::{SimulationControllerMonitoring};
 use crate::websocket::{WsCommand};
@@ -45,7 +45,7 @@ impl SimulationControllerMonitoring for SimulationController {
                 recv(self.ws_command_receiver) -> command_res => {
                     debug!("Controller received command {:?}", command_res);
                     if let Ok(command) = command_res {
-                        self.handle_ws_command(command);
+                        self.handle_ws_command(command, &sender_to_gui);
                     }
                 },
                 recv(self.client_event_receiver) -> client_event => {
@@ -174,7 +174,7 @@ impl SimulationControllerMonitoring for SimulationController {
 }
 
 impl SimulationController {
-    fn handle_ws_command(&mut self, command: WsCommand) {
+    fn handle_ws_command(&mut self, command: WsCommand, sender_to_gui: &Sender<String>) {
         match command {
             WsCommand::WsUpdateData => {
                 //println!("CONTROLLER RECEIVED NETWORK DATA UPDATE COMMAND");
@@ -253,7 +253,7 @@ impl SimulationController {
             WsCommand::WsCrashDrone {
                 drone_id
             } => {
-                match self.request_drone_crash(drone_id){
+                match self.request_drone_crash(drone_id, sender_to_gui){
                     Ok(_) => {
                         println!("*********************************\n\
                         drone crashed\n\

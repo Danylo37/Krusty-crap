@@ -462,9 +462,12 @@ impl SimulationController {
     /*- This function sends a Crash command to the specified drone_id.
 It uses the command_senders map to find the appropriate sender channel.
 */
-    pub fn request_drone_crash(&mut self, drone_id: NodeId) -> Result<(), String> {
+    pub fn request_drone_crash(&mut self, drone_id: NodeId, sender_to_gui: &Sender<String>) -> Result<(), String> {
 
         if self.is_drone_critical(drone_id) {
+            if let Err(e) = sender_to_gui.send("DroneNotCrashed".to_string()) {
+                warn!("Error sending crash result to WebSocket: {}", e);
+            }
             return Err(format!("Cannot crash drone {}: critical for connectivity", drone_id));
         }
 
@@ -507,6 +510,9 @@ It uses the command_senders map to find the appropriate sender channel.
         }
         self.state.topology.remove(&drone_id);
         self.command_senders_drones.remove(&drone_id);
+        if let Err(e) = sender_to_gui.send("DroneCrashed".to_string()) {
+            warn!("Error sending crash result to WebSocket: {}", e);
+        }
 
         Ok(())
     }

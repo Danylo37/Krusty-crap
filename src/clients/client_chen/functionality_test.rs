@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 use std::io::{self, Write};
+use crossbeam_channel::Sender;
 use wg_2024::network::NodeId;
 use crate::clients::Client;
 use crate::general_use::ClientCommand;
 use crate::simulation_controller::SimulationController;
 
-pub(crate) fn start_testing(mut controller: SimulationController) {
+pub(crate) fn start_testing(mut controller: SimulationController, sender_to_gui: &Sender<String>) {
     let mut clients: HashMap<i32, NodeId> = HashMap::new();
     let mut counter = 0;
 
@@ -146,7 +147,7 @@ pub(crate) fn start_testing(mut controller: SimulationController) {
                 };
 
                 // Mutable borrow happens here, but after immutable borrow ends
-                controller.request_drone_crash(drone_choice as NodeId).expect("Drone crash failed");
+                controller.request_drone_crash(drone_choice as NodeId, sender_to_gui).expect("Drone crash failed");
 
                 if let Some((cmd_tx, _)) = controller.command_senders_clients.get(chosen_client) {
                     let sender = cmd_tx.clone();
