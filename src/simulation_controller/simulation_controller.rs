@@ -1,6 +1,6 @@
 use crossbeam_channel::{Receiver, Sender};
 use std::collections::{HashMap, HashSet, VecDeque};
-use log::{debug, info, warn};
+use log::{info, warn};
 use wg_2024::{
     controller::{DroneCommand, DroneEvent},
     drone::Drone,
@@ -45,7 +45,6 @@ pub struct SimulationController {
     pub command_senders_servers: HashMap<NodeId, (Sender<ServerCommand>, ServerType)>,
     pub packet_senders: HashMap<NodeId, Sender<Packet>>,
 
-    drones_pdr: HashMap<NodeId, f32>,
     fixed_drones: HashSet<NodeId>,
 
     //for the monitoring
@@ -89,7 +88,6 @@ impl SimulationController {
             server_event_receiver,
             packet_senders: HashMap::new(),
 
-            drones_pdr: HashMap::new(),
             fixed_drones: HashSet::new(),
 
             //for the monitoring
@@ -250,7 +248,7 @@ impl SimulationController {
     /// Spawns a new drone.
     pub fn create_drone<T: Drone + Send + 'static>(&mut self,
                                                    drone_id: NodeId,
-                                                   event_sender: Sender<DroneEvent>,
+                                                   _event_sender: Sender<DroneEvent>,
                                                    command_receiver: Receiver<DroneCommand>,
                                                    packet_receiver: Receiver<Packet>,
                                                    connected_nodes: HashMap<NodeId, Sender<Packet>>,
@@ -270,7 +268,7 @@ impl SimulationController {
 
     pub(super) fn fix_drone(&mut self, drone_id: DroneId, sender: (NodeId, NodeType)) {
         if self.fixed_drones.contains(&drone_id) {
-            debug!("Drone {} is already fixed", drone_id);
+            info!("Drone {} is already fixed", drone_id);
         } else {
             let mut rng = rand::thread_rng();
             let new_pdr = rng.gen_range(0.0..=0.1); // Generate random PDR between 0 and 0.1
@@ -278,6 +276,9 @@ impl SimulationController {
             info!("Drone {} has been fixed! New PDR: {}", drone_id, new_pdr);
 
             self.fixed_drones.insert(drone_id);
+            if let Some(drone_data) = self.drones_data.get_mut(&drone_id) {
+                drone_data.pdr = new_pdr;
+            }
         }
 
         match sender.1 {

@@ -1,7 +1,5 @@
 use crossbeam_channel::{Sender};
-use tungstenite::protocol::frame::coding::Data;
-use crate::general_use::{DataScope, DisplayDataWebBrowser};
-use crate::general_use::ClientEvent::WebClientData;
+use crate::general_use::{DataScope};
 
 pub trait Monitoring {
     fn send_display_data(&mut self, data_scope: DataScope);

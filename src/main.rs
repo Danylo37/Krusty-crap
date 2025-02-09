@@ -12,9 +12,7 @@ extern crate rouille;
 use std::thread;
 use std::time::Duration;
 use crossbeam_channel::{unbounded};
-use log::info;
 use crate::ui_traits::{SimulationControllerMonitoring};
-use crate::clients::client_chen::functionality_test;
 
 // Modified main function
 fn main() {
@@ -28,7 +26,7 @@ fn main() {
     // Run the simulation controller
     thread::spawn(move || {
         // Initialize the network
-        let mut my_net = network_initializer::NetworkInitializer::new(tx.clone(), receiver_from_ws);
+        let mut my_net = network_initializer::NetworkInitializer::new(receiver_from_ws);
         my_net.initialize_from_file("topologies/tree.toml");
         // Clone the shared simulation controller
         let mut simulation_controller = my_net.simulation_controller;
@@ -42,7 +40,10 @@ fn main() {
 
     // Start HTTP server for web interface
     thread::spawn(|| {
-        println!("HTTP server started on http://0.0.0.0:8000");
+        //println!("HTTP server started on http://0.0.0.0:8000");
+        println!("💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥\n
+        To use the application go to http://localhost:8000/index.html\n\
+        💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥\n");
         rouille::start_server("0.0.0.0:8000", move |request| {
             rouille::match_assets(&request, "static")
         });

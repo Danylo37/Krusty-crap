@@ -1,13 +1,12 @@
 use crate::clients::client_chen::{ClientChen, ClientInformation, DroneInformation, FloodingPacketsHandler, NodeInfo, Router, Sending, ServerInformation, SpecificInfo};
 use crate::clients::client_chen::prelude::*;
-use crate::clients::client_chen::general_client_traits::*;
 
 impl FloodingPacketsHandler for ClientChen {
     fn handle_flood_request(&mut self, session_id: SessionId, request: &mut FloodRequest) {
         //println!("{:?} Client {} has received flood request that contains the path: {:?}", self.metadata.client_type ,self.metadata.node_id , request.path_trace);
         // Prepare the flood response.
         request.increment(self.metadata.node_id, self.metadata.node_type);
-        let mut response = request.generate_response(session_id);
+        let response = request.generate_response(session_id);
 
         //you send directly because the source routing header is there
         self.send(response.clone());

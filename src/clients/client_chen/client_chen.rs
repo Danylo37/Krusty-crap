@@ -11,9 +11,8 @@ use crate::clients::Client as TraitClient;
 /// Note: when you send the packet with routing the hop_index is increased in the receiving by a drone
 
 use crate::clients::client_chen::prelude::*;
-use crate::clients::client_chen::{CommandHandler, CommunicationTrait, FragmentsHandler, PacketsReceiver, Router, Sending};
-use crate::general_use::{ClientType, DataScope, DisplayDataWebBrowser, DroneId, MediaRef, SpecificNodeType};
-use crate::general_use::ClientEvent::WebClientData;
+use crate::clients::client_chen::{CommandHandler, CommunicationTrait, FragmentsHandler, PacketsReceiver, Sending};
+use crate::general_use::{DroneId, MediaRef};
 
 #[derive(Clone)]
 pub(crate) struct ClientChen {
@@ -48,7 +47,6 @@ impl TraitClient for ClientChen {
             metadata: NodeMetadata {
                 node_id: id,
                 node_type: NodeType::Client,
-                client_type: ClientType::Web,
             },
 
             // Status
@@ -84,7 +82,7 @@ impl TraitClient for ClientChen {
                 current_text_media_list: Vec::new(),
                 current_chosen_media_ref: "".to_string(),
                 current_received_serialized_media: Default::default(),
-                current_chosen_media: String::new(),
+                //current_chosen_media: String::new(),
             },
 
 
@@ -134,7 +132,6 @@ impl ClientChen{
 pub(crate) struct NodeMetadata {
     pub(crate) node_id: NodeId,
     pub(crate) node_type: NodeType,
-    pub(crate) client_type: ClientType,
 }
 
 // Status of the client
@@ -174,7 +171,7 @@ pub struct NodeStorage {
     pub(crate) current_text_media_list: Vec<MediaRef>,
     pub(crate) current_chosen_media_ref: MediaRef,
     pub(crate) current_received_serialized_media: HashMap<MediaRef, String>,
-    pub(crate) current_chosen_media: String,
+    //pub(crate) current_chosen_media: String,
 }
 
 
@@ -208,13 +205,6 @@ pub struct ClientInformation {
     pub(crate) connected_nodes_ids: HashSet<NodeId>,
 }
 
-impl ClientInformation {
-    fn new(connected_nodes_ids: HashSet<NodeId>) -> ClientInformation {
-        ClientInformation {
-            connected_nodes_ids,
-        }
-    }
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerInformation {
@@ -222,27 +212,11 @@ pub struct ServerInformation {
     pub(crate) server_type: ServerType,
 }
 
-impl ServerInformation {
-    fn new(connected_nodes_ids: HashSet<NodeId>, server_type: ServerType) -> ServerInformation {
-        ServerInformation {
-            connected_nodes_ids,
-            server_type,
-        }
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DroneInformation {
     pub(crate) connected_nodes_ids: HashSet<NodeId>,
 }
 
-impl DroneInformation {
-    fn new(connected_nodes_ids: HashSet<NodeId>) -> DroneInformation {
-        DroneInformation {
-            connected_nodes_ids,
-        }
-    }
-}
 
 
 

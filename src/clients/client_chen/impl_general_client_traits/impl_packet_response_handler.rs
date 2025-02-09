@@ -1,6 +1,7 @@
 use crate::clients::client_chen::{ClientChen, PacketResponseHandler, Router, Sending};
 use crate::clients::client_chen::prelude::*;
 use crate::clients::client_chen::general_client_traits::*;
+use crate::general_use::PacketStatus::WaitingForFixing;
 
 impl PacketResponseHandler for ClientChen {
     fn handle_ack(&mut self, ack_packet_session_id: SessionId, ack: &Ack) {
@@ -126,9 +127,9 @@ impl PacketResponseHandler for ClientChen {
 
                 self.storage
                     .packets_status
-                    .entry(self.status.session_id)
+                    .entry(session_id)
                     .or_insert_with(HashMap::new)
-                    .insert(nack.fragment_index, PacketStatus::WaitingForFixing);
+                    .insert(nack.fragment_index, WaitingForFixing(drone));
 
                 return;
             }

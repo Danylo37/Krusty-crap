@@ -93,13 +93,12 @@ pub struct NetworkInitializer {
     pub server_channels: HashMap<NodeId, (Sender<Packet>, ServerType)>,
     pub drone_brand_usage: HashMap<DroneBrand, UsingTimes>,
     pub client_type_usage: HashMap<ClientType, UsingTimes>,
-    pub sender_to_gui: Sender<String>,
     pub command_senders: HashMap<NodeId, Sender<DroneCommand>>, // Add this field
 
 }
 
 impl NetworkInitializer {
-    pub fn new( sender_to_gui: Sender<String>, ws_receiver: Receiver<WsCommand>) -> Self {
+    pub fn new( ws_receiver: Receiver<WsCommand>) -> Self {
         // Create event channels for drones, clients, and servers
         let (drone_event_sender, drone_event_receiver) = unbounded();
         let (client_event_sender, client_event_receiver) = unbounded();
@@ -124,7 +123,6 @@ impl NetworkInitializer {
             server_channels:HashMap::new(),
             drone_brand_usage: DroneBrand::iter().map(|brand| (brand, 0)).collect(),
             client_type_usage: ClientType::iter().map(|client_type| (client_type, 0)).collect(),
-            sender_to_gui,
             command_senders: HashMap::new(),
         }
     }
@@ -391,18 +389,17 @@ impl NetworkInitializer {
                 HashMap::new(),
                 );
 
-            let tx_clone = self.sender_to_gui.clone();
             let client_type;
             match self.choose_client_type_evenly() {
                 ClientType::Web => {
                     client_type = ClientType::Web;
-                    self.create_and_spawn_client_with_monitoring::<ClientChen>(tx_clone, client_params);
+                    self.create_and_spawn_client_with_monitoring::<ClientChen>(client_params);
                     self.client_channels.insert(client.id, (packet_sender , ClientType::Web));
                 },
 
                 ClientType::Chat=> {
                     client_type = ClientType::Chat;
-                    self.create_and_spawn_client_with_monitoring::<ChatClientDanylo>(tx_clone,client_params);
+                    self.create_and_spawn_client_with_monitoring::<ChatClientDanylo>(client_params);
                     self.client_channels.insert(client.id, (packet_sender , ClientType::Chat));
                 }
             };
@@ -434,7 +431,7 @@ impl NetworkInitializer {
         //Shouldn't happen
         ClientType::Web
     }
-
+    #[allow(dead_code)]
     fn create_and_spawn_client<T>(   //without gui monitoring
         &mut self,
         client_params: (
@@ -464,7 +461,6 @@ impl NetworkInitializer {
 
     fn create_and_spawn_client_with_monitoring<T: TraitClient + Monitoring + Send + 'static>(
         &mut self,
-        sender_to_gui: Sender<String>,
         client_params: (
             ClientId,
             Sender<ClientEvent>,
@@ -505,7 +501,6 @@ impl NetworkInitializer {
 
             // Clone sender for server events
             let server_events_sender_clone = self.simulation_controller.server_event_sender.clone();
-            let sender_to_gui_clone = self.sender_to_gui.clone();
             //Choosing type
             let server_type;
             //Fast fix on many servers
