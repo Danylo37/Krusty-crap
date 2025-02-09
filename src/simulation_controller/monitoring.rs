@@ -87,9 +87,6 @@ impl SimulationControllerMonitoring for SimulationController {
                                     }
                                 }
                             },
-                            ClientEvent::PacketSent(_packet) => {
-                                // todo
-                            },
                             ClientEvent::CallTechniciansToFixDrone(id, sender) => {
                                 self.fix_drone(id, sender);
                             },

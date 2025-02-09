@@ -113,9 +113,6 @@ impl CommandHandler for ChatClientDanylo {
                 error!("Client {}: Failed to send FloodRequest to the drone {}: {}", self.id, sender.0, err);
             } else {
                 info!("Client {}: FloodRequest sent to the drone with id {}.", self.id, sender.0);
-
-                // Send the 'PacketSent' event to the simulation controller.
-                self.send_event(ClientEvent::PacketSent(packet.clone()));
             }
         }
     }

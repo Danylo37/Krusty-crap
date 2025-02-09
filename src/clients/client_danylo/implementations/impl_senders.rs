@@ -34,8 +34,6 @@ impl Senders for ChatClientDanylo {
         // Attempt to send the packet to the next hop.
         match sender.send(packet.clone()) {
             Ok(_) => {
-                // Send the 'PacketSent' event to the simulation controller
-                self.send_event(ClientEvent::PacketSent(packet));
                 Ok(())
             }
             Err(err) => {
@@ -68,7 +66,6 @@ impl Senders for ChatClientDanylo {
     fn send_event(&self, event: ClientEvent) {
         let result = self.controller_send.send(event.clone());
         let event_name = match event {
-            ClientEvent::PacketSent(_) => "PacketSent",
             ClientEvent::KnownServers(_) => "KnownServers",
             ClientEvent::ChatClientData(_, _, _) => "ChatClientData",
             ClientEvent::CallTechniciansToFixDrone(_, _) => "CallTechniciansToFixDrone",

@@ -239,7 +239,6 @@ pub enum ClientEvent {
     ChatClientData(InitiatorId, DisplayDataChatClient, DataScope),
     WebClientData(InitiatorId, DisplayDataWebBrowser, DataScope),
 
-    PacketSent(Packet),
     KnownServers(Vec<(NodeId, ServerType, bool)>),
 
     // DroneId - id of the drone to be fixed.
