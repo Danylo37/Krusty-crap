@@ -2,7 +2,7 @@ use crossbeam_channel::{select, unbounded, Receiver, Sender};
 use serde::{Deserialize, Serialize};
 use std::net::{TcpListener};
 use std::thread;
-use log::{warn};
+use log::{info, warn};
 use tungstenite::{accept, Message};
 use tungstenite::error::Error as WsError;
 use crate::general_use::{ClientId, DroneId, FileRef, MediaRef, ServerId};
@@ -130,19 +130,19 @@ pub fn start_websocket_server(rx: Receiver<String>, cmd_tx: Sender<WsCommand>) {
                                 default => {
                                     match websocket.read() {
                                         Ok(Message::Text(text)) => {
-                                            println!("Raw WebSocket Message Received: {}", text); // Debug log
+                                            info!("Raw WebSocket Message Received: {}", text); // Debug log
                                             if let Ok(cmd) = serde_json::from_str::<WsCommand>(&text) {
-                                                println!("Parsed command: {:?}", cmd);
+                                                info!("Parsed command: {:?}", cmd);
                                                 ws_tx.send(cmd).unwrap();
                                             } else {
-                                                println!("Failed to parse message: {}", text);
+                                                info!("Failed to parse message: {}", text);
                                             }
                                         }
                                         Err(WsError::Io(ref err)) if err.kind() == std::io::ErrorKind::WouldBlock => {
                                             // No message received, continue
                                         }
                                         Err(e) => {
-                                            warn!("WebSocket error: {}", e);
+                                            info!("WebSocket error: {}", e);
                                             break;
                                         }
                                         _=>{}

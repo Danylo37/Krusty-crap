@@ -44,7 +44,7 @@ impl CommandHandler for ClientChen{
                 self.ask_server_type(server_id);
             }
             ClientCommand::RequestListFile(server_id) => {
-                println!("
+                info!("
                 CLIENT PROCESSING ASK FILE LIST COMMAND");
                 self.ask_list_files(server_id);
             }
@@ -55,7 +55,7 @@ impl CommandHandler for ClientChen{
                 self.ask_media(media_ref);
             }
             ClientCommand::DroneFixed(drone_id) => {
-                println!("*******************************************************************\n Client [{}] is processing the drone [{}] fixed\n*******************************************************************", self.metadata.node_id, drone_id);
+                info!("*******************************************************************\n Client [{}] is processing the drone [{}] fixed\n*******************************************************************", self.metadata.node_id, drone_id);
 
 
                 // Collect (session_id, fragment_index) pairs where the status is WaitingForFixing(drone_id)

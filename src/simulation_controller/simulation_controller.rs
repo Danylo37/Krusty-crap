@@ -268,7 +268,7 @@ impl SimulationController {
 
     pub(super) fn fix_drone(&mut self, drone_id: DroneId, sender: (NodeId, NodeType)) {
         if self.fixed_drones.contains(&drone_id) {
-            println!("Drone {} is already fixed", drone_id);
+            info!("Drone {} is already fixed", drone_id);
         } else {
             let mut rng = rand::thread_rng();
             let new_pdr = rng.gen_range(0.0..=0.1); // Generate random PDR between 0 and 0.1

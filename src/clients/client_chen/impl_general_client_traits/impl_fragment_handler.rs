@@ -81,26 +81,26 @@ impl FragmentsHandler for ClientChen {
         match message {
             Response::ServerType(server_type) => {
                 self.update_topology_entry_for_server(initiator_id, server_type);
-                println!("CLIENT[{}]: process server type {}: {:?}", self.metadata.node_id, initiator_id, server_type);
+                info!("CLIENT[{}]: process server type {}: {:?}", self.metadata.node_id, initiator_id, server_type);
                 self.send_display_data(DataScope::UpdateSelf);
             },
             Response::ListFiles(list_file)  => {
-                println!("CLIENT RECEIVED FILE LIST FROM SERVER");
+                info!("CLIENT RECEIVED FILE LIST FROM SERVER");
                 self.handle_list_file(list_file);
                 self.send_display_data(DataScope::UpdateSelf);
-                println!("CLIENT SENT LIST FILE TO THE SIMULATION CONTROLLER");
+                info!("CLIENT SENT LIST FILE TO THE SIMULATION CONTROLLER");
             },
             Response::File(text) => {
                 self.handle_text_file(text);
                 self.send_display_data(DataScope::UpdateSelf);
             },
             Response::Media(media) =>{
-                println!("------CLIENT RECEIVED MEDIA");
+                info!("------CLIENT RECEIVED MEDIA");
                 self.handle_media(media);
                 self.send_display_data(DataScope::UpdateSelf);
             },
             Response::Err(error) => {
-                warn!("Error received: {:?}", error);
+                info!("Error received: {:?}", error);
             },
             _ => {}
         }

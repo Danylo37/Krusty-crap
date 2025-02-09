@@ -15,7 +15,7 @@ impl ServerQuery for ClientChen{
         self.update_servers();
         if self.communication.servers.contains(&server_id) {
             self.send_query(server_id, Query::AskListFiles);
-            println!("|WEB| CLIENT [{}] SENT QUERY ASK FILE LIST TO SERVER [{}]", self.metadata.node_id, server_id);
+            info!("|WEB| CLIENT [{}] SENT QUERY ASK FILE LIST TO SERVER [{}]", self.metadata.node_id, server_id);
         }
     }
 
