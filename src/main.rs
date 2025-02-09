@@ -40,7 +40,10 @@ fn main() {
 
     // Start HTTP server for web interface
     thread::spawn(|| {
-        println!("HTTP server started on http://0.0.0.0:8000");
+        //println!("HTTP server started on http://0.0.0.0:8000");
+        println!("💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥\n
+        To use the application go to http://localhost:8000/index.html\n\
+        💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥\n");
         rouille::start_server("0.0.0.0:8000", move |request| {
             rouille::match_assets(&request, "static")
         });

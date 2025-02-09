@@ -70,7 +70,7 @@ pub enum WsCommand {
 
 pub fn start_websocket_server(rx: Receiver<String>, cmd_tx: Sender<WsCommand>) {
     let listener = TcpListener::bind("0.0.0.0:8080").unwrap();
-    println!("WebSocket server started on ws://0.0.0.0:8080");
+    //println!("WebSocket server started on ws://0.0.0.0:8080");
 
     let (ws_tx, ws_rx) = unbounded(); // Unbounded WebSocket command channel
 
