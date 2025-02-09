@@ -44,7 +44,8 @@ impl CommandHandler for ClientChen{
                 self.ask_server_type(server_id);
             }
             ClientCommand::RequestListFile(server_id) => {
-                println!("CLIENT PROCESSING ASK FILE LIST COMMAND");
+                println!("
+                CLIENT PROCESSING ASK FILE LIST COMMAND");
                 self.ask_list_files(server_id);
             }
             ClientCommand::RequestText(server_id, file_ref) => {
@@ -54,10 +55,9 @@ impl CommandHandler for ClientChen{
                 self.ask_media(media_ref);
             }
             ClientCommand::DroneFixed(drone_id) => {
-                println!("
-                ******************************************\n
-                Client [{}] is processing the drone fixed command\n
-                ******************************************", self.metadata.node_id);
+                println!("*******************************************************************\n Client [{}] is processing the drone [{}] fixed\n*******************************************************************", self.metadata.node_id, drone_id);
+
+
                 // Collect (session_id, fragment_index) pairs where the status is WaitingForFixing(drone_id)
                 let filtered_pairs: Vec<(SessionId, FragmentIndex)> = self
                     .storage
