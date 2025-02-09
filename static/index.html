@@ -305,6 +305,9 @@
 </head>
 <body>
 
+
+
+
 <!-- CHOOSING ROLE -->
 
 <div id="role-popup" class="popup">
@@ -328,9 +331,20 @@
     </div>
 </div>
 
+
+
+
+
+
+
 <!-- CONTROLLER VIEW -->
 
 <div id="controller-view" style="display: none;">
+
+
+
+
+
     <div class="header">
         <div class="previewContainer me-4 ms-4">
             <div class="previewButton">
@@ -345,10 +359,13 @@
     </div>
 
 
+
+
+
+
+
     <!-- Clients Display -->
     <div id="network-container">
-
-
         <!-- Drone Details Side Tab -->
         <div id="drone-details" class="side-tab" style="display: none;">
             <div class="side-tab-header">
@@ -367,6 +384,10 @@
         </div>
 
 
+
+
+
+
         <div class="dropdown">
             <button onclick="toggleDropdown()">Menu</button>
             <div class="dropdown-content select-user-none" id="dropdown-menu">
@@ -382,7 +403,15 @@
                 <button class="back-button" onclick="goBackToAllNodes()" style="display: none;">Back</button>
             </div>
         </div>
+
+
+
+
         <svg id="network-canvas"></svg>
+
+
+
+
 
         <div id="instructions-container" class="select-user-none">
             <div class="instruction">
@@ -393,8 +422,51 @@
                 <img src="content_objects/increase_size_icon.png" alt="Use mouse wheel" class="instruction-icon" />
                 <span>Use mouse wheel</span>
             </div>
+
+            <div id="legend-toggle" onclick="toggleLegend()" style="display: block; text-align: center; margin-top: 10px;">
+                <img src="content_objects/down_arrow.png" alt="Toggle Legend" id="down-arrow-btn" />
+            </div>
+        </div>
+
+
+        <!-- Legend container (initially collapsed) -->
+        <div id="legend-container" class="select-user-none">
+            <div class="legend-item">
+                <img src="content_objects/drone_top.png" alt="Drone" class="legend-icon" />
+                <span>Drone</span>
+            </div>
+            <div class="legend-item">
+                <img src="content_objects/comm_serv_top.png" alt="Communication Server" class="legend-icon" />
+                <span>Communication Server</span>
+            </div>
+            <div class="legend-item">
+                <img src="content_objects/chat_client_top.png" alt="Chat Client" class="legend-icon" />
+                <span>Chat Client</span>
+            </div>
+            <div class="legend-item">
+                <img src="content_objects/web_browser_top.png" alt="Web Browser" class="legend-icon" />
+                <span>Web Browser</span>
+            </div>
+            <div class="legend-item">
+                <img src="content_objects/text_serv_top.png" alt="Text Server" class="legend-icon" />
+                <span>Text Server</span>
+            </div>
+            <div class="legend-item">
+                <img src="content_objects/media_serv_top.png" alt="Media Server" class="legend-icon" />
+                <span>Media Server</span>
+            </div>
         </div>
     </div>
+
+
+
+
+
+
+
+
+
+
     <div id="monitoring-container" style="position: relative;">
         <!-- Top Buttons (inside monitoring-container, below header) -->
         <div id="monitoring-tabs">
@@ -403,10 +475,21 @@
             <button onclick="showSection('drones-container')" class="tab-button">Drones</button>
         </div>
 
+
+
+
+
+
         <!-- Sections -->
         <div id="clients-container" class="section active"></div>
         <div id="servers-container" class="section"></div>
         <div id="drones-container" class="section"></div>
+
+
+
+
+
+
 
         <!-- Filters on the right -->
         <div id="filters">
@@ -421,11 +504,20 @@
     </div>
 </div>
 
+
+
+
+
+
+
+
 <!-- CLIENT VIEW -->
 
 <div id="client-view" style="display: none;">
+
     <!-- COMMUNICATION APPLICATION -->
     <div id="communication-ui">
+
         <div class="header-whatsapp">
             <div class="flex-center-all" style="  user-select: none; ">
                 <img src="content_objects/whatsapp_logo.png" alt="whats-logo" class="whatsapp-logo">
@@ -434,16 +526,24 @@
             <img src="content_objects/logout_icon_rev.png" alt="Log Out" class="comm-ui-log_out_button" onclick="logOut()">
         </div>
 
-        <!-- Logout Button -->
+
+
+
+
 
 
         <div class="flex-center-all" style="flex: 1; height: 20%">
+
             <!-- Sidebar for Chats -->
             <div id="chat-sidebar" style="width: 30%; display: flex; flex-direction: column;">
+
+
                 <div id="sidebar-header">
                     <span>Chats</span>
                     <img src="content_objects/new_chat_icon.png" alt="create_chat" onclick="createNewChat()" style="width:100%; max-width:30px; padding: 5px 10px; cursor: pointer;">
                 </div>
+
+
                 <div id="chat-list">
                     <!-- Example Chat Items with update dot -->
                     <div class="chat-item" data-id="0" onclick="openChat('Chat 1')">
@@ -461,6 +561,11 @@
                 </div>
             </div>
 
+
+
+
+
+
             <!-- Chat Window -->
             <div id="chat-window">
                 <div id="chat-header">
@@ -476,17 +581,27 @@
                     <button onclick="sendMessage()">Send</button>
                 </div>
             </div>
+
         </div>
     </div>
 
 
 
 
+
+
+
+
+
     <!-- CONTENT APPLICATION -->
     <div id="content-ui">
+
         <!-- Header -->
         <div id="header-content-ui">
+
+
             <img src="content_objects/chrome_logo.png" alt="Google Drive" class="drive-logo">
+
 
             <div class="search-bar">
                 <img src="content_objects/search_icon.png" alt="Search Icon" class="search-icon" onclick="searchGoogleDrive()">
@@ -503,15 +618,22 @@
                 </div>
             </div>
 
+
             <!-- Logout Button -->
             <img src="content_objects/logout_icon.png" alt="Log Out" class="content-ui-log_out_button" onclick="logOut()">
         </div>
 
+
+
         <!-- Body -->
         <div id="body-content-ui">
+
             <div id="side-bar-content-ui" style="display:none"></div>
 
+
+
             <div id="content-container-content-ui">
+
                 <!-- SERVER SELECTOR -->
                 <div id="server-selector">
                     <div style="display:flex">
@@ -533,6 +655,8 @@
                 <table class="file-list">
                 </table>
 
+
+
                 <!-- Loading Pop-up Overlay for Reload -->
                 <div id="loading-popup" class="file-loading-overlay" style="display: none;">
                     <div class="file-loading-content">
@@ -540,11 +664,7 @@
                         <p style="margin-top:0">Retrieving files... Take a coffee meanwhile (b^_^)</p>
                     </div>
                 </div>
-
-
             </div>
-
-
         </div>
 
 
@@ -563,6 +683,9 @@
         </div>
     </div>
 </div>
+
+
+
 
 <!-- Pop Ups for CLIENT VIEW -->
 
@@ -647,6 +770,13 @@
             // Hide the pop-up and show the controller view
             document.getElementById('role-popup').style.display = 'none';
             document.getElementById('controller-view').style.display = 'block';
+
+            translateX = -500; // move 200px to the left
+            translateY = -500; // move 200px up
+            currentTranslateX = translateX;
+            currentTranslateY = translateY;
+            const canvas = document.getElementById("network-canvas");
+            canvas.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
 
         } else if (role === 'client') {
             // Update the pop-up for client selection
@@ -874,7 +1004,7 @@
 
         // Update the current-server display.
         if (available_servers.length > 0) {
-            document.getElementById("current-server").innerHTML = `Server Id: ${available_servers[0]}`;
+            document.getElementById("current-server").innerHTML = `${file_lists[get_server_id_from_current_server_index()].name}`;
         } else {
             document.getElementById("current-server").innerHTML = "No server available";
         }
@@ -1160,7 +1290,7 @@
             if (node.type === "Drone") {
                 circle.addEventListener("click", () => showDroneDetails(node));
             } else {
-                circle.addEventListener("click", () => alert(`Node: ${node.id}`));
+                circle.addEventListener("click", () => alert(`Node: ${node.id}, Type: ${node.type}`));
             }
             canvas.appendChild(circle);
         });
@@ -1182,10 +1312,16 @@
         const totalNodes = nodeIds.length;
 
         // Grid layout parameters:
-        const margin = 100;
         const cellWidth = 100;
         const cellHeight = 100;
         const cols = Math.ceil(Math.sqrt(totalNodes));
+        const rows = Math.ceil(totalNodes / cols);
+        const centerX = 1000;
+        const centerY = 1000;
+        const gridWidth = (cols - 1) * cellWidth;
+        const gridHeight = (rows - 1) * cellHeight;
+        const startX = centerX - gridWidth / 2;
+        const startY = centerY - gridHeight / 2;
 
         // Position each node in a grid.
         nodeIds.forEach((nodeId, i) => {
@@ -1195,8 +1331,8 @@
 
             const col = i % cols;
             const row = Math.floor(i / cols);
-            const x = margin + col * cellWidth;
-            const y = margin + row * cellHeight;
+            const x = startX + col * cellWidth;
+            const y = startY + row * cellHeight;
 
             drawn_nodes.push({ id: nodeId, type: specificType, x: x, y: y });
         });
@@ -1243,21 +1379,19 @@
             if (node.type === "Drone") {
                 circle.addEventListener("click", () => showDroneDetails(node));
             } else {
-                circle.addEventListener("click", () => alert(`Node: ${node.id}`));
+                circle.addEventListener("click", () => alert(`Node: ${node.id}, Type: ${node.type}`));
             }
             canvas.appendChild(circle);
         });
 
-        console.log(topologyImagesToggled)
-        console.log(topologyImagesToggled !== false)
-        if (topologyImagesToggled !== false){
-            topologyImagesToggled = !topologyImagesToggled
-            toggleTopologyAppearance()
-            topologyImagesToggled = !topologyImagesToggled
+        console.log(topologyImagesToggled);
+        console.log(topologyImagesToggled !== false);
+        if (topologyImagesToggled !== false) {
+            topologyImagesToggled = !topologyImagesToggled;
+            toggleTopologyAppearance();
+            topologyImagesToggled = !topologyImagesToggled;
         }
-
     }
-
 
 
 
