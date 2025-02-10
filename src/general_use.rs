@@ -287,7 +287,7 @@ pub enum Response {
     ListFiles(Vec<String>),
     File(String),
     //(Media)
-    Media(String),
+    Media(MediaRef, String),
 
     //General Error
     Err(String),

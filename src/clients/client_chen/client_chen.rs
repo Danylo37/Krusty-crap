@@ -169,7 +169,7 @@ pub struct NodeStorage {
     pub(crate) current_list_file: Vec<String>,                                  // Files received from media servers
     pub(crate) current_requested_text_file: String,
     pub(crate) current_text_media_list: Vec<MediaRef>,
-    pub(crate) current_chosen_media_ref: MediaRef,
+    pub(crate) current_chosen_media_ref: Vec<MediaRef>,
     pub(crate) current_received_serialized_media: HashMap<MediaRef, String>,
     //pub(crate) current_chosen_media: String,
 }

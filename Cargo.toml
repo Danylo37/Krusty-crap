@@ -27,7 +27,7 @@ env_logger = "0.11.6"
 
 #drones
 krusty_drone = { git = "https://github.com/Danylo37/krusty_drone.git"}
-rustable-drone = {git = "https://github.com/SmL-Boi/RustableDroneLib.git"}
+#rustable-drone = {git = "https://github.com/SmL-Boi/RustableDroneLib.git"}  OUT OF ORDER
 bagel_bomber = {git = "https://github.com/daw-dev/bagel-bomber.git"}
 RF_drone = {git = "https://github.com/RustAndFurious/RF_drone.git"}
 fungi_drone = {git = "https://github.com/Fungi-B-D/Fungi-Drone.git"}

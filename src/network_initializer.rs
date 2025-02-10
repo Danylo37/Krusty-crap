@@ -28,7 +28,7 @@ use crate::{
 //Drones
 use rusty_drones::RustyDrone;
 use rolling_drone::RollingDrone;
-use rustable_drone::RustableDrone;
+//use rustable_drone::RustableDrone;                OUT OF MAINTENANCE
 use rustbusters_drone::RustBustersDrone;
 use rusteze_drone::RustezeDrone;
 use fungi_drone::FungiDrone;
@@ -49,7 +49,7 @@ use crate::websocket::WsCommand;
 pub enum DroneBrand {
     //KrustyDrone,
     RustyDrone,
-    Rustable,
+    //Rustable,
     BagelBomber,
     RustAndFurious,
     Fungi,
@@ -67,7 +67,7 @@ impl DroneBrand {
         [
             // DroneBrand::KrustyDrone,
             DroneBrand::RustyDrone,
-            DroneBrand::Rustable,
+            //DroneBrand::Rustable,
             DroneBrand::BagelBomber,
             DroneBrand::RustAndFurious,
             DroneBrand::Fungi,
@@ -230,7 +230,7 @@ impl NetworkInitializer {
                         pdr: drone_params.5,
                     });
                 },
-                DroneBrand::Rustable => {
+                /*DroneBrand::Rustable => {
                     self.create_and_spawn_drone::<RustableDrone>(drone_params.clone());
                     self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone {
                         node_id: drone_params.0,
@@ -239,7 +239,7 @@ impl NetworkInitializer {
                         connected_nodes_ids: Vec::new(),
                         pdr: drone_params.5,
                     });
-                },
+                },*/
                 DroneBrand::RustBusters => {
                     self.create_and_spawn_drone::<RustBustersDrone>(drone_params.clone());
                     self.simulation_controller.drones_data.insert(drone_params.0, DisplayDataDrone{

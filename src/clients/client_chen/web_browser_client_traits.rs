@@ -4,7 +4,7 @@ use crate::general_use::{MediaRef};
 pub trait WebBrowserClientTrait {
     fn handle_list_file(&mut self, list_file: Vec<String>);
     fn handle_text_file(&mut self, text_file: String);
-    fn handle_media(&mut self, serialized_media: String);
+    fn handle_media(&mut self, media_ref: MediaRef,  media: String);
 }
 
 impl WebBrowserClientTrait for ClientChen{
@@ -20,9 +20,8 @@ impl WebBrowserClientTrait for ClientChen{
        self.storage.current_text_media_list = media_refs;
    }
 
-    fn handle_media(&mut self, serialized_media: String) {
-        //println!("{:?}", serialized_media);
-        self.storage.current_received_serialized_media.insert(self.storage.current_chosen_media_ref.clone(), serialized_media);
+    fn handle_media(&mut self, media_ref: MediaRef,  media: String) {
+        self.storage.current_received_serialized_media.insert(media_ref, media);
     }
 }
 

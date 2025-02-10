@@ -199,7 +199,7 @@ impl CharTrait for MediaServer{
         //println!("media in the server {:?}", self.media);
         if let Some(media) = self.media.get(&reference).cloned() {
             //Checking if present
-            let response = Response::Media(media);
+            let response = Response::Media(reference, media);
 
             //Serializing message to send
             let response_as_string = serde_json::to_string(&response).unwrap();

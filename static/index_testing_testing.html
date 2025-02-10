@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Section Page with URLs</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; }
+    .section { display: none; padding: 20px; }
+    .active { display: block; }
+    nav { margin-bottom: 20px; }
+    button { margin: 5px; padding: 10px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <button onclick="navigateTo('/home')">Home</button>
+  <button onclick="navigateTo('/chat')">Chat</button>
+  <button onclick="navigateTo('/notifications')">Notifications</button>
+</nav>
+
+<div id="home" class="section">
+  <h1>Welcome to Home</h1>
+  <p>This is the main page.</p>
+</div>
+
+<div id="chat" class="section">
+  <h1>Chat Section</h1>
+  <p>Here you can chat.</p>
+  <input type="text" id="chatInput" placeholder="Type a message">
+  <button onclick="sendMessage()">Send</button>
+  <ul id="chatMessages"></ul>
+</div>
+
+<div id="notifications" class="section">
+  <h1>Notifications Section</h1>
+  <p>Real-time notifications will appear here.</p>
+  <ul id="notificationList"></ul>
+</div>
+
+<script>
+  function navigateTo(path) {
+    history.pushState(null, "", path);  // Change URL without reloading
+    showSection(path);
+  }
+
+  function showSection(path) {
+    document.querySelectorAll('.section').forEach(section => {
+      section.classList.remove('active');
+    });
+
+    const sectionId = path.replace("/", "") || "home"; // Default to home
+    document.getElementById(sectionId).classList.add('active');
+  }
+
+  // Handle back/forward navigation
+  window.onpopstate = () => showSection(location.pathname);
+
+  // Initialize correct section on page load
+  showSection(location.pathname);
+
+  // WebSocket for Chat
+  const chatSocket = new WebSocket("ws://localhost:9002");
+  chatSocket.onmessage = (event) => {
+    const messageList = document.getElementById("chatMessages");
+    const newMessage = document.createElement("li");
+    newMessage.textContent = event.data;
+    messageList.appendChild(newMessage);
+  };
+
+  function sendMessage() {
+    const input = document.getElementById("chatInput");
+    if (input.value.trim() !== "") {
+      chatSocket.send(input.value);
+      input.value = "";
+    }
+  }
+
+  // WebSocket for Notifications
+  const notificationSocket = new WebSocket("ws://localhost:9001");
+  notificationSocket.onmessage = (event) => {
+    const notificationList = document.getElementById("notificationList");
+    const newNotification = document.createElement("li");
+    newNotification.textContent = event.data;
+    notificationList.appendChild(newNotification);
+  };
+</script>
+
+</body>
+</html>
