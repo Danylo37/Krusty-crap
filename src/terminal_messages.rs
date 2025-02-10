@@ -76,8 +76,8 @@ pub fn network_valid(){
     fancy_box("✅ Network Status: VALID", GREEN);
 }
 
-pub fn network_not_valid(){
-    fancy_box("❌ Network Status: FAILED", RED);
+pub fn network_not_valid(err: String){
+    fancy_box(format!("❌ Network Status: NOT VALID: {}", err).as_str(), RED);
 }
 
 pub fn network_stopped(){

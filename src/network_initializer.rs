@@ -1,5 +1,5 @@
 //Outside libraries
-use std::{collections::HashMap, env, fs, thread};
+use std::{collections::HashMap, env, fs, process, thread};
 use crossbeam_channel::*;
 use rand::prelude::*;
 //Wg libraries
@@ -141,8 +141,9 @@ impl NetworkInitializer {
                 network_valid();
             },
             Err(e) => {
-                network_not_valid();
+                network_not_valid(e);
                 network_stopped();
+                process::exit(1);
             },
         }
 
