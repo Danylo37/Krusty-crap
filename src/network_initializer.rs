@@ -1,5 +1,5 @@
 //Outside libraries
-use std::{collections::HashMap, env, fs, thread, time, io::{stdout, Write}};
+use std::{collections::HashMap, env, fs, thread};
 use crossbeam_channel::*;
 use rand::prelude::*;
 //Wg libraries
@@ -39,7 +39,7 @@ use bobry_w_locie::drone::BoberDrone;
 use log::info;
 use crate::clients::client_chen::Serialize;
 use crate::general_use::SpecificNodeType;
-use crate::terminal_messages::{building_network, network_not_valid, network_running, network_stopped, network_valid, validating_network};
+use crate::terminal_messages::{building_network, network_not_valid, network_stopped, network_valid};
 //UI
 use crate::ui_traits::Monitoring;
 use crate::websocket::WsCommand;

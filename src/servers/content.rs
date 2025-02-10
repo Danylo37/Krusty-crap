@@ -1,5 +1,6 @@
 use std::collections::HashMap;
-use rand::random;
+use rand::{random, thread_rng};
+use rand::seq::SliceRandom;
 
 const N_FILES: usize = 25;
 
@@ -15,15 +16,17 @@ pub fn choose_random_texts() -> Vec<(String, String)> {
     let n_files = trying_closures(random::<u8>() % (N_FILES as u8));
 
     let mut vec_files: Vec<(String, String)> = Vec::new();
+    let mut randomized_indexes: Vec<usize> = (0..TEXT.len()).collect();
+    randomized_indexes.shuffle(&mut thread_rng());
+
     if random::<u8>() % 2 == 0 {
-        for i in 0..n_files {
-            // Access the first element of the tuple (index 0)
-            vec_files.push((TEXT[i as usize].0.to_string(), TEXT[i as usize].1.to_string()));
+        for &i in randomized_indexes.iter().take(n_files as usize) {
+            vec_files.push((TEXT[i].0.to_string(), TEXT[i].1.to_string()));
         }
+
     } else {
-        for i in (0..n_files).rev() {
-            // Access the first element of the tuple (index 0)
-            vec_files.push((TEXT[i as usize].0.to_string(), TEXT[i as usize].1.to_string()));
+        for &i in randomized_indexes.iter().take(n_files as usize).rev(){
+            vec_files.push((TEXT[i].0.to_string(), TEXT[i].1.to_string()));
         }
     }
     vec_files
