@@ -1,11 +1,7 @@
 //Outside libraries
-use std::{
-    collections::HashMap,
-    env, fs, thread,
-};
+use std::{collections::HashMap, env, fs, thread, time, io::{stdout, Write}};
 use crossbeam_channel::*;
 use rand::prelude::*;
-
 //Wg libraries
 use wg_2024::{
     config::{Client, Config, Drone, Server},
@@ -40,11 +36,10 @@ use bagel_bomber::BagelBomber;
 use skylink::SkyLinkDrone;
 use RF_drone::RustAndFurious;
 use bobry_w_locie::drone::BoberDrone;
+use log::info;
 use crate::clients::client_chen::Serialize;
 use crate::general_use::SpecificNodeType;
-
-
-
+use crate::terminal_messages::{building_network, network_not_valid, network_running, network_stopped, network_valid, validating_network};
 //UI
 use crate::ui_traits::Monitoring;
 use crate::websocket::WsCommand;
@@ -127,9 +122,10 @@ impl NetworkInitializer {
         }
     }
     pub fn initialize_from_file(&mut self, config_path: &str) {
-        // Log the current directory for debugging purposes
-        println!("Current directory: {:?}", env::current_dir().expect("Failed to get current directory"));
 
+        // Log the current directory for debugging purposes
+        info!("Current directory: {:?}", env::current_dir().expect("Failed to get current directory"));
+        building_network();
         // Construct the full path to the configuration file
         let config_path = env::current_dir()
             .expect("Failed to get current directory")
@@ -141,8 +137,13 @@ impl NetworkInitializer {
 
         // Check the configuration file for errors
         match InitializationFileChecker::new(&config).check() {
-            Ok(_) => println!("Configuration is valid."),
-            Err(e) => eprintln!("Validation error: {}", e),
+            Ok(_) => {
+                network_valid();
+            },
+            Err(e) => {
+                network_not_valid();
+                network_stopped();
+            },
         }
 
         // Build the network topology

@@ -1,5 +1,6 @@
 use crate::clients::client_chen::{ClientChen, ClientInformation, DroneInformation, FloodingPacketsHandler, NodeInfo, Router, Sending, ServerInformation, SpecificInfo};
 use crate::clients::client_chen::prelude::*;
+use crate::general_use::PacketStatus::Sent;
 
 impl FloodingPacketsHandler for ClientChen {
     fn handle_flood_request(&mut self, session_id: SessionId, request: &mut FloodRequest) {
@@ -10,6 +11,7 @@ impl FloodingPacketsHandler for ClientChen {
 
         //you send directly because the source routing header is there
         self.send(response.clone());
+        self.update_packet_status(response.session_id, 0, Sent);
     }
 
     /// When you receive a flood response, you need first to update the topology with the elements of the path_traces

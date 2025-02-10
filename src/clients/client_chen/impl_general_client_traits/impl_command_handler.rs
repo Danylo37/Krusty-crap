@@ -55,9 +55,6 @@ impl CommandHandler for ClientChen{
                 self.ask_media(media_ref);
             }
             ClientCommand::DroneFixed(drone_id) => {
-                info!("*******************************************************************\n Client [{}] is processing the drone [{}] fixed\n*******************************************************************", self.metadata.node_id, drone_id);
-
-
                 // Collect (session_id, fragment_index) pairs where the status is WaitingForFixing(drone_id)
                 let filtered_pairs: Vec<(SessionId, FragmentIndex)> = self
                     .storage
@@ -76,21 +73,24 @@ impl CommandHandler for ClientChen{
                     .collect();
 
                 // Process the filtered packets
-                for (session_id, fragment_index) in filtered_pairs {
-                    match self.storage.output_buffer.get(&session_id) {
-                        Some(output_buffer_map) => match output_buffer_map.get(&fragment_index) {
-                            Some(packet) => self.send(packet.clone()), // Consider removing .clone() if not needed
-                            None => println!(
-                    "Packet not found in output buffer | session_id: {}, fragment_index: {}",
-                    session_id, fragment_index
-                ),
-                        },
-                        None => println!(
-                "Output buffer not found | session_id: {}",
-                session_id
-            ),
+                for (session_id, fragment_index) in &filtered_pairs {
+                    if let Some(output_buffer_map) = self.storage.output_buffer.get(session_id) {
+                        if let Some(packet) = output_buffer_map.get(fragment_index) {
+                            self.send(packet.clone());
+                        }
                     }
                 }
+
+                // Unified and structured output with borders
+                /*println!(
+                    "\n*******************************************************************\n\
+        🚁 Drone [{}] is fixed.\n\
+        📦 Sending waiting packets: {:?}\n\
+        -------------------------------------------------------------------\n\
+        📊 Packet status:\n{:#?}\n\
+        *******************************************************************",
+                    drone_id, filtered_pairs, self.storage.packets_status
+                );*/
             }
 
             _ => {}

@@ -1,6 +1,7 @@
 use crate::clients::client_chen::{ClientChen, NodeInfo, PacketCreator, Router, Sending, ServerInformation, SpecificInfo};
 use crate::clients::client_chen::prelude::*;
 use crate::clients::client_chen::SpecificInfo::ServerInfo;
+use crate::general_use::PacketStatus::Sent;
 use crate::general_use::ServerType::{Undefined, WaitingForResponse};
 
 impl Router for ClientChen {
@@ -30,6 +31,7 @@ impl Router for ClientChen {
         for &node_id in connected_nodes.iter() {
             //println!("|Web| Client [{}] sent to: {}", self.metadata.node_id, node_id);
             self.send_packet_to_connected_node(node_id, packet.clone()); // Assuming `send_packet_to_connected_node` takes a cloned packet
+            self.update_packet_status(packet.session_id, 0, Sent);
         }
     }
     fn update_routing_for_server(&mut self, destination_id: NodeId, path_trace: Vec<(NodeId, NodeType)>) {

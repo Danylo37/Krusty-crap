@@ -5,7 +5,8 @@ pub mod general_use;
 pub mod clients;
 pub mod ui_traits;
 pub mod websocket;
-mod initialization_file_checker;
+pub mod initialization_file_checker;
+pub mod terminal_messages;
 
 extern crate rouille;
 
@@ -30,7 +31,13 @@ fn main() {
         my_net.initialize_from_file("topologies/tree.toml");
         // Clone the shared simulation controller
         let mut simulation_controller = my_net.simulation_controller;
-        eprintln!("Simulation Controller is running");
+        println!(
+            "\n\
+    ┌──────────────────────────────────────────────────┐\n\
+    │   🚀 To use the application, visit:              │\n\
+    │   🌍 http://localhost:8000/index.html            │\n\
+    └──────────────────────────────────────────────────┘\n"
+        );
         simulation_controller.run_with_monitoring(tx.clone());
     });
 
@@ -41,13 +48,6 @@ fn main() {
     // Start HTTP server for web interface
     thread::spawn(|| {
         //println!("HTTP server started on http://0.0.0.0:8000");
-        println!(
-            "\n\
-    ┌──────────────────────────────────────────────────┐\n\
-    │   🚀 To use the application, visit:              │\n\
-    │   🌍 http://localhost:8000/index.html            │\n\
-    └──────────────────────────────────────────────────┘\n"
-        );
         rouille::start_server("0.0.0.0:8000", move |request| {
             rouille::match_assets(&request, "static")
         });

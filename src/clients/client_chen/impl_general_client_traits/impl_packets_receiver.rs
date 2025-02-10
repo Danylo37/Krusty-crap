@@ -1,6 +1,8 @@
 use crate::clients::client_chen::{ClientChen, PacketsReceiver, PacketResponseHandler, FloodingPacketsHandler};
 use crate::clients::client_chen::prelude::*;
 use crate::clients::client_chen::general_client_traits::*;
+use crate::general_use::PacketStatus::Sent;
+
 impl PacketsReceiver for ClientChen {
     fn handle_received_packet(&mut self, packet: Packet) {
         match packet.pack_type.clone() {
@@ -27,7 +29,10 @@ impl PacketsReceiver for ClientChen {
                 }
             },
             PacketType::FloodRequest(mut flood_request) => self.handle_flood_request(packet.session_id, &mut flood_request),
-            PacketType::FloodResponse(flood_response) => self.handle_flood_response(&flood_response),
+            PacketType::FloodResponse(flood_response) => {
+                self.update_packet_status(packet.session_id, 0, Sent);
+                self.handle_flood_response(&flood_response)
+            },
         }
     }
 }

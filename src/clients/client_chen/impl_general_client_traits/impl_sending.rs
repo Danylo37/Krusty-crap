@@ -24,10 +24,10 @@ impl Sending for ClientChen {
                             //we will manage these packets based on their sending status
                             self.packets_status_sending_actions(packet.clone(), status.clone());
                         } else {
-                            warn!("Missing status for session {} fragment {}", session_id, fragment_index);
+                            println!("Missing status for session {} fragment {}", session_id, fragment_index);
                         }
                     } else {
-                        warn!("Missing packet in output_packet_disk for session {} fragment {}", session_id, fragment_index);
+                        println!("Missing packet in output_packet_disk for session {} fragment {}", session_id, fragment_index);
                     }
                 }
             }

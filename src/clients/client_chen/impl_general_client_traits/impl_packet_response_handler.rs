@@ -1,17 +1,24 @@
 use crate::clients::client_chen::{ClientChen, PacketResponseHandler, Router, Sending};
 use crate::clients::client_chen::prelude::*;
 use crate::clients::client_chen::general_client_traits::*;
-use crate::general_use::PacketStatus::WaitingForFixing;
+use crate::general_use::PacketStatus::{Sent, WaitingForFixing};
 
 impl PacketResponseHandler for ClientChen {
     fn handle_ack(&mut self, ack_packet_session_id: SessionId, ack: &Ack) {
+        /*println!(
+            "\n==============================================\n\
+         ✔ ACK RECEIVED\n\
+         ─────────────────────────────────────────────\n\
+         Session ID    : {}\n\
+         Fragment Index: {}\n\
+         =============================================\n",
+            ack_packet_session_id, ack.fragment_index
+        );*/
         let session_id = ack_packet_session_id;
         let fragment_index = ack.fragment_index;
 
         // Update packets_status using nested HashMap access
-        if let Some(fragments) = self.storage.packets_status.get_mut(&session_id) {
-            fragments.insert(fragment_index, PacketStatus::Sent);
-        }
+        self.update_packet_status(session_id, fragment_index, Sent);
 
         // Remove from output_buffer using proper nested structure
         if let Some(fragments) = self.storage.output_buffer.get_mut(&session_id) {
@@ -145,8 +152,21 @@ impl PacketResponseHandler for ClientChen {
             if let Some(packet) = map.get(&nack.fragment_index) {
                 // Notice that the packet status will be automatically updated
                 self.send(packet.clone());
+            } else{
+                println!("Dropped packet not found in output buffer");
             }
+        } else{
+            println!("Dropped packet not found in output buffer");
         }
+
+        /*println!(
+            "\n*******************************************************************\n\
+        🚁 Dropped packet resent\n\
+        -------------------------------------------------------------------\n\
+        📊 Packet status:\n{:#?}\n\
+        *******************************************************************",
+            self.storage.packets_status
+        );*/
     }
 
     fn handle_unexpected_recipient(&mut self, node_id: NodeId, nack_packet_session_id: SessionId, nack: &Nack) {
