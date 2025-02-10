@@ -3,12 +3,8 @@
 
 
 /*
-
-
    USER VIEW
    -> WHATSAPP: SEND MESSAGE, CREATING AND SWITCHING BETWEEN CHATS
-
-
 */
 
 
@@ -275,11 +271,7 @@ function closeChatPopup() {
 
 
 /*
-
-
    Requesting and Updating
-
-
 */
 
 
@@ -546,12 +538,8 @@ function updateChatWindow(history) {
 
 
 /*
-
-
    USER VIEW
    -> CONTENT APP: General for now
-
-
 */
 
 
@@ -988,88 +976,33 @@ function updateFile(file_content) {
 
 function updateMedia(mediaRef) {
 
-    const reference = Object.keys(mediaRef)[0];
-    const base64Image = mediaRef[reference];
+    const fullPath = window.location.pathname;
+    // Remove the filename (assumes a filename is present)
+    const basePath = fullPath.substring(0, fullPath.lastIndexOf('/'));
+    // Combine with the protocol
+    const absolutePath = window.location.protocol + basePath;
+    console.log(absolutePath);
 
-    // Add the media to the media array.
-    const existingMedia = media.find(item => item.reference === reference);
-    if (!existingMedia) {
-        media.push({ reference, media: base64Image });
-    } else {
-        existingMedia.media = base64Image;
-    }
-
-    // Find the image element with the corresponding id.
-    const imgElem = document.getElementById("reference-" + reference);
-    console.log(imgElem)
-    console.log(reference)
-    if (imgElem) {
-        imgElem.src = base64Image; // Update the image source
-    } else {
-        console.warn("No element found with id:", "reference-" + reference);
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// SEARCH AND FILTERS
-function searchGoogleDrive() {
-    const searchInputValue = document.querySelector('.search-input').value.trim();
-
-
-    if (currentSearchValue !== searchInputValue && Object.keys(file_lists[get_server_id_from_current_server_index()].files).length !== 0) {
-        currentSearchValue = searchInputValue;
-        updateFileList(file_lists[get_server_id_from_current_server_index()].files);
+    for (const key in mediaRef){
+        console.log(mediaRef)
+        const reference = key;
+        const base64Image = mediaRef[reference];
+        // Add the media to the media array.
+        const existingMedia = media.find(item => item.reference === reference);
+        if (!existingMedia) {
+            media.push({ reference, media: base64Image });
+        } else {
+            existingMedia.media = base64Image;
+        }
+        // Find the image element with the corresponding id.
+        const imgElem = document.getElementById("reference-" + reference);
+        if (imgElem) {
+            console.log(base64Image)
+            imgElem.animation = "";
+            imgElem.width = "400"
+            imgElem.src = absolutePath + base64Image // Update the image source
+        } else {
+            console.warn("No element found with id:", "reference-" + reference);
+        }
     }
 }
-
-
-function handleSearchKeyPress(event) {
-    if (event.key === "Enter") {
-        searchGoogleDrive();
-    }
-}
-
-
-
-
-document.addEventListener("DOMContentLoaded", () => {
-    document.querySelectorAll('.filter-option').forEach(btn => {
-        btn.addEventListener('click', function() {
-            // Set the current filter type from the button's data-type attribute.
-            currentFilterType = this.dataset.type;
-            // Optionally, you can add visual feedback (e.g., add a 'selected' class).
-            document.querySelectorAll('.filter-option').forEach(b => b.classList.remove('selected'));
-            this.classList.add('selected');
-            // Now update the file list for the current server.
-            const currentServer = file_lists[get_server_id_from_current_server_index()];
-            if (currentServer && currentServer.files) {
-                updateFileList(currentServer.files);
-            }
-        });
-    });
-});
-
-
-function logOut() {
-    alert("Logging out...");
-    window.location.reload(); // Simulating logout by refreshing
-}
-
