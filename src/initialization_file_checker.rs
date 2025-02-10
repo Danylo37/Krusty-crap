@@ -20,6 +20,7 @@ impl<'a> InitializationFileChecker<'a> {
     pub fn check(&self) -> Result<(), String> {
         let mut seen_ids = HashSet::new();
 
+        // Validate each drone: check for duplicate IDs and individual drone fields.
         for drone in self.drones {
             if !seen_ids.insert(drone.id) {
                 return Err(format!("Duplicate ID detected: {}", drone.id));
@@ -27,6 +28,7 @@ impl<'a> InitializationFileChecker<'a> {
             self.is_valid_drone(drone)?;
         }
 
+        // Validate each client.
         for client in self.clients {
             if !seen_ids.insert(client.id) {
                 return Err(format!("Duplicate ID detected: {}", client.id));
@@ -34,6 +36,7 @@ impl<'a> InitializationFileChecker<'a> {
             self.is_valid_client(client)?;
         }
 
+        // Validate each server.
         for server in self.servers {
             if !seen_ids.insert(server.id) {
                 return Err(format!("Duplicate ID detected: {}", server.id));
@@ -41,6 +44,10 @@ impl<'a> InitializationFileChecker<'a> {
             self.is_valid_server(server)?;
         }
 
+        // Check that all drone-to-drone connections are bidirectional.
+        self.check_bidirectional()?;
+
+        // Check that the drone network is fully connected.
         if !self.is_network_connected() {
             return Err("The network is not fully connected after removing clients and servers.".to_string());
         }
@@ -98,15 +105,49 @@ impl<'a> InitializationFileChecker<'a> {
         Ok(())
     }
 
+    /// Checks that every drone-to-drone connection is bidirectional.
+    ///
+    /// For each drone, if it lists a connection to another drone (i.e. a neighbor that is also defined as a drone),
+    /// then the neighbor must also list the original drone in its `connected_node_ids`.
+    fn check_bidirectional(&self) -> Result<(), String> {
+        // Build a map of drone IDs to Drone objects for quick lookup.
+        let drone_map: HashMap<DroneId, &Drone> = self.drones.iter().map(|d| (d.id, d)).collect();
+
+        // Iterate over each drone and its connections.
+        for drone in self.drones {
+            for &neighbor in &drone.connected_node_ids {
+                // Only check bidirectionality if the neighbor is also a drone in the configuration.
+                if let Some(neighbor_drone) = drone_map.get(&neighbor) {
+                    // If the neighbor drone does not have a reciprocal connection, report an error.
+                    if !neighbor_drone.connected_node_ids.contains(&drone.id) {
+                        return Err(format!(
+                            "Drone {} is not bidirectionally connected with drone {}",
+                            drone.id, neighbor
+                        ));
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
+    /// Checks if the drone network is fully connected.
+    ///
+    /// This method constructs a symmetric graph from the drone connections.
+    /// Since bidirectionality has been validated above, we add the edges in both directions
+    /// for drones that exist in the configuration.
     fn is_network_connected(&self) -> bool {
         let mut graph: HashMap<DroneId, HashSet<DroneId>> = HashMap::new();
 
-        // Add only drones to the graph
+        // Build the graph using only drones.
         for drone in self.drones {
             graph.entry(drone.id).or_default();
+            // Add edges only for neighbors that are also drones.
             for &node in &drone.connected_node_ids {
-                graph.entry(node).or_default().insert(drone.id);
-                graph.entry(drone.id).or_default().insert(node);
+                if self.drones.iter().any(|d| d.id == node) {
+                    graph.entry(node).or_default().insert(drone.id);
+                    graph.entry(drone.id).or_default().insert(node);
+                }
             }
         }
 
@@ -114,14 +155,16 @@ impl<'a> InitializationFileChecker<'a> {
             return false;
         }
 
-        // DFS for checking connectivity
+        // Use DFS to check connectivity.
         let start = *graph.keys().next().unwrap();
         let mut visited = HashSet::new();
         self.dfs(start, &graph, &mut visited);
 
+        // The network is fully connected if all nodes in the graph are visited.
         visited.len() == graph.len()
     }
 
+    /// Depth-first search helper function.
     fn dfs(&self, node: DroneId, graph: &HashMap<DroneId, HashSet<DroneId>>, visited: &mut HashSet<DroneId>) {
         if visited.insert(node) {
             if let Some(neighbors) = graph.get(&node) {
