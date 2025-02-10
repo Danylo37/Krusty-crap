@@ -20,7 +20,6 @@ function openChat(chatName, clientId) {
     // Remove the update dot from the clicked chat item and mark it as active.
     const chatItem = document.querySelector(`.chat-item[data-id="${clientId}"]`);
     if (chatItem) {
-        console.log("updatingChat")
         const chatMessages = document.getElementById('chat-messages');
         if (chatMessages.style.background != 'url("content_objects/whatsapp_bg.jpg")'){
             chatMessages.style.background = 'url("content_objects/whatsapp_bg.jpg")';
@@ -28,25 +27,23 @@ function openChat(chatName, clientId) {
             chatMessages.style.backgroundPosition = 'center';
         }
 
+        document.getElementById("chat-messages").innerHTML = '';
         // Hide the update dot.
         const updateDot = chatItem.querySelector('.update-dot');
         if (updateDot) {
             updateDot.style.display = 'none';
         }
 
+
         // Remove 'active' class from any other chat items.
         document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
         // Mark this chat as active.
         chatItem.classList.add('active');
 
-
         // Check if there is stored chat history for this chat item.
         if (chatItem.dataset.history) {
             const history = JSON.parse(chatItem.dataset.history);
             updateChatWindow(history);
-        } else {
-            // Optionally display a placeholder if no history exists.
-            chatMessages.innerHTML = `<div style="text-align:center; padding:20px;">No messages yet.</div>`;
         }
     }
 }
@@ -71,22 +68,20 @@ const phonebooks = {
 
 
 function createNewChat() {
+    console.log("new Chat")
+
     const chatPopup = document.getElementById('chat-popup');
     const receiverList = document.getElementById('receiver-list');
 
 
     const listBoxes = [];
 
+    console.log(phonebooks)
 
     // Create list boxes dynamically for each server
     Object.keys(phonebooks).forEach((serverId) => {
 
-
-        if (document.getElementById(`server-container-${serverId}`)) {
-            // Container already exists, so skip creating a new one.
-            return;
-        }
-
+        receiverList.innerHTML = '';
 
         // Server container
         const serverContainer = document.createElement('div');
@@ -142,11 +137,13 @@ function createNewChat() {
         listBox.appendChild(defaultOption);
 
 
+        console.log("lost?")
+
         // Gather existing chats (assuming each chat item’s text is the receiver id)
         const existingChats = Array.from(document.getElementById('chat-list').children)
             .map(item => item.dataset.id);
 
-        console.log(existingChats)
+
         if (Array.isArray(phonebooks[serverId])) {
             phonebooks[serverId].forEach((receiver) => {
                 if (existingChats.includes(receiver.toString())) {
@@ -990,11 +987,9 @@ function updateFile(file_content) {
 
 
 function updateMedia(mediaRef) {
-    // mediaRef is expected to be an array: [reference, base64ImageString]
-    const reference = mediaRef[0];
-    const base64Image = mediaRef[1];
 
-    console.log(mediaRef)
+    const reference = Object.keys(mediaRef)[0];
+    const base64Image = mediaRef[reference];
 
     // Add the media to the media array.
     const existingMedia = media.find(item => item.reference === reference);
@@ -1006,6 +1001,8 @@ function updateMedia(mediaRef) {
 
     // Find the image element with the corresponding id.
     const imgElem = document.getElementById("reference-" + reference);
+    console.log(imgElem)
+    console.log(reference)
     if (imgElem) {
         imgElem.src = base64Image; // Update the image source
     } else {
