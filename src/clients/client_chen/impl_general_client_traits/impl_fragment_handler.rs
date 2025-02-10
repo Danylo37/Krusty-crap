@@ -95,7 +95,7 @@ impl FragmentsHandler for ClientChen {
                 self.send_display_data(DataScope::UpdateSelf);
             },
             Response::Media(media) =>{
-                info!("------CLIENT RECEIVED MEDIA");
+                //print!("------CLIENT RECEIVED MEDIA");
                 self.handle_media(media);
                 self.send_display_data(DataScope::UpdateSelf);
             },

@@ -21,6 +21,7 @@ impl WebBrowserClientTrait for ClientChen{
    }
 
     fn handle_media(&mut self, serialized_media: String) {
+        //println!("{:?}", serialized_media);
         self.storage.current_received_serialized_media.insert(self.storage.current_chosen_media_ref.clone(), serialized_media);
     }
 }

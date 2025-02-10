@@ -196,7 +196,7 @@ impl MainTrait for MediaServer{
 impl CharTrait for MediaServer{
     fn give_media_back(&mut self, client_id: NodeId, reference: String) {
         //Get media
-        println!("media in the server {:?}", self.media);
+        //println!("media in the server {:?}", self.media);
         if let Some(media) = self.media.get(&reference).cloned() {
             //Checking if present
             let response = Response::Media(media);
