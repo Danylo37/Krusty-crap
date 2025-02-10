@@ -510,7 +510,7 @@ impl NetworkInitializer {
             let mut server_instance_text: Option<TextServer>= None;
             let mut server_instance_media: Option<MediaServer>= None;
 
-            if (random::<u8>()%2 == 0) && !comm_server_used{
+            if (!comm_server_used){
                 comm_server_used = !comm_server_used;
                 server_type = ServerType::Communication;
 
@@ -523,7 +523,7 @@ impl NetworkInitializer {
                 ));
 
             }else{
-                comm_server_used = false;
+                comm_server_used = !comm_server_used;
                 if text_server_used {
                     text_server_used = !text_server_used;
                     let content = content::get_media(vec_files.clone());
