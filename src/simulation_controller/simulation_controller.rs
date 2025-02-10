@@ -16,6 +16,7 @@ use crate::general_use::{ClientCommand, ClientEvent, ClientType,
 use crate::websocket::WsCommand;
 use std::collections::hash_map::Entry;
 use rand::Rng;
+use crate::ui_traits::SimulationControllerMonitoring;
 
 pub struct SimulationState {
     pub nodes: HashMap<NodeId, NodeType>,
@@ -266,9 +267,14 @@ impl SimulationController {
         Ok(drone)
     }
 
-    pub(super) fn fix_drone(&mut self, drone_id: DroneId, sender: (NodeId, NodeType)) {
+    pub(super) fn fix_drone(&mut self, drone_id: DroneId, sender: (NodeId, NodeType)) -> Result<(DroneId, f32), ()> {
         if self.fixed_drones.contains(&drone_id) {
             info!("Drone {} is already fixed", drone_id);
+            Ok((drone_id, if let Some(drone_data) = self.drones_data.get_mut(&drone_id){
+                drone_data.pdr
+            }else{
+                0.0
+            }))
         } else {
             let mut rng = rand::thread_rng();
             let new_pdr = rng.gen_range(0.0..=0.1); // Generate random PDR between 0 and 0.1
@@ -279,25 +285,30 @@ impl SimulationController {
             if let Some(drone_data) = self.drones_data.get_mut(&drone_id) {
                 drone_data.pdr = new_pdr;
             }
+            match sender.1 {
+                NodeType::Client => {
+                    if let Some((client_command_sender, _)) = self.command_senders_clients.get(&sender.0) {
+                        if let Err(e) = client_command_sender.send(ClientCommand::DroneFixed(drone_id)) {
+                            warn!("Failed to send DroneFixed to client {}: {:?}", sender.0, e);
+                        }
+                    }
+                    Ok((drone_id, new_pdr))
+                },
+                NodeType::Server => {
+                    if let Some((server_command_sender, _)) = self.command_senders_servers.get(&sender.0) {
+                        if let Err(e) = server_command_sender.send(ServerCommand::DroneFixed(drone_id)) {
+                            warn!("Failed to send DroneFixed to server {}: {:?}", sender.0, e);
+                        }
+                    }
+                    Ok((drone_id, new_pdr))
+                },
+                _ => {
+                    Err(())
+                }
+            }
         }
 
-        match sender.1 {
-            NodeType::Client => {
-                if let Some((client_command_sender, _)) = self.command_senders_clients.get(&sender.0) {
-                    if let Err(e) = client_command_sender.send(ClientCommand::DroneFixed(drone_id)) {
-                        warn!("Failed to send DroneFixed to client {}: {:?}", sender.0, e);
-                    }
-                }
-            },
-            NodeType::Server => {
-                if let Some((server_command_sender, _)) = self.command_senders_servers.get(&sender.0) {
-                    if let Err(e) = server_command_sender.send(ServerCommand::DroneFixed(drone_id)) {
-                        warn!("Failed to send DroneFixed to server {}: {:?}", sender.0, e);
-                    }
-                }
-            },
-            _ => {}
-        }
+
     }
 
     pub(crate) fn create_topology_with_types(&self) -> HashMap<NodeId, (Vec<NodeId>, SpecificNodeType)> {

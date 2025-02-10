@@ -231,7 +231,12 @@ pub enum ClientCommand {
     //commands for testing
     RequestRoutes(DestinationId),
 }
-
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum TechnicalOperationOnDrone{
+    DroneCrashed(DroneId),
+    NotCrashed(DroneId),
+    PdrChanged(DroneId, f32),
+}
 
 #[derive(Debug, Clone)]
 pub enum ClientEvent {
