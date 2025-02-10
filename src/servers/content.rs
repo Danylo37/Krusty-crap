@@ -62,7 +62,6 @@ E forse del mio dir poco ti cale."#),
     //2
     ("the_banana.html", r#"<html>
 <head>
-    <title>The Banana</title>
 </head>
 <body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px;">
 
@@ -97,7 +96,6 @@ E forse del mio dir poco ti cale."#),
     //3
     ("forbidden_text.html", r#"<html>
 <head>
-    <title>Forbidden Text</title>
 </head>
 <body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px;">
 
@@ -134,7 +132,6 @@ E forse del mio dir poco ti cale."#),
     //5
     ("mountain_panoramas.html", r#"<html>
 <head>
-    <title>Mountain Panoramas</title>
 </head>
 <body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px;">
 
@@ -165,7 +162,6 @@ E forse del mio dir poco ti cale."#),
     //6
     ("bigfoot_sighting.html", r#"<html>
 <head>
-    <title>Bigfoot Sighting Report</title>
 </head>
 <body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px;">
 
@@ -199,12 +195,19 @@ E forse del mio dir poco ti cale."#),
 "#),
 
     //7
-    ("a_cat_life.txt", "A day in the life of a cat: sleep, eat, stare at nothing, and repeat."),
+    ("a_cat_life.txt", "A day in the life of a cat is a carefully balanced cycle of elegance, mystery, and absolute laziness.
+
+Wake up. Stretch dramatically. Yawn as if the weight of the world rests upon your tiny shoulders. Walk to the food bowl with the grace of royalty, only to stare at it in disappointment when it is not filled to your liking. Meow loudly. Human obeys. Eat exactly three bites before walking away.
+
+Find a sunny spot. Curl up. Sleep. Dream of chasing things you have no intention of catching. Wake up suddenly as if you remembered something urgent, only to realize it was nothing. Stare at the wall for an uncomfortably long time.
+
+At 3 AM, sprint across the house as if possessed by an unseen force. Knock something off a table for reasons only you understand. Watch your human sigh in defeat. Mission accomplished.
+
+Sleep again. Repeat the next day. Such is the life of a cat—simple, yet undeniably perfect."),
 
     //8
     ("famous_quote.html", r#"<html>
 <head>
-    <title>Famous Quote</title>
 </head>
 <body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px;">
 
@@ -234,15 +237,32 @@ E forse del mio dir poco ti cale."#),
 "#),
 
     //9
-    ("recipe_for_happiness.txt", r#"Take one sunny day,
-Add a sprinkle of laughter,
-Mix in some good company,
-And serve with warm smiles."#),
+    ("recipe_for_happiness.txt", r#"Recipe for Happiness
+
+Ingredients:
+- 1 bright and sunny day (or a cozy rainy one, if preferred)
+- A generous sprinkle of laughter
+- A handful of good company
+- 2 cups of kindness
+- A dash of curiosity
+- A pinch of adventure
+- Unlimited warm smiles
+
+Instructions:
+1. Start by embracing the day with gratitude. Whether the sun is shining or the rain is tapping gently against the window, find joy in the moment.
+2. Add a sprinkle of laughter—this is the secret ingredient. Let it bubble up naturally, whether from a joke, a shared memory, or the simple absurdity of life.
+3. Mix in good company. Friends, family, or even a kind stranger—happiness grows best when shared.
+4. Gently fold in kindness. A small gesture, a thoughtful word, or an act of generosity can enhance the flavor of joy.
+5. Sprinkle in a dash of curiosity—try something new, explore a new place, or simply ask "why" more often.
+6. If you're feeling adventurous, add a pinch of spontaneity. A last-minute plan, an unexpected detour, or dancing when no one is watching can make life richer.
+7. Serve immediately, with warm smiles and open hearts.
+
+Tip: Best enjoyed daily. Pairs well with deep conversations, stargazing, and quiet moments of reflection.
+"#),
 
     //10
     ("travel_dream.html", r#"<html>
 <head>
-    <title>Travel Dream</title>
 </head>
 <body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#f0f8ff;">
 
@@ -273,7 +293,6 @@ And serve with warm smiles."#),
     //11
     ("astronomy_facts.html", r#"<html>
 <head>
-    <title>Astronomy Facts</title>
 </head>
 <body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#e8f0f8;">
 
@@ -304,7 +323,6 @@ And serve with warm smiles."#),
     //12
     ("forest_mysteries.html", r#"<html>
 <head>
-    <title>Forest Mysteries</title>
 </head>
 <body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#f4f7f2;">
 
@@ -333,14 +351,26 @@ And serve with warm smiles."#),
 "#),
 
     //13
-    ("tech_innovations.txt", r#"The rise of AI is transforming industries:
-From healthcare to space exploration,
-The future is already here."#),
+    ("tech_innovations.txt", r#"Tech Innovations: A New Era Unfolds
+
+The rise of AI is transforming industries at an unprecedented pace.
+What was once the realm of science fiction is now reality, shaping the way we live, work, and explore the universe.
+
+Key areas of impact:
+
+- **Healthcare:** AI-driven diagnostics can detect diseases earlier than ever before, robotic surgeries are improving precision, and personalized medicine is tailoring treatments to individual patients.
+- **Space Exploration:** Autonomous rovers, AI-assisted navigation, and machine learning models are helping us explore distant planets, analyze cosmic data, and even search for extraterrestrial life.
+- **Automation & Industry:** Smart factories optimize production, reducing waste and increasing efficiency, while AI-powered logistics ensure supply chains run smoothly across the globe.
+- **Everyday Life:** From virtual assistants and recommendation algorithms to self-driving cars, AI is seamlessly integrating into our daily routines.
+- **Cybersecurity:** Advanced AI models detect and neutralize cyber threats in real time, keeping digital infrastructures secure.
+- **Creativity & Art:** AI-generated music, paintings, and literature challenge traditional notions of human creativity, blurring the line between artist and algorithm.
+
+The future is already here, and it is learning, evolving, and redefining what’s possible. The only question left is: how will we shape this new technological frontier?
+"#),
 
     //14
     ("city_lights.html", r#"<html>
 <head>
-    <title>City Lights</title>
 </head>
 <body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#e9e9e9;">
 
@@ -369,14 +399,30 @@ The future is already here."#),
 "#),
 
     //15
-    ("winter_tale.txt", r#"The first snow of the year falls gently,
+    ("winter_tale.txt", r#"Winter Tale
+
+The first snow of the year falls gently,
 Covering the world in a blanket of white.
-A serene and magical moment."#),
+A serene and magical moment, where time seems to slow,
+And the air is filled with quiet wonder.
+
+Footsteps vanish as quickly as they appear,
+Soft flakes settling on rooftops and tree branches,
+Transforming the ordinary into something almost otherworldly.
+
+Children laugh in the distance, building snowmen,
+While the glow of streetlights catches the falling snow,
+Turning each flake into a tiny, fleeting star.
+
+The world feels peaceful,
+As if winter itself is whispering a lullaby,
+Reminding us to pause, to breathe,
+And to embrace the beauty of the cold.
+"#),
 
     //16
     ("lost_artifact.html", r#"<html>
 <head>
-    <title>Lost Artifact</title>
 </head>
 <body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#fafafa;">
 
@@ -416,7 +462,6 @@ It’s easy to overlook what is most important. But perhaps, the greatest secret
     //18
     ("cosmic_dream.html", r#"<html>
 <head>
-    <title>Cosmic Dream</title>
 </head>
 <body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#0d0d0d; color:white;">
 
@@ -458,7 +503,6 @@ The encounter left me shaken, my mind racing with questions and possibilities. W
     //20
     ("old_map.html", r#"<html>
 <head>
-    <title>Old Map</title>
 </head>
 <body style="font-family:Georgia, serif; line-height:1.8; max-width:800px; margin:auto; padding:20px; background-color:#f4f4f4; color:#333;">
 
@@ -500,7 +544,6 @@ The wind’s story is ever-changing, constantly moving, shifting with the season
     //22
     ("forgotten_poem.html", r#"<html>
 <head>
-    <title>Forgotten Poem</title>
 </head>
 <body style="font-family:Georgia, serif; line-height:1.8; max-width:800px; margin:auto; padding:20px; background-color:#fdf6e3; color:#333;">
 
@@ -531,7 +574,6 @@ The wind’s story is ever-changing, constantly moving, shifting with the season
     //23
     ("desert_whispers.html", r#"<html>
 <head>
-    <title>Desert Whispers</title>
 </head>
 <body style="font-family:Georgia, serif; line-height:1.8; max-width:800px; margin:auto; padding:20px; background-color:#f4e1c1; color:#4a2c2a;">
 
@@ -564,7 +606,6 @@ The wind’s story is ever-changing, constantly moving, shifting with the season
     //24
     ("cyber_rebellion.html", r#"<html>
 <head>
-    <title>Cyber Rebellion</title>
 </head>
 <body style="font-family: 'Courier New', monospace; line-height: 1.8; max-width: 900px; margin: auto; padding: 20px; background-color: #121212; color: #e0e0e0;">
 
