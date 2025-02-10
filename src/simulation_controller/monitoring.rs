@@ -91,8 +91,8 @@ impl SimulationControllerMonitoring for SimulationController {
                             },
                             ClientEvent::CallTechniciansToFixDrone(id, sender) => {
                                 if let Ok((drone_id, drone_pdr)) = self.fix_drone(id, sender){
-                                    //let json_string = serde_json::to_string(&TechnicalOperationOnDrone::PdrChanged(drone_id, drone_pdr)).unwrap();
-                                    //sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
+                                    let json_string = serde_json::to_string(&TechnicalOperationOnDrone::PdrChanged(drone_id, drone_pdr)).unwrap();
+                                    sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
                                 }
                             },
                             _ => {}
@@ -166,8 +166,8 @@ impl SimulationControllerMonitoring for SimulationController {
                             },
                             ServerEvent::CallTechniciansToFixDrone(id, sender) => {
                                 if let Ok((drone_id, drone_pdr)) = self.fix_drone(id, sender){
-                                    //let json_string = serde_json::to_string(&TechnicalOperationOnDrone::PdrChanged(drone_id, drone_pdr)).unwrap();
-                                    //sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
+                                    let json_string = serde_json::to_string(&TechnicalOperationOnDrone::PdrChanged(drone_id, drone_pdr)).unwrap();
+                                    sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
                                 }
                             }
                         }
