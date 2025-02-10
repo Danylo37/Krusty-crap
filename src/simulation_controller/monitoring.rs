@@ -23,6 +23,7 @@ impl SimulationControllerMonitoring for SimulationController {
         };
         let json_string = serde_json::to_string(&display_data).unwrap();
         info!("Controller has sent the data of all the nodes {:?}", display_data);
+        sender_to_gui.send(json_string.clone()).expect("error in sending displaying data to the websocket");
         sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
     }
 
@@ -65,6 +66,7 @@ impl SimulationControllerMonitoring for SimulationController {
                                         self.web_clients_data.insert(id, data.clone());
                                         let json_string = serde_json::to_string(&data).unwrap();
                                         info!("Client {} has sent json data with scope UpdateSelf {:?} ", id, json_string);
+                                        sender_to_gui.send(json_string.clone()).expect("error in sending displaying data to the websocket");
                                         sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
                                     }
                                 }
@@ -82,6 +84,7 @@ impl SimulationControllerMonitoring for SimulationController {
                                         self.chat_clients_data.insert(id, data.clone());
                                         let json_string = serde_json::to_string(&data).unwrap();
                                         info!("Sent json data with scope UpdateSelf {:?} ", json_string);
+                                        sender_to_gui.send(json_string.clone()).expect("error in sending displaying data to the websocket");
                                         sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
                                     }
                                 }
@@ -119,6 +122,7 @@ impl SimulationControllerMonitoring for SimulationController {
                                         self.comm_servers_data.insert(id, data.clone());
                                         let json_string = serde_json::to_string(&data).unwrap();
                                         debug!("Sent json data  with scope UpdateSelf {:?}", json_string);
+                                        sender_to_gui.send(json_string.clone()).expect("error in sending displaying data to the websocket");
                                         sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
                                     },
                                 }
@@ -136,6 +140,7 @@ impl SimulationControllerMonitoring for SimulationController {
                                         self.text_servers_data.insert(id, data.clone());
                                         let json_string = serde_json::to_string(&data).unwrap();
                                         debug!("Sent json data {:?} with scope UpdateSelf", json_string);
+                                        sender_to_gui.send(json_string.clone()).expect("error in sending displaying data to the websocket");
                                         sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
                                     },
                                 }
@@ -153,6 +158,7 @@ impl SimulationControllerMonitoring for SimulationController {
                                         self.media_servers_data.insert(id, data.clone());
                                         let json_string = serde_json::to_string(&data).unwrap();
                                         debug!("Sent json data with scope UpdateSelf {:?} ", json_string);
+                                        sender_to_gui.send(json_string.clone()).expect("error in sending displaying data to the websocket");
                                         sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
                                     },
                                 }
