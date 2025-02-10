@@ -80,7 +80,6 @@ impl TraitClient for ClientChen {
                 current_list_file: Vec::new(),
                 current_requested_text_file: String::new(),
                 current_text_media_list: Vec::new(),
-                current_chosen_media_ref: "".to_string(),
                 current_received_serialized_media: Default::default(),
                 //current_chosen_media: String::new(),
             },
@@ -169,7 +168,6 @@ pub struct NodeStorage {
     pub(crate) current_list_file: Vec<String>,                                  // Files received from media servers
     pub(crate) current_requested_text_file: String,
     pub(crate) current_text_media_list: Vec<MediaRef>,
-    pub(crate) current_chosen_media_ref: Vec<MediaRef>,
     pub(crate) current_received_serialized_media: HashMap<MediaRef, String>,
     //pub(crate) current_chosen_media: String,
 }
