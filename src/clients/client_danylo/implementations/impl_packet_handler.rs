@@ -1,5 +1,5 @@
 use std::collections::{HashSet, VecDeque};
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 
 use wg_2024::{
     packet::{Fragment, Nack, NackType, Packet, PacketType, FloodRequest, NodeType, FloodResponse},
@@ -266,9 +266,12 @@ impl PacketHandler for ChatClientDanylo {
         let response = flood_request.generate_response(session_id);
 
         // Send the response to the next hop.
-        match self.send_to_next_hop(response) {
+        match self.send_to_next_hop(response.clone()) {
             Ok(_) => info!("Client {}: FloodResponse sent successfully.", self.id),
-            Err(err) => error!("Client {}: Error sending FloodResponse: {}", self.id, err),
+            Err(err) => {
+                warn!("Client {}: Error sending FloodResponse: {}", self.id, err);
+                self.send_event(ClientEvent::ControllerShortcut(response));
+            },
         }
     }
 
