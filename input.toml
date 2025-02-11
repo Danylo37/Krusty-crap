@@ -83,7 +83,6 @@ connected_drone_ids = [15, 16]
 
 
 
-
 #[[drone]]
 #id = 1
 #connected_node_ids = [2,3]

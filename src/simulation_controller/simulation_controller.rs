@@ -7,7 +7,7 @@ use wg_2024::{
     network::NodeId,
     packet::{NodeType, Packet, PacketType}
 };
-use crate::general_use::{ClientCommand, ClientEvent, ClientType, ServerCommand, ServerEvent, ServerType, ServerId, Query, DisplayDataWebBrowser, DisplayDataCommunicationServer, DisplayDataMediaServer, DisplayDataChatClient, DisplayDataTextServer, DisplayDataDrone, SpecificNodeType, DroneId, TechnicalOperationOnDrone};
+use crate::general_use::{ClientCommand, ClientEvent, ClientType, ServerCommand, ServerEvent, ServerType, ServerId, Query, DisplayDataWebBrowser, DisplayDataCommunicationServer, DisplayDataMediaServer, DisplayDataChatClient, DisplayDataTextServer, DisplayDataDrone, SpecificNodeType, DroneId, TechnicalOperationOnDrone, Node};
 use crate::websocket::WsCommand;
 use std::collections::hash_map::Entry;
 use rand::Rng;
@@ -526,30 +526,44 @@ It uses the command_senders map to find the appropriate sender channel.
         // Create a copy of the topology without the drone and its connections
         let mut temp_topology = self.state.topology.clone();
         temp_topology.remove(&drone_id);
-        for (_, neighbors) in temp_topology.iter_mut() {
+        for neighbors in temp_topology.values_mut() {
             neighbors.retain(|&n| n != drone_id);
         }
 
+        let clients:Vec<NodeId> = self.command_senders_clients.keys().cloned().collect::<Vec<NodeId>>();
         // Iterate through all clients and check their reachability to at least one server.
-        for (client_id, _) in &self.command_senders_clients {
-            if !self.check_client_reachability(*client_id, &temp_topology) {
+        for client_id in clients {
+            if !self.check_client_reachability(client_id, &mut temp_topology) {
                 return true; // Drone is critical if any client loses all server connections.
             }
         }
         false // Drone is not critical.
     }
 
-    fn check_client_reachability(&self, client_id: NodeId, topology: &HashMap<NodeId, Vec<NodeId>>) -> bool{
+    fn check_client_reachability(&self, client_id: NodeId, topology: &mut HashMap<NodeId, Vec<NodeId>>) -> bool{
+        let mut other_clients_than_yourself:HashSet<NodeId> = self.command_senders_clients.keys().cloned().collect::<HashSet<NodeId>>();
+        other_clients_than_yourself.remove(&client_id);
 
-        let mut reachable_servers = HashSet::new();    //To store all reachable servers
+        for neighbors in topology.values_mut() {
+            neighbors.retain(|&n| !other_clients_than_yourself.contains(&n));
+        }
+
+        let mut reachable_servers = Vec::new();    //To store all reachable servers
 
         //Check reachability for every server
         for (server_id, _) in &self.command_senders_servers{
+            let mut other_server_than_server_in_question: HashSet<NodeId> = self.command_senders_servers.keys().cloned().collect::<HashSet<NodeId>>();
+            other_server_than_server_in_question.remove(&server_id);
+            for neighbors in topology.values_mut() {
+                neighbors.retain(|&n| !other_server_than_server_in_question.contains(&server_id));
+            }
+
             if self.is_reachable(client_id, *server_id, topology) {
-                reachable_servers.insert(*server_id);
+                reachable_servers.push(*server_id);
             }
         }
-        !reachable_servers.is_empty()  //Returns true if there is at least one reachable server.
+        let servers = self.command_senders_servers.keys().cloned().collect::<Vec<_>>();
+        reachable_servers == servers  //Returns true if there is at least one reachable server.
     }
 
     fn is_reachable(&self, start_node: NodeId, end_node: NodeId, topology: &HashMap<NodeId, Vec<NodeId>>) -> bool {
