@@ -7,7 +7,7 @@ use wg_2024::{
     network::NodeId,
     packet::{NodeType, Packet, PacketType}
 };
-use crate::general_use::{ClientCommand, ClientEvent, ClientType, ServerCommand, ServerEvent, ServerType, ServerId, Query, DisplayDataWebBrowser, DisplayDataCommunicationServer, DisplayDataMediaServer, DisplayDataChatClient, DisplayDataTextServer, DisplayDataDrone, SpecificNodeType, DroneId, TechnicalOperationOnDrone, Node};
+use crate::general_use::{ClientCommand, ClientEvent, ClientType, ServerCommand, ServerEvent, ServerType, ServerId, Query, DisplayDataWebBrowser, DisplayDataCommunicationServer, DisplayDataMediaServer, DisplayDataChatClient, DisplayDataTextServer, DisplayDataDrone, SpecificNodeType, DroneId, TechnicalOperationOnDrone};
 use crate::websocket::WsCommand;
 use std::collections::hash_map::Entry;
 use rand::Rng;
@@ -533,18 +533,18 @@ It uses the command_senders map to find the appropriate sender channel.
         let clients:Vec<NodeId> = self.command_senders_clients.keys().cloned().collect::<Vec<NodeId>>();
         // Iterate through all clients and check their reachability to at least one server.
         for client_id in clients {
-            if !self.check_client_reachability(client_id, &mut temp_topology) {
+            if !self.check_client_reachability(client_id, temp_topology.clone()) {
                 return true; // Drone is critical if any client loses all server connections.
             }
         }
         false // Drone is not critical.
     }
 
-    fn check_client_reachability(&self, client_id: NodeId, topology: &mut HashMap<NodeId, Vec<NodeId>>) -> bool{
+    fn check_client_reachability(&self, client_id: NodeId, mut topology: HashMap<NodeId, Vec<NodeId>>) -> bool{
         let mut other_clients_than_yourself:HashSet<NodeId> = self.command_senders_clients.keys().cloned().collect::<HashSet<NodeId>>();
         other_clients_than_yourself.remove(&client_id);
 
-        for neighbors in topology.values_mut() {
+        for neighbors in topology.clone().values_mut() {
             neighbors.retain(|&n| !other_clients_than_yourself.contains(&n));
         }
 
@@ -552,13 +552,13 @@ It uses the command_senders map to find the appropriate sender channel.
 
         //Check reachability for every server
         for (server_id, _) in &self.command_senders_servers{
-            let mut other_server_than_server_in_question: HashSet<NodeId> = self.command_senders_servers.keys().cloned().collect::<HashSet<NodeId>>();
-            other_server_than_server_in_question.remove(&server_id);
-            for neighbors in topology.values_mut() {
-                neighbors.retain(|&n| !other_server_than_server_in_question.contains(&server_id));
+            let mut other_servers_than_server_in_question: HashSet<NodeId> = self.command_senders_servers.keys().cloned().collect::<HashSet<NodeId>>();
+            other_servers_than_server_in_question.remove(&server_id);
+            for neighbors in topology.clone().values_mut() {
+                neighbors.retain(|&n| !other_servers_than_server_in_question.contains(&n));
             }
 
-            if self.is_reachable(client_id, *server_id, topology) {
+            if self.is_reachable(client_id, *server_id, topology.clone()) {
                 reachable_servers.push(*server_id);
             }
         }
@@ -566,7 +566,7 @@ It uses the command_senders map to find the appropriate sender channel.
         reachable_servers == servers  //Returns true if there is at least one reachable server.
     }
 
-    fn is_reachable(&self, start_node: NodeId, end_node: NodeId, topology: &HashMap<NodeId, Vec<NodeId>>) -> bool {
+    fn is_reachable(&self, start_node: NodeId, end_node: NodeId, topology: HashMap<NodeId, Vec<NodeId>>) -> bool {
         let mut visited = HashSet::new();
         let mut queue = VecDeque::new();
         queue.push_back(start_node);

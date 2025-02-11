@@ -21,7 +21,7 @@ fn fancy_box(title: &str, color: &str) {
     let border = "━".repeat(width);
 
     println!(
-        "\n{}┏{}┓\n┃  {}      ┃\n┗{}┛{}",
+        "\n{}┏{}┓\n┃  {}     ┃\n┗{}┛{}",
         color, border, title, border, RESET
     );
 }
