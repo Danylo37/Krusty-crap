@@ -515,12 +515,6 @@ It uses the command_senders map to find the appropriate sender channel.
         self.state.topology.remove(&drone_id);
         self.command_senders_drones.remove(&drone_id);
 
-        // After drone crash, update the routing
-
-        for (_, (sender, _)) in self.command_senders_clients.iter(){
-            sender.send(ClientCommand::StartFlooding).unwrap();
-        }
-
         let json_enum = serde_json::to_string(&TechnicalOperationOnDrone::DroneCrashed(drone_id)).unwrap();
         if let Err(e) = sender_to_gui.send(json_enum) {
             warn!("Error sending crash result to WebSocket: {}", e);
@@ -549,7 +543,7 @@ It uses the command_senders map to find the appropriate sender channel.
         false // Drone is not critical.
     }
 
-    fn check_client_reachability(&self, client_id: NodeId, mut topology: HashMap<NodeId, Vec<NodeId>>) -> bool{
+    fn check_client_reachability(&self, client_id: NodeId, topology: HashMap<NodeId, Vec<NodeId>>) -> bool{
         let mut other_clients_than_yourself:HashSet<NodeId> = self.command_senders_clients.keys().cloned().collect::<HashSet<NodeId>>();
         other_clients_than_yourself.remove(&client_id);
 

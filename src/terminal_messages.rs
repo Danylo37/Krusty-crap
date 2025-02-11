@@ -50,8 +50,7 @@ fn animated_progress_bar(task: &str, duration: u64) {
 }
 
 pub fn building_network(){
-    let loading_frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
-
+    let _loading_frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
     // 🚀 Building the Network
     fancy_box("🚀 Building the Network", CYAN);
     animated_progress_bar("Building...", 200);
