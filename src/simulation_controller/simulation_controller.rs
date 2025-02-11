@@ -526,60 +526,57 @@ It uses the command_senders map to find the appropriate sender channel.
         // Create a copy of the topology without the drone and its connections
         let mut temp_topology = self.state.topology.clone();
         temp_topology.remove(&drone_id);
+
         for neighbors in temp_topology.values_mut() {
             neighbors.retain(|&n| n != drone_id);
         }
 
-        let clients:Vec<NodeId> = self.command_senders_clients.keys().cloned().collect::<Vec<NodeId>>();
+        let clients: Vec<NodeId> = self.command_senders_clients.keys().cloned().collect();
+
         // Iterate through all clients and check their reachability to at least one server.
-        for client_id in clients {
-            if !self.check_client_reachability(client_id, temp_topology.clone()) {
-                return true; // Drone is critical if any client loses all server connections.
+        for &client_id in &clients {
+            if !self.check_client_reachability(client_id, &temp_topology) {
+                return true; // The drone is critical if a client loses all server connections.
             }
         }
-        false // Drone is not critical.
+        false // The drone is not critical.
     }
 
-    fn check_client_reachability(&self, client_id: NodeId, mut topology: HashMap<NodeId, Vec<NodeId>>) -> bool{
-        let mut other_clients_than_yourself:HashSet<NodeId> = self.command_senders_clients.keys().cloned().collect::<HashSet<NodeId>>();
-        other_clients_than_yourself.remove(&client_id);
+    fn check_client_reachability(&self, client_id: NodeId, topology: &HashMap<NodeId, Vec<NodeId>>) -> bool {
+        let clients_set: HashSet<NodeId> = self.command_senders_clients.keys().cloned().collect();
+        let servers_set: HashSet<NodeId> = self.command_senders_servers.keys().cloned().collect();
 
-        for neighbors in topology.clone().values_mut() {
-            neighbors.retain(|&n| !other_clients_than_yourself.contains(&n));
+        // Create a temporary filtered topology without other clients and servers
+        let mut filtered_topology = topology.clone();
+        for neighbors in filtered_topology.values_mut() {
+            neighbors.retain(|&n| !clients_set.contains(&n) && !servers_set.contains(&n));
         }
 
-        let mut reachable_servers = Vec::new();    //To store all reachable servers
-
-        //Check reachability for every server
-        for (server_id, _) in &self.command_senders_servers{
-            let mut other_servers_than_server_in_question: HashSet<NodeId> = self.command_senders_servers.keys().cloned().collect::<HashSet<NodeId>>();
-            other_servers_than_server_in_question.remove(&server_id);
-            for neighbors in topology.clone().values_mut() {
-                neighbors.retain(|&n| !other_servers_than_server_in_question.contains(&n));
-            }
-
-            if self.is_reachable(client_id, *server_id, topology.clone()) {
-                reachable_servers.push(*server_id);
+        // Check if this client can reach at least one server
+        for &server_id in &servers_set {
+            if self.is_reachable(client_id, server_id, &filtered_topology) {
+                return true; // If at least one server is reachable, return early
             }
         }
-        let servers = self.command_senders_servers.keys().cloned().collect::<Vec<_>>();
-        reachable_servers == servers  //Returns true if there is at least one reachable server.
+        false // No server is reachable from this client
     }
 
-    fn is_reachable(&self, start_node: NodeId, end_node: NodeId, topology: HashMap<NodeId, Vec<NodeId>>) -> bool {
+    fn is_reachable(&self, start_node: NodeId, end_node: NodeId, topology: &HashMap<NodeId, Vec<NodeId>>) -> bool {
         let mut visited = HashSet::new();
         let mut queue = VecDeque::new();
+
         queue.push_back(start_node);
+        visited.insert(start_node);
 
         while let Some(current_node) = queue.pop_front() {
             if current_node == end_node {
                 return true;
             }
-            visited.insert(current_node);
 
             if let Some(neighbors) = topology.get(&current_node) {
                 for &neighbor in neighbors {
                     if !visited.contains(&neighbor) {
+                        visited.insert(neighbor);
                         queue.push_back(neighbor);
                     }
                 }
@@ -587,6 +584,7 @@ It uses the command_senders map to find the appropriate sender channel.
         }
         false
     }
+
 
     pub fn get_list_clients(&self) -> Vec<(ClientType, NodeId)> {
         self.command_senders_clients
