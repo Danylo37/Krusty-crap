@@ -128,14 +128,8 @@ impl CommandHandler for ChatClientDanylo {
                 info!("Client {}: Request for server type sent successfully.", self.id);
             }
             Err(err) => {
-                let error_string = format!("Client {}: Failed to send request for server type: {}", self.id, err);
-
-                if err == "Topology is empty. Discovery started and the query will be resent" {
-                    warn!("{}", error_string);
-                } else {
-                    error!("{}", error_string);
-                }
-            },
+                error!("Client {}: Failed to send request for server type: {}", self.id, err);
+            }
         }
     }
 
@@ -168,14 +162,9 @@ impl CommandHandler for ChatClientDanylo {
                 chat.push((Me, content));
             }
             Err(err) => {
-                let error_string = format!("Client {}: Failed to send message: {}", self.id, err);
+                error!("Client {}: Failed to send message: {}", self.id, err);
 
-                if err == "Topology is empty. Discovery started and the query will be resent" {
-                    warn!("{}", error_string);
-                } else {
-                    error!("{}", error_string);
-                }
-            },
+            }
         }
     }
 
@@ -197,20 +186,14 @@ impl CommandHandler for ChatClientDanylo {
                 info!("Client {}: Request to register sent successfully.", self.id);
             }
             Err(err) => {
-                let error_string = format!("Client {}: Failed to send request to register: {}", self.id, err);
-
-                if err == "Topology is empty. Discovery started and the query will be resent" {
-                    warn!("{}", error_string);
-                } else {
-                    error!("{}", error_string);
-                }
-            },
+                error!("Client {}: Failed to send request to register: {}", self.id, err);
+            }
         }
     }
 
     /// ###### Requests the list of clients from a specified server.
     fn request_clients_list(&mut self, server_id: ServerId) {
-        debug!("Client {}: Requesting clients list from server {}", self.id, server_id);
+        println!("Client {}: Requesting clients list from server {}", self.id, server_id);
 
         let result = self.create_and_send_message(Query::AskListClients, server_id);
 
@@ -219,14 +202,8 @@ impl CommandHandler for ChatClientDanylo {
                 info!("Client {}: Request for clients list sent successfully.", self.id);
             }
             Err(err) => {
-                let error_string = format!("Client {}: Failed to send request for clients list: {}", self.id, err);
-
-                if err == "Topology is empty. Discovery started and the query will be resent" {
-                    warn!("{}", error_string);
-                } else {
-                    error!("{}", error_string);
-                }
-            },
+                error!("Client {}: Failed to send request for clients list: {}", self.id, err);
+            }
         }
     }
 
