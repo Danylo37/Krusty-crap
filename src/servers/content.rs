@@ -60,10 +60,7 @@ Ma tu mortal non sei,
 E forse del mio dir poco ti cale."#),
 
     //2
-    ("the_banana.html", r#"<html>
-<head>
-</head>
-<body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#f7f7f7; color:#333;">
+    ("the_banana.html", r#"<body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#f7f7f7; color:#333;">
 
     <h1 style="margin-top: 0; text-align:center; font-size:2.5em; color:#f2b600; letter-spacing: 2px;">The Banana</h1>
 
@@ -92,24 +89,14 @@ E forse del mio dir poco ti cale."#),
     </p>
 
 </body>
-</html>
-
 "#),
 
     //3
-    ("forbidden_text.html", r#"<html>
-<head>
-<style type="text/css">
-      p{
-        line-height: 2rem; /*or use value in px*/
-      }
-</style>
-</head>
-<body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#f8f8f8; color:#333;">
+    ("forbidden_text.html", r#"<body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#f8f8f8; color:#333;">
 
     <h1 style="margin-top: 0; text-align:center; color:#ff3333; font-size:2.5em; letter-spacing: 2px; text-transform: uppercase;">⚠ Forbidden Text ⚠</h1>
 
-    <p style="margin-bottom: 15px; font-size: 1.1em; background-color: rgba(0, 0, 0, 0.1); padding: 10px 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+    <p style="margin-bottom: 15px; font-size: 1.1em; background-color: rgba(0, 0, 0, 0.1); padding: 10px 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); line-height: 2rem;">
         There exist certain texts that have been hidden from the public eye for generations. Some say they contain knowledge too dangerous to be shared. Others believe they are mere superstition.
     </p>
 
@@ -117,20 +104,19 @@ E forse del mio dir poco ti cale."#),
         #Media[do_not_search_this]
     </div>
 
-    <p style="margin-bottom: 15px; font-size: 1.1em; background-color: rgba(0, 0, 0, 0.1); padding: 10px 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+    <p style="margin-bottom: 15px; font-size: 1.1em; background-color: rgba(0, 0, 0, 0.1); padding: 10px 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); line-height: 2rem;">
         The origins of this mysterious writing remain unknown. Fragments have surfaced in ancient libraries, secret societies, and encrypted manuscripts, yet no one has ever deciphered the full meaning.
     </p>
 
-    <p style="margin-bottom: 15px; font-size: 1.1em; background-color: rgba(0, 0, 0, 0.1); padding: 10px 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+    <p style="margin-bottom: 15px; font-size: 1.1em; background-color: rgba(0, 0, 0, 0.1); padding: 10px 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); line-height: 2rem;">
         Many who have attempted to read the forbidden text speak of strange occurrences—whispers in the dark, flickering lights, and an overwhelming sense of unease. Could it all be coincidence, or is there something truly hidden within these words?
     </p>
 
-    <p style="margin-bottom: 15px; font-size: 1.1em; background-color: rgba(0, 0, 0, 0.1); padding: 10px 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+    <p style="margin-bottom: 15px; font-size: 1.1em; background-color: rgba(0, 0, 0, 0.1); padding: 10px 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); line-height: 2rem;">
         Some scholars warn that certain knowledge is best left undiscovered. But for those who are curious, the question remains: will you dare to seek the truth, or will you turn back before it's too late?
     </p>
 
 </body>
-</html>
 "#),
 
     //4
@@ -140,25 +126,17 @@ E forse del mio dir poco ti cale."#),
 - if you have to ask if you’re a member of a group, you’re probably not."#),
 
     //5
-    ("mountain_panoramas.html", r#"<html>
-<head>
-<style type="text/css">
-      p{
-        line-height: 2rem; /*or use value in px*/
-      }
-</style>
-</head>
-<body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#eef2f3; color:#333;">
+    ("mountain_panoramas.html", r#"<body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#eef2f3; color:#333;">
 
     <h1 style="margin-top: 0; text-align:center; color:#1e4f3d; font-size:2.5em; letter-spacing: 1.5px; text-transform: uppercase; padding-bottom: 10px; border-bottom: 2px solid #1e4f3d;">
         Breathtaking Mountain Panoramas
     </h1>
 
-    <p style="margin-bottom: 15px; font-size: 1.1em; background-color: rgba(0, 0, 0, 0.05); padding: 10px 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+    <p style="margin-bottom: 15px; font-size: 1.1em; background-color: rgba(0, 0, 0, 0.05); padding: 10px 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); line-height: 2rem;">
         Some of the most stunning views on Earth can be found in the mountains. Whether covered in lush greenery or blanketed in fresh snow, these landscapes offer a sense of peace and wonder.
     </p>
 
-    <p style="margin-bottom: 15px; font-size: 1.1em; background-color: rgba(0, 0, 0, 0.05); padding: 10px 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+    <p style="margin-bottom: 15px; font-size: 1.1em; background-color: rgba(0, 0, 0, 0.05); padding: 10px 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); line-height: 2rem;">
         Walking along a mountain trail, the crisp air fills your lungs. The silence is only broken by the rustling of leaves and the distant call of a bird. Each step brings you closer to a perfect view, one that few get to witness.
     </p>
 
@@ -166,37 +144,28 @@ E forse del mio dir poco ti cale."#),
         #Media[sparkling_snow]
     </div>
 
-    <p style="margin-bottom: 15px; font-size: 1.1em; background-color: rgba(0, 0, 0, 0.05); padding: 10px 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+    <p style="margin-bottom: 15px; font-size: 1.1em; background-color: rgba(0, 0, 0, 0.05); padding: 10px 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); line-height: 2rem;">
         Sitting in the middle of a forest clearing, you gaze at the untouched snow glistening under the sun. The world feels still, frozen in time, as nature displays its beauty in the simplest of ways.
     </p>
 
-    <p style="margin-bottom: 15px; font-size: 1.1em; background-color: rgba(0, 0, 0, 0.05); padding: 10px 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+    <p style="margin-bottom: 15px; font-size: 1.1em; background-color: rgba(0, 0, 0, 0.05); padding: 10px 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); line-height: 2rem;">
         Whether you seek adventure or solitude, the mountains have something for everyone. They remind us that the best panoramas are often right beside us, waiting to be discovered.
     </p>
 
 </body>
-</html>
 "#),
 
     //6
-    ("bigfoot_sighting.html", r#"<html>
-<head>
-<style type="text/css">
-      p{
-        line-height: 2rem; /*or use value in px*/
-      }
-</style>
-</head>
-<body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#f2f0e6; color:#4e3629;">
+    ("bigfoot_sighting.html", r#"<body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#f2f0e6; color:#4e3629;">
 
     <h1 style="margin-top: 0; text-align:center; color:#6a4e3c; font-size:2.5em; letter-spacing: 1.5px; text-transform: uppercase; padding-bottom: 10px; border-bottom: 2px solid #6a4e3c;">
         Bigfoot Sighting Report
     </h1>
 
-    <p style="font-weight:bold; margin-bottom: 10px;">
+    <p style="font-weight:bold; margin-bottom: 10px; line-height: 2rem;">
         <strong>Location:</strong> Dense forest near Willow Creek, California
     </p>
-    <p style="font-weight:bold; margin-bottom: 10px;">
+    <p style="font-weight:bold; margin-bottom: 10px; line-height: 2rem;">
         <strong>Date and Time:</strong> December 12, 2024, 4:45 PM
     </p>
 
@@ -208,24 +177,23 @@ E forse del mio dir poco ti cale."#),
         Witness Report
     </h2>
 
-    <p style="margin-bottom: 20px; background-color: rgba(0, 0, 0, 0.05); padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); font-size:1.1em;">
+    <p style="margin-bottom: 20px; background-color: rgba(0, 0, 0, 0.05); padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); font-size:1.1em; line-height: 2rem;">
         While hiking along an isolated trail, approximately 5 miles from the nearest road, I encountered an unusual figure standing roughly 50 yards away in a clearing.
     </p>
 
-    <p style="margin-bottom: 20px; background-color: rgba(0, 0, 0, 0.05); padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); font-size:1.1em;">
+    <p style="margin-bottom: 20px; background-color: rgba(0, 0, 0, 0.05); padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); font-size:1.1em; line-height: 2rem;">
         The figure was enormous, standing between 7 and 8 feet tall, with broad shoulders and a heavily muscled frame. Its body appeared to be covered in dark, shaggy hair, likely black or very dark brown, and it moved with a distinct upright, bipedal gait.
     </p>
 
-    <p style="margin-bottom: 20px; background-color: rgba(0, 0, 0, 0.05); padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); font-size:1.1em;">
+    <p style="margin-bottom: 20px; background-color: rgba(0, 0, 0, 0.05); padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); font-size:1.1em; line-height: 2rem;">
         For a few moments, we stood frozen—me, trying to process what I was seeing, and the creature, seemingly studying me in return. Then, with a slow yet deliberate movement, it turned and disappeared into the dense undergrowth, leaving behind only a series of deep footprints in the soft earth.
     </p>
 
-    <p style="margin-bottom: 20px; background-color: rgba(0, 0, 0, 0.05); padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); font-size:1.1em;">
+    <p style="margin-bottom: 20px; background-color: rgba(0, 0, 0, 0.05); padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); font-size:1.1em; line-height: 2rem;">
         Could it have been a hoax? Perhaps. But the eerie silence that followed, the unsettling weight of the moment—it felt real. Too real.
     </p>
 
 </body>
-</html>
 "#),
 
     //7
@@ -240,43 +208,35 @@ At 3 AM, sprint across the house as if possessed by an unseen force. Knock somet
 Sleep again. Repeat the next day. Such is the life of a cat—simple, yet undeniably perfect."),
 
     //8
-    ("famous_quote.html", r#"<html>
-<head>
-<style type="text/css">
-      p{
-        line-height: 2rem; /*or use value in px*/
-      }
-</style>
-</head>
-<body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#f0f0f0; color:#333;">
+    ("famous_quote.html", r#"
+    <body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#f0f0f0; color:#333;">
 
-    <h1 style="margin-top: 0; text-align:center; font-size:2.5em; color:#2d2d2d; font-weight:700; letter-spacing: 1.5px; text-transform: uppercase; padding-bottom: 10px; border-bottom: 2px solid #2d2d2d;">
-        To Be or Not to Be
-    </h1>
+        <h1 style="margin-top: 0; text-align:center; font-size:2.5em; color:#2d2d2d; font-weight:700; letter-spacing: 1.5px; text-transform: uppercase; padding-bottom: 10px; border-bottom: 2px solid #2d2d2d;">
+            To Be or Not to Be
+        </h1>
 
-    <p style="font-size:1.2em; margin-bottom: 20px;">
-        "To be, or not to be, that is the question." This famous line from Shakespeare’s *Hamlet* has resonated through the ages, posing one of life’s most profound questions. It speaks to the internal struggle, the contemplation of existence itself, and the choice between enduring suffering or ending it.
-    </p>
+        <p style="font-size:1.2em; margin-bottom: 20px; line-height: 2rem;">
+            "To be, or not to be, that is the question." This famous line from Shakespeare’s *Hamlet* has resonated through the ages, posing one of life’s most profound questions. It speaks to the internal struggle, the contemplation of existence itself, and the choice between enduring suffering or ending it.
+        </p>
 
-    <div style="text-align:center; margin:20px 0;">
-        #Media[shakespeare]
-    </div>
+        <div style="text-align:center; margin:20px 0;">
+            #Media[shakespeare]
+        </div>
 
-    <p style="font-size:1.1em; background-color: rgba(0, 0, 0, 0.05); padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 20px;">
-        Shakespeare’s *Hamlet* is one of the most well-known works of literature, and this quote encapsulates the torment of the play's protagonist. As Hamlet debates the merit of life and death, his words echo through time, exploring the universal theme of human existence and its meaning.
-    </p>
+        <p style="font-size:1.1em; background-color: rgba(0, 0, 0, 0.05); padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 20px; line-height: 2rem;">
+            Shakespeare’s *Hamlet* is one of the most well-known works of literature, and this quote encapsulates the torment of the play's protagonist. As Hamlet debates the merit of life and death, his words echo through time, exploring the universal theme of human existence and its meaning.
+        </p>
 
-    <p style="font-size:1.1em; background-color: rgba(0, 0, 0, 0.05); padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 20px;">
-        Even today, over 400 years after it was written, the question remains relevant. We all face moments of doubt, moments when we question our purpose, our place in the world, and the choices we must make.
-    </p>
+        <p style="font-size:1.1em; background-color: rgba(0, 0, 0, 0.05); padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 20px; line-height: 2rem;">
+            Even today, over 400 years after it was written, the question remains relevant. We all face moments of doubt, moments when we question our purpose, our place in the world, and the choices we must make.
+        </p>
 
-    <p style="font-size:1.1em; background-color: rgba(0, 0, 0, 0.05); padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 20px;">
-        Perhaps the real question is not whether to live or die, but how we live—how we embrace the moments of uncertainty and continue to move forward despite them.
-    </p>
+        <p style="font-size:1.1em; background-color: rgba(0, 0, 0, 0.05); padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 20px; line-height: 2rem;">
+            Perhaps the real question is not whether to live or die, but how we live—how we embrace the moments of uncertainty and continue to move forward despite them.
+        </p>
 
-</body>
-</html>
-"#),
+    </body>
+    "#),
 
     //9
     ("recipe_for_happiness.txt", r#"Recipe for Happiness
@@ -303,126 +263,105 @@ Tip: Best enjoyed daily. Pairs well with deep conversations, stargazing, and qui
 "#),
 
     //10
-    ("travel_dream.html", r#"<html>
-<head>
-<style type="text/css">
-      p{
-        line-height: 2rem; /*or use value in px*/
-      }
-</style>
-</head>
-<body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#f0f8ff; color:#333;">
+    ("travel_dream.html", r#"
+    <body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#f0f8ff; color:#333;">
 
-    <h1 style="margin-top: 0; text-align:center; font-size:2.5em; color:#2a8c8d; font-weight:700; letter-spacing: 1.5px; text-transform: uppercase; padding-bottom: 10px; border-bottom: 2px solid #2a8c8d;">
-        A Dream of Travel
-    </h1>
+        <h1 style="margin-top: 0; text-align:center; font-size:2.5em; color:#2a8c8d; font-weight:700; letter-spacing: 1.5px; text-transform: uppercase; padding-bottom: 10px; border-bottom: 2px solid #2a8c8d;">
+            A Dream of Travel
+        </h1>
 
-    <p style="font-size:1.2em; margin-bottom: 20px; text-align:justify;">
-        Imagine waking up to the sound of waves gently crashing against the shore, each wave a soft lullaby from the ocean. As the morning sun rises, a warm breeze carries the scent of saltwater and tropical flowers, filling your lungs with fresh air.
-    </p>
+        <p style="font-size:1.2em; margin-bottom: 20px; text-align:justify; line-height: 2rem;">
+            Imagine waking up to the sound of waves gently crashing against the shore, each wave a soft lullaby from the ocean. As the morning sun rises, a warm breeze carries the scent of saltwater and tropical flowers, filling your lungs with fresh air.
+        </p>
 
-    <div style="text-align:center; margin:20px 0;">
-        #Media[tropical_paradise]
-    </div>
+        <div style="text-align:center; margin:20px 0;">
+            #Media[tropical_paradise]
+        </div>
 
-    <p style="font-size:1.2em; margin-bottom: 20px; text-align:justify;">
-        The sky is painted in shades of pink and orange as the sun rises over turquoise waters. The horizon stretches out endlessly, offering a view so serene that it almost feels like a dream itself. You can hear the rustling of palm trees swaying in the breeze, their leaves whispering secrets of the tropical paradise they call home.
-    </p>
+        <p style="font-size:1.2em; margin-bottom: 20px; text-align:justify; line-height: 2rem;">
+            The sky is painted in shades of pink and orange as the sun rises over turquoise waters. The horizon stretches out endlessly, offering a view so serene that it almost feels like a dream itself. You can hear the rustling of palm trees swaying in the breeze, their leaves whispering secrets of the tropical paradise they call home.
+        </p>
 
-    <p style="font-size:1.2em; margin-bottom: 20px; text-align:justify;">
-        For a moment, everything feels still. You sit back, close your eyes, and just breathe in the beauty of the world around you. This is a place where time slows down, where worries disappear, and all that remains is peace and wonder.
-    </p>
+        <p style="font-size:1.2em; margin-bottom: 20px; text-align:justify; line-height: 2rem;">
+            For a moment, everything feels still. You sit back, close your eyes, and just breathe in the beauty of the world around you. This is a place where time slows down, where worries disappear, and all that remains is peace and wonder.
+        </p>
 
-    <p style="font-size:1.2em; margin-bottom: 20px; text-align:justify;">
-        This dream is not far from reality; it exists in the hearts of those who long to explore, to escape, and to find solace in the arms of nature. And perhaps, one day, you’ll find yourself there—waking up to the sound of waves and the promise of a new adventure.
-    </p>
+        <p style="font-size:1.2em; margin-bottom: 20px; text-align:justify; line-height: 2rem;">
+            This dream is not far from reality; it exists in the hearts of those who long to explore, to escape, and to find solace in the arms of nature. And perhaps, one day, you’ll find yourself there—waking up to the sound of waves and the promise of a new adventure.
+        </p>
 
-</body>
-</html>
-"#),
+    </body>
+    "#),
 
     //11
-    ("astronomy_facts.html", r#"<html>
-<head>
-<style type="text/css">
-      p{
-        line-height: 2rem; /*or use value in px*/
-      }
-</style>
-</head>
-<body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#f0f8ff; color:#333;">
+    ("astronomy_facts.html", r#"
+    <body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#f0f8ff; color:#333;">
 
-    <h1 style="margin-top: 0; text-align:center; color:#2a8c8d;">Fascinating Astronomy Facts</h1>
+        <h1 style="margin-top: 0; text-align:center; color:#2a8c8d;">
+            Fascinating Astronomy Facts
+        </h1>
 
-    <p style="font-size:1.2em; margin-bottom: 20px; text-align:justify;">
-        The universe is vast and full of wonders. From the planets that orbit distant stars to the far reaches of black holes, our understanding of space continues to grow. Here are some mind-blowing astronomy facts that will leave you in awe.
-    </p>
+        <p style="font-size:1.2em; margin-bottom: 20px; text-align:justify; line-height: 2rem;">
+            The universe is vast and full of wonders. From the planets that orbit distant stars to the far reaches of black holes, our understanding of space continues to grow. Here are some mind-blowing astronomy facts that will leave you in awe.
+        </p>
 
-    <p style="font-size:1.2em; margin-bottom: 20px; text-align:justify;">
-        <strong>1. A day on Venus is longer than a year on Venus.</strong> Venus has an extremely slow rotation, taking about 243 Earth days to complete one rotation on its axis. Meanwhile, it only takes 225 Earth days to orbit the Sun. This makes a day on Venus longer than its year.
-    </p>
+        <p style="font-size:1.2em; margin-bottom: 20px; text-align:justify; line-height: 2rem;">
+            <strong>1. A day on Venus is longer than a year on Venus.</strong> Venus has an extremely slow rotation, taking about 243 Earth days to complete one rotation on its axis. Meanwhile, it only takes 225 Earth days to orbit the Sun. This makes a day on Venus longer than its year.
+        </p>
 
-    <p style="font-size:1.2em; margin-bottom: 20px; text-align:justify;">
-        <strong>2. There are more stars in the universe than grains of sand on Earth.</strong> It is estimated that there are around 100 billion galaxies in the observable universe, each containing billions or even trillions of stars. The total number of stars is far greater than the number of grains of sand on all of Earth's beaches.
-    </p>
+        <p style="font-size:1.2em; margin-bottom: 20px; text-align:justify; line-height: 2rem;">
+            <strong>2. There are more stars in the universe than grains of sand on Earth.</strong> It is estimated that there are around 100 billion galaxies in the observable universe, each containing billions or even trillions of stars. The total number of stars is far greater than the number of grains of sand on all of Earth's beaches.
+        </p>
 
-    <p style="font-size:1.2em; margin-bottom: 20px; text-align:justify;">
-        <strong>3. The largest known star is UY Scuti.</strong> UY Scuti, located in the constellation Scutum, is considered one of the largest known stars. Its diameter is roughly 1,700 times that of the Sun, making it an absolute giant in the cosmos.
-    </p>
+        <p style="font-size:1.2em; margin-bottom: 20px; text-align:justify; line-height: 2rem;">
+            <strong>3. The largest known star is UY Scuti.</strong> UY Scuti, located in the constellation Scutum, is considered one of the largest known stars. Its diameter is roughly 1,700 times that of the Sun, making it an absolute giant in the cosmos.
+        </p>
 
-    <p style="font-size:1.2em; margin-bottom: 20px; text-align:justify;">
-        <strong>4. A teaspoon of a neutron star would weigh about 6 billion tons.</strong> Neutron stars are incredibly dense remnants of supernova explosions. The material inside them is so dense that a single teaspoon would have a mass of about 6 billion tons!
-    </p>
+        <p style="font-size:1.2em; margin-bottom: 20px; text-align:justify; line-height: 2rem;">
+            <strong>4. A teaspoon of a neutron star would weigh about 6 billion tons.</strong> Neutron stars are incredibly dense remnants of supernova explosions. The material inside them is so dense that a single teaspoon would have a mass of about 6 billion tons!
+        </p>
 
-    <div style="text-align:center; margin:20px 0;">
-        #Media[astronomy_image]
-    </div>
+        <div style="text-align:center; margin:20px 0;">
+            #Media[astronomy_image]
+        </div>
 
-    <p style="font-size:1.2em; margin-bottom: 20px; text-align:justify;">
-        The universe is filled with mysteries, and we have only scratched the surface. Who knows what future discoveries will reveal? Keep looking up!
-    </p>
+        <p style="font-size:1.2em; margin-bottom: 20px; text-align:justify; line-height: 2rem;">
+            The universe is filled with mysteries, and we have only scratched the surface. Who knows what future discoveries will reveal? Keep looking up!
+        </p>
 
-</body>
-</html>
-"#),
+    </body>
+    "#),
 
     //12
-    ("forest_mysteries.html", r#"<html>
-<head>
-<style type="text/css">
-      p {
-        line-height: 2rem; /* Увеличенный интервал для читаемости */
-        text-align: justify;
-      }
-</style>
-</head>
-<body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#f4f7f2; color:#2c3e3a;">
+    ("forest_mysteries.html", r#"
+    <body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#f4f7f2; color:#2c3e3a;">
 
-    <h1 style="margin-top: 0; text-align:center; color:#3e6e5f;">Forest Mysteries</h1>
+        <h1 style="margin-top: 0; text-align:center; color:#3e6e5f;">
+            Forest Mysteries
+        </h1>
 
-    <p>
-        The forest is alive with secrets, each tree and rustling leaf whispering a story from ancient times. Walk beneath the emerald canopy, and you may feel the weight of history pressing against your shoulders, as if unseen eyes are watching from the shadows.
-    </p>
+        <p style="line-height: 2rem; text-align: justify;">
+            The forest is alive with secrets, each tree and rustling leaf whispering a story from ancient times. Walk beneath the emerald canopy, and you may feel the weight of history pressing against your shoulders, as if unseen eyes are watching from the shadows.
+        </p>
 
-    <div style="text-align:center; margin:20px 0;">
-        #Media[forest_story]
-    </div>
+        <div style="text-align:center; margin:20px 0;">
+            #Media[forest_story]
+        </div>
 
-    <p>
-        Listen closely to the wind weaving through the branches—it carries voices of those who walked these paths long before you. A broken twig underfoot, the distant hoot of an owl, the sudden hush that falls over the trees—all could be signs of something hidden just beyond your sight.
-    </p>
+        <p style="line-height: 2rem; text-align: justify;">
+            Listen closely to the wind weaving through the branches—it carries voices of those who walked these paths long before you. A broken twig underfoot, the distant hoot of an owl, the sudden hush that falls over the trees—all could be signs of something hidden just beyond your sight.
+        </p>
 
-    <p>
-        Some say that if you venture deep enough, you may stumble upon a place untouched by time. A forgotten shrine covered in ivy, an ancient tree older than any map, or perhaps a clearing where the world feels just a little different—as if reality itself bends to the will of the forest.
-    </p>
+        <p style="line-height: 2rem; text-align: justify;">
+            Some say that if you venture deep enough, you may stumble upon a place untouched by time. A forgotten shrine covered in ivy, an ancient tree older than any map, or perhaps a clearing where the world feels just a little different—as if reality itself bends to the will of the forest.
+        </p>
 
-    <p>
-        But beware. Not all who seek the forest’s secrets return with answers. Some stories are meant to remain hidden, buried beneath roots and shadows, waiting for those who dare to listen.
-    </p>
+        <p style="line-height: 2rem; text-align: justify;">
+            But beware. Not all who seek the forest’s secrets return with answers. Some stories are meant to remain hidden, buried beneath roots and shadows, waiting for those who dare to listen.
+        </p>
 
-</body>
-</html>
-"#),
+    </body>
+    "#),
 
     //13
     ("tech_innovations.txt", r#"Tech Innovations: A New Era Unfolds
@@ -443,42 +382,35 @@ The future is already here, and it is learning, evolving, and redefining what’
 "#),
 
     //14
-    ("city_lights.html", r#"<html>
-<head>
-<style type="text/css">
-    p {
-        line-height: 2rem;
-        text-align: justify;
-    }
-</style>
-</head>
-<body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#e9e9e9; color:#333;">
+    ("city_lights.html", r#"
+    <body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#e9e9e9; color:#333;">
 
-    <h1 style="text-align:center; color:#4c4f5c;">City Lights</h1>
+        <h1 style="text-align:center; color:#4c4f5c;">
+            City Lights
+        </h1>
 
-    <p>
-        From the rooftop, the city stretches before me, a vast sea of lights flickering like distant stars. Each window, each neon sign, each glowing streetlamp tells a silent story—a heartbeat in the metropolis that never truly sleeps.
-    </p>
+        <p style="line-height: 2rem; text-align: justify;">
+            From the rooftop, the city stretches before me, a vast sea of lights flickering like distant stars. Each window, each neon sign, each glowing streetlamp tells a silent story—a heartbeat in the metropolis that never truly sleeps.
+        </p>
 
-    <div style="text-align:center; margin:20px 0;">
-        #Media[city_night]
-    </div>
+        <div style="text-align:center; margin:20px 0;">
+            #Media[city_night]
+        </div>
 
-    <p>
-        The skyline stands tall, jagged and luminous, cutting through the darkness like a modern constellation. Below, the streets hum with the quiet symphony of life—the distant murmur of conversations, the rhythmic pulse of car horns, the occasional burst of laughter from a late-night café.
-    </p>
+        <p style="line-height: 2rem; text-align: justify;">
+            The skyline stands tall, jagged and luminous, cutting through the darkness like a modern constellation. Below, the streets hum with the quiet symphony of life—the distant murmur of conversations, the rhythmic pulse of car horns, the occasional burst of laughter from a late-night café.
+        </p>
 
-    <p>
-        There’s something surreal about this moment—standing high above the world, watching the city move like an intricate clockwork. Each light below represents a story, a dream, a fleeting moment in time, all woven into the fabric of the night.
-    </p>
+        <p style="line-height: 2rem; text-align: justify;">
+            There’s something surreal about this moment—standing high above the world, watching the city move like an intricate clockwork. Each light below represents a story, a dream, a fleeting moment in time, all woven into the fabric of the night.
+        </p>
 
-    <p>
-        And as I take it all in, I wonder—who else stands at their own window, gazing into the same night, lost in thought? For all its chaos, the city has a way of making strangers feel connected, even in solitude.
-    </p>
+        <p style="line-height: 2rem; text-align: justify;">
+            And as I take it all in, I wonder—who else stands at their own window, gazing into the same night, lost in thought? For all its chaos, the city has a way of making strangers feel connected, even in solitude.
+        </p>
 
-</body>
-</html>
-"#),
+    </body>
+    "#),
 
     //15
     ("winter_tale.txt", r#"Winter Tale
@@ -503,36 +435,35 @@ And to embrace the beauty of the cold.
 "#),
 
     //16
-    ("lost_artifact.html", r#"<html>
-<head>
-</head>
-<body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#fafafa; color:#333;">
+    ("lost_artifact.html", r#"
+    <body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#fafafa; color:#333;">
 
-    <h1 style="text-align:center; color:#4d4b39;">The Lost Artifact</h1>
+        <h1 style="text-align:center; color:#4d4b39;">
+            The Lost Artifact
+        </h1>
 
-    <p>
-        Deep within the endless expanse of the desert, buried beneath shifting sands, a mysterious artifact has been unearthed. Its origins remain unknown, and the symbols etched onto its surface continue to defy all attempts at deciphering. Some believe it holds the key to an ancient civilization, long forgotten by time.
-    </p>
+        <p style="line-height: 2rem; text-align: justify;">
+            Deep within the endless expanse of the desert, buried beneath shifting sands, a mysterious artifact has been unearthed. Its origins remain unknown, and the symbols etched onto its surface continue to defy all attempts at deciphering. Some believe it holds the key to an ancient civilization, long forgotten by time.
+        </p>
 
-    <div style="text-align:center; margin:20px 0;">
-        #Media[ancient_artifact]
-    </div>
+        <div style="text-align:center; margin:20px 0;">
+            #Media[ancient_artifact]
+        </div>
 
-    <p>
-        Crafted from a metal unlike any known to modern science, the artifact gleams under the relentless desert sun, its surface untouched by time. Archaeologists and historians alike are baffled—some theorize it belonged to a lost kingdom, while others whisper of something more otherworldly.
-    </p>
+        <p style="line-height: 2rem; text-align: justify;">
+            Crafted from a metal unlike any known to modern science, the artifact gleams under the relentless desert sun, its surface untouched by time. Archaeologists and historians alike are baffled—some theorize it belonged to a lost kingdom, while others whisper of something more otherworldly.
+        </p>
 
-    <p>
-        Despite years of study, the cryptic markings that adorn its structure refuse to yield their secrets. No known language matches its script, leaving researchers with far more questions than answers. Is it a relic from a forgotten people, or evidence of something beyond our understanding?
-    </p>
+        <p style="line-height: 2rem; text-align: justify;">
+            Despite years of study, the cryptic markings that adorn its structure refuse to yield their secrets. No known language matches its script, leaving researchers with far more questions than answers. Is it a relic from a forgotten people, or evidence of something beyond our understanding?
+        </p>
 
-    <p>
-        Until its secrets are unveiled, the artifact remains a symbol of humanity’s unending curiosity—a reminder that, even in the modern age, the world still holds mysteries waiting to be discovered.
-    </p>
+        <p style="line-height: 2rem; text-align: justify;">
+            Until its secrets are unveiled, the artifact remains a symbol of humanity’s unending curiosity—a reminder that, even in the modern age, the world still holds mysteries waiting to be discovered.
+        </p>
 
-</body>
-</html>
-"#),
+    </body>
+    "#),
 
     //17
     ("hidden_wisdom.txt", "The greatest secrets are not kept, but overlooked.
@@ -544,41 +475,35 @@ It’s easy to overlook what is most important. But perhaps, the greatest secret
 "),
 
     //18
-    ("cosmic_dream.html", r#"<html>
-<head>
-<style type="text/css">
-      p{
-        line-height: 2rem; /*or use value in px*/
-      }
-</style>
-</head>
-<body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#0d0d0d; color:white;">
+    ("cosmic_dream.html", r#"
+    <body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#0d0d0d; color:white;">
 
-    <h1 style="margin-top: 0, text-align:center; color:#a1c4fd;">Cosmic Dream</h1>
+        <h1 style="margin-top: 0; text-align:center; color:#a1c4fd;">
+            Cosmic Dream
+        </h1>
 
-    <p>
-        Floating through the stars, time loses all meaning. There is no past, no future, only the endless expanse of the cosmos, stretching out in every direction. The stars twinkle softly like distant beacons, calling to us from the farthest reaches of the universe.
-    </p>
+        <p style="line-height: 2rem; text-align: justify;">
+            Floating through the stars, time loses all meaning. There is no past, no future, only the endless expanse of the cosmos, stretching out in every direction. The stars twinkle softly like distant beacons, calling to us from the farthest reaches of the universe.
+        </p>
 
-    <div style="text-align:center; margin:20px 0;">
-        #Media[deep_space_hum]
-    </div>
+        <div style="text-align:center; margin:20px 0;">
+            #Media[deep_space_hum]
+        </div>
 
-    <p>
-        The silence of space is profound, but there is a hum—a low, constant vibration that seems to resonate from the very fabric of the universe itself. It’s a sound you can feel more than hear, a deep, pulsating rhythm that echoes through your soul, connecting you to the cosmos in ways words cannot describe.
-    </p>
+        <p style="line-height: 2rem; text-align: justify;">
+            The silence of space is profound, but there is a hum—a low, constant vibration that seems to resonate from the very fabric of the universe itself. It’s a sound you can feel more than hear, a deep, pulsating rhythm that echoes through your soul, connecting you to the cosmos in ways words cannot describe.
+        </p>
 
-    <p>
-        As you drift further into the void, the planets and moons below you seem like distant memories. Their surface features are lost in the darkness, while nebulae swirl in brilliant clouds of color—vivid reds, purples, and blues. The stars, once so far away, now feel like part of you, and the universe seems infinite, without boundaries or limits.
-    </p>
+        <p style="line-height: 2rem; text-align: justify;">
+            As you drift further into the void, the planets and moons below you seem like distant memories. Their surface features are lost in the darkness, while nebulae swirl in brilliant clouds of color—vivid reds, purples, and blues. The stars, once so far away, now feel like part of you, and the universe seems infinite, without boundaries or limits.
+        </p>
 
-    <p>
-        This is no longer just a dream; it’s an awakening. You realize that the stars are not separate from you, but part of your own being. The cosmos is not a cold, distant place—it’s a vast, living entity that you are a part of. In this moment, you are connected to everything, and the enormity of the universe becomes a source of comfort rather than fear.
-    </p>
+        <p style="line-height: 2rem; text-align: justify;">
+            This is no longer just a dream; it’s an awakening. You realize that the stars are not separate from you, but part of your own being. The cosmos is not a cold, distant place—it’s a vast, living entity that you are a part of. In this moment, you are connected to everything, and the enormity of the universe becomes a source of comfort rather than fear.
+        </p>
 
-</body>
-</html>
-"#),
+    </body>
+    "#),
 
     //19
     ("unexpected_encounter.txt", "I turned the corner, and there it stood—watching.
@@ -592,19 +517,14 @@ The encounter left me shaken, my mind racing with questions and possibilities. W
 "),
 
     //20
-    ("old_map.html", r#"<html>
-<head>
-<style type="text/css">
-      p{
-        line-height: 2rem; /*or use value in px*/
-      }
-</style>
-</head>
+    ("old_map.html", r#"
 <body style="font-family:Georgia, serif; line-height:1.8; max-width:800px; margin:auto; padding:20px; background-color:#f4f4f4; color:#333;">
 
-    <h1 style="margin-top: 0, text-align:center; color:#4f6d7a;">The Old Map</h1>
+    <h1 style="margin-top: 0; text-align:center; color:#4f6d7a;">
+        The Old Map
+    </h1>
 
-    <p>
+    <p style="line-height: 2rem; text-align: justify;">
         A parchment with faded ink, hinting at forgotten treasures. The map, weathered by time, seems almost alive—its corners curled, the ink smudged in places, but the paths and symbols still faintly visible. It’s as if it has been waiting, hidden in the shadows, for someone to uncover its secrets.
     </p>
 
@@ -612,20 +532,19 @@ The encounter left me shaken, my mind racing with questions and possibilities. W
         #Media[hidden_cave]
     </div>
 
-    <p>
+    <p style="line-height: 2rem; text-align: justify;">
         The map seems to depict a landscape that no longer exists—at least, not in any way familiar to the modern world. Ancient landmarks, now lost to time, are marked with symbols and words that speak of hidden caverns, buried riches, and dangers that once haunted the land.
     </p>
 
-    <p>
+    <p style="line-height: 2rem; text-align: justify;">
         The more you study it, the more details emerge. A trail leading through dense forests, across rivers that no longer flow, and into a forgotten valley where a hidden cave lies waiting to be discovered. But something about the map feels strange. There’s an aura around it, a sense that it was meant for someone else—someone from the past, who left this map behind, hoping it would one day be found by the right person.
     </p>
 
-    <p>
+    <p style="line-height: 2rem; text-align: justify;">
         What lies in that cave? Is it treasure, or something more dangerous? The map gives no answers, only more questions. Yet, there’s an undeniable pull—a calling that beckons you to follow its path, to find the treasure that history has left behind.
     </p>
 
 </body>
-</html>
 "#),
 
     //21
@@ -640,19 +559,14 @@ The wind’s story is ever-changing, constantly moving, shifting with the season
 "),
 
     //22
-    ("forgotten_poem.html", r#"<html>
-<head>
-<style type="text/css">
-      p{
-        line-height: 2rem; /*or use value in px*/
-      }
-</style>
-</head>
+    ("forgotten_poem.html", r#"
 <body style="font-family:Georgia, serif; line-height:1.8; max-width:800px; margin:auto; padding:20px; background-color:#fdf6e3; color:#333;">
 
-    <h1 style="margin-top: 0, text-align:center; color:#6a4e5a;">The Forgotten Poem</h1>
+    <h1 style="margin-top: 0; text-align:center; color:#6a4e5a;">
+        The Forgotten Poem
+    </h1>
 
-    <p>
+    <p style="line-height: 2rem; text-align: justify;">
         A verse found in an old book, speaking of love lost. The pages were yellowed with age, the ink faded but still legible enough to capture the heart of the reader. It was as if the poem had been waiting, hidden for centuries, to speak its truth to someone who would understand.
     </p>
 
@@ -660,36 +574,30 @@ The wind’s story is ever-changing, constantly moving, shifting with the season
         #Media[library_wonder]
     </div>
 
-    <p>
+    <p style="line-height: 2rem; text-align: justify;">
         The poem speaks of a love that once bloomed brightly, a love that filled the air with warmth and light. But time, as it does with all things, took its toll. The words speak of memories that linger like shadows, fading with each passing day, yet never fully disappearing. A love that was once strong, now reduced to the echoes of the past.
     </p>
 
-    <p>
+    <p style="line-height: 2rem; text-align: justify;">
         "What is love," the poem asks, "but a fleeting flame, one that burns bright only for a moment, before it is extinguished by time?" The words are haunting, a reminder that love, in its purest form, is both beautiful and tragic. It is something that can never be fully possessed, only remembered.
     </p>
 
-    <p>
+    <p style="line-height: 2rem; text-align: justify;">
         As you read the lines, you can almost hear the voice of the poet, speaking softly in the silence of a forgotten library, surrounded by the dust of ages. The poem's message is timeless: that love, no matter how fleeting, leaves an indelible mark on the heart.
     </p>
 
 </body>
-</html>
 "#),
 
     //23
-    ("desert_whispers.html", r#"<html>
-<head>
-<style type="text/css">
-      p{
-        line-height: 2rem; /*or use value in px*/
-      }
-</style>
-</head>
+    ("desert_whispers.html", r#"
 <body style="font-family:Georgia, serif; line-height:1.8; max-width:800px; margin:auto; padding:20px; background-color:#f4e1c1; color:#4a2c2a;">
 
-    <h1 style="margin-top: 0, text-align:center; color:#c68e17;">Desert Whispers</h1>
+    <h1 style="margin-top: 0; text-align:center; color:#c68e17;">
+        Desert Whispers
+    </h1>
 
-    <p>
+    <p style="line-height: 2rem; text-align: justify;">
         They say the dunes remember those who dare to cross. The desert, vast and unyielding, holds the footprints of those who venture across its endless sands. With each gust of wind, the dunes shift and change, as if the desert itself is keeping track of every soul who has passed through.
     </p>
 
@@ -697,11 +605,11 @@ The wind’s story is ever-changing, constantly moving, shifting with the season
         #Media[desert_oasis]
     </div>
 
-    <p>
+    <p style="line-height: 2rem; text-align: justify;">
         The heat is oppressive, but there is something else—something almost mystical about the desert. The silence, broken only by the occasional whisper of wind, seems to echo with memories. The desert holds secrets, secrets that only those brave enough to journey into its heart can begin to understand.
     </p>
 
-    <p>
+    <p style="line-height: 2rem; text-align: justify;">
         The winds carry not just sand but stories—stories of travelers, merchants, and wanderers who sought solace in its endless expanse, only to disappear without a trace. Some say the dunes take what they want, hiding the past beneath layers of sand.
     </p>
 
@@ -709,28 +617,19 @@ The wind’s story is ever-changing, constantly moving, shifting with the season
         #Media[city_ambience]
     </div>
 
-    <p>
+    <p style="line-height: 2rem; text-align: justify;">
         As the sun sets, the desert transforms. The heat gives way to a cool breeze, and the once oppressive landscape is now a place of quiet reflection. The city, far off in the distance, hums with life, but here, in the vastness of the desert, there is only the wind and the whispers it carries.
     </p>
-
 </body>
-</html>
 "#),
 
     //24
     ("cyber_rebellion.html", r#"<html>
-<head>
-<style type="text/css">
-      p{
-        line-height: 2rem; /*or use value in px*/
-      }
-</style>
-</head>
 <body style="font-family: 'Courier New', monospace; line-height: 1.8; max-width: 900px; margin: auto; padding: 20px; background-color: #121212; color: #e0e0e0;">
 
     <h1 style="margin-top: 0; text-align: center; color: #ff4081;">Cyber Rebellion</h1>
 
-    <p>
+    <p style="line-height: 2rem; text-align: justify;">
         In the neon glow of the city, beneath the hum of digital billboards and the flicker of flickering lights, they planned their uprising. The city was a sprawling mass of concrete and steel, its skyline dominated by towering skyscrapers and holographic advertisements. But beneath the surface, the rebellion simmered—a movement of those who were tired of being controlled by the powerful corporations that ran everything.
     </p>
 
@@ -738,11 +637,11 @@ The wind’s story is ever-changing, constantly moving, shifting with the season
         #Media[futuristic_city]
     </div>
 
-    <p>
+    <p style="line-height: 2rem; text-align: justify;">
         The streets were alive with the pulse of technology, but there was a deeper current, one that thrived in the shadows. They met in secret, exchanging encrypted messages, their faces hidden behind augmented reality masks. The world above was bright, but the underground was dark, where those who had nothing left to lose could finally be heard.
     </p>
 
-    <p>
+    <p style="line-height: 2rem; text-align: justify;">
         "The system is broken," they whispered, "but we can rebuild it, or tear it down, depending on how we choose to act." Their voices were determined, their hearts filled with a fire that could not be extinguished. The future was uncertain, but they were ready to fight for a new world, one free from the control of the corporations.
     </p>
 
@@ -750,12 +649,11 @@ The wind’s story is ever-changing, constantly moving, shifting with the season
         #Media[train_journey]
     </div>
 
-    <p>
+    <p style="line-height: 2rem; text-align: justify;">
         As the city’s pulse echoed around them, they boarded the trains that would take them to their destinations—places where they would lay the groundwork for their rebellion. The train carriages were silent, save for the hum of the electric engines and the occasional chatter of those who shared the same dream. The journey was long, but every mile brought them closer to a future they could only imagine.
     </p>
 
 </body>
-</html>
 "#),
 
     //25
