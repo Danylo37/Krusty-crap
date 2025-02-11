@@ -489,6 +489,9 @@ It uses the command_senders map to find the appropriate sender channel.
         } else {
             return Err(format!("Drone {} not found in controller", drone_id)); //Return error if drone not found
         }
+
+        self.state.topology.remove(&drone_id);
+        self.command_senders_drones.remove(&drone_id);
         // Remove senders from neighbors.
         if let Some(neighbors) = neighbors {
             for neighbor in neighbors {
@@ -516,8 +519,7 @@ It uses the command_senders map to find the appropriate sender channel.
                 }
             }
         }
-        self.state.topology.remove(&drone_id);
-        self.command_senders_drones.remove(&drone_id);
+
 
         let json_enum = serde_json::to_string(&TechnicalOperationOnDrone::DroneCrashed(drone_id)).unwrap();
         if let Err(e) = sender_to_gui.send(json_enum) {

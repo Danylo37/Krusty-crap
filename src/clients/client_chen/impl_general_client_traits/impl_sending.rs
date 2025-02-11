@@ -88,11 +88,15 @@ impl Sending for ClientChen {
                         info!("Successfully sent packet to {}", target_node_id);
                         match packet.pack_type{
                             PacketType::Ack(_) | PacketType::Nack(_) | PacketType::FloodResponse(_) =>{
+                                self.update_packet_status(session_id, fragment_index, PacketStatus::Sent);
+                                return;
+                            }
+                            PacketType::MsgFragment(_)=>{
                                 self.update_packet_status(session_id, fragment_index, PacketStatus::InProgress);
                                 return;
                             }
-                            PacketType::MsgFragment(_)| PacketType::FloodRequest(_)=>{
-                                self.update_packet_status(session_id, fragment_index, PacketStatus::InProgress);
+                            PacketType::FloodRequest(_)=>{
+                                self.update_packet_status(session_id, fragment_index, PacketStatus::Sent);
                                 return;
                             }
                         }
@@ -138,16 +142,21 @@ impl Sending for ClientChen {
 
 
     fn handle_not_sent_packet(&mut self, mut packet: Packet, not_sent_type: NotSentType, destination: NodeId) {
-        let routes = self.communication.routing_table.get(&destination);
+        let route = self.communication.routing_table.get(&destination);
         match not_sent_type {
             //through
-            NotSentType::RoutingError | NotSentType::ToBeSent | NotSentType::BeenInWrongRecipient => {
-                if routes.map_or(false, |r| !r.is_empty()) {
-                    let srh = self.get_source_routing_header(destination);
-                    packet.routing_header = srh.unwrap();
-                    self.send(packet);
+            NotSentType::RoutingError(drone_id) => {
+                if let Some(route) = route
+                {
+                    if !route.is_empty() && !route.contains(&drone_id){
+                        let srh = SourceRoutingHeader::initialize(route.clone());
+                        packet.routing_header = srh.clone();
+                        self.send(packet);
+                        println!("error routing packet sent to {}", destination);
+                    }
+
                 } else {
-                    warn!("No valid routes to {}", destination);
+                    println!("No valid routes to {}", destination);
                 }
             }
             NotSentType::DroneDestination => {
@@ -158,6 +167,29 @@ impl Sending for ClientChen {
                 self.storage.output_buffer
                     .entry(session_id)
                     .and_modify(|fragments| { fragments.remove(&fragment_index); });
+            }
+            NotSentType::ToBeSent => {
+                if let Some(route) = route {
+                    if !route.is_empty() {
+                        let srh = SourceRoutingHeader::initialize(route.clone());
+                        packet.routing_header = srh.clone();
+                        self.send(packet);
+                    }
+                }
+            },
+            NotSentType::BeenInWrongRecipient(drone_id) => {
+                if let Some(route) = route
+                {
+                    if !route.is_empty(){
+                        let srh = SourceRoutingHeader::initialize(route.clone());
+                        packet.routing_header = srh.clone();
+                        self.send(packet);
+                        println!("error routing packet sent to {}", destination);
+                    }
+
+                } else {
+                    println!("No valid routes to {}", destination);
+                }
             }
             _=>{}
         }

@@ -149,9 +149,9 @@ pub struct DisplayDataTextServer{
 pub enum NotSentType{
     ToBeSent,
     Dropped,
-    RoutingError,
+    RoutingError(DroneId),
     DroneDestination,
-    BeenInWrongRecipient,
+    BeenInWrongRecipient(DroneId),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

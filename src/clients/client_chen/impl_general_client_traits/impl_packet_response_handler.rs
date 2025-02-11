@@ -30,7 +30,7 @@ impl PacketResponseHandler for ClientChen {
     fn handle_nack(&mut self, nack_packet: Packet, nack: &Nack) {
         // Handle specific NACK types
         match nack.nack_type.clone() {
-            NackType::ErrorInRouting(node_id) =>  self.handle_error_in_routing(node_id, nack_packet.session_id, nack),
+            NackType::ErrorInRouting(node_id) => self.handle_error_in_routing(node_id, nack_packet.session_id, nack),
             NackType::DestinationIsDrone => self.handle_destination_is_drone(nack_packet.session_id, nack),
             NackType::Dropped => self.handle_packet_dropped(nack_packet, nack),
             NackType::UnexpectedRecipient(node_id) => self.handle_unexpected_recipient(node_id, nack_packet.session_id, nack),
@@ -44,7 +44,7 @@ impl PacketResponseHandler for ClientChen {
             warn!("Removed broken connection to node {} from packet_send", node_id);
         }
 
-        warn!("Routing error encountered for node {}: Drone crashed or sender not found", node_id);
+        println!("Routing error encountered for node {}: Drone crashed or sender not found", node_id);
 
         let session_id = nack_packet_session_id;
         let fragment_index = nack.fragment_index;
@@ -52,7 +52,7 @@ impl PacketResponseHandler for ClientChen {
         self.update_packet_status(
             session_id,
             fragment_index,
-            PacketStatus::NotSent(NotSentType::RoutingError),
+            PacketStatus::NotSent(NotSentType::RoutingError(node_id)),
         );
 
         let opt_packet = self.storage.output_buffer
@@ -62,24 +62,23 @@ impl PacketResponseHandler for ClientChen {
 
         let option_packet_to_send = {
             if let Some(mut packet) = opt_packet {
+                println!("DEBUGGING SESSION ID: {}", packet.session_id);
                 let opt_destination = packet.routing_header.destination();
                 if let Some(destination) = opt_destination {
                     let pack = match self.communication.routing_table.get(&destination) {
                         Some(routes) => {
                             // Case 1: Still the wrong path memorized
-                            if routes.clone() == packet.routing_header.hops {
+                            println!("DEBUGGING ERROR NODE IS: {} AND THE ROUTES: {:#?}", node_id, routes);
+                            if routes.clone().contains(&node_id) {
                                 self.do_flooding();
                                 None
                             }
                             // Case 2: We have the ok path, so it returns the packet to send
                             else if !routes.is_empty() {
-                                let source_routing_header = self.get_source_routing_header(destination);
-                                if let Some(srh) = source_routing_header {
-                                    packet.routing_header = srh; // Perform the update
-                                    Some(packet.clone()) // Clone the packet
-                                } else {
-                                    None
-                                }
+                                let source_routing_header = SourceRoutingHeader::initialize(routes.clone());
+                                packet.routing_header = source_routing_header; // Perform the update
+                                println!("DEBUGGING ERROR NODE IS: {} AND THE ROUTES: {:#?}", node_id, routes);
+                                Some(packet.clone())
                             }
                             // Case 3: When the routing table doesn't contain the wrong route and is empty
                             else {
@@ -105,6 +104,7 @@ impl PacketResponseHandler for ClientChen {
         if let Some(p) = option_packet_to_send {
             // Notice that by sending, it will automatically update the PacketStatus
             self.send(p);
+            println!("DEBUGGING PACKET SESSION ID SENT: {}", session_id);
         }
     }
     fn handle_destination_is_drone(&mut self, nack_packet_session_id: SessionId, nack: &Nack) {
@@ -152,10 +152,10 @@ impl PacketResponseHandler for ClientChen {
             if let Some(packet) = map.get(&nack.fragment_index) {
                 // Notice that the packet status will be automatically updated
                 self.send(packet.clone());
-            } else{
+            } else {
                 println!("Dropped packet not found in output buffer");
             }
-        } else{
+        } else {
             println!("Dropped packet not found in output buffer");
         }
 
@@ -177,40 +177,46 @@ impl PacketResponseHandler for ClientChen {
         self.update_packet_status(
             session_id,
             nack.fragment_index,
-            PacketStatus::NotSent(NotSentType::BeenInWrongRecipient));
+            PacketStatus::NotSent(NotSentType::BeenInWrongRecipient(node_id)));
 
         let opt_packet = self.storage.output_buffer
             .get_mut(&session_id)
             .and_then(|fragments| fragments.get_mut(&fragment_index))
             .cloned();
 
-        let packet_to_send = {
+        let option_packet_to_send = {
             if let Some(mut packet) = opt_packet {
+                println!("DEBUGGING SESSION ID: {}", packet.session_id);
                 let opt_destination = packet.routing_header.destination();
                 if let Some(destination) = opt_destination {
                     let pack = match self.communication.routing_table.get(&destination) {
                         Some(routes) => {
-                            if routes.clone() == packet.routing_header.hops {
-                                //still the wrong path memorized
+                            // Case 1: Still the wrong path memorized
+                            println!("DEBUGGING ERROR NODE IS: {} AND THE ROUTES: {:#?}", node_id, routes);
+                            if routes.clone().contains(&node_id) {
                                 self.do_flooding();
                                 None
-                            } else if !routes.is_empty() {
-                                let source_routing_header = self.get_source_routing_header(destination);
-                                if let Some(srh) = source_routing_header {
-                                    packet.routing_header = srh; // Perform the update
-                                    Some(packet.clone()) // Clone the packet
-                                } else {
-                                    None
-                                }
-                            } else {  //when the routing table doesn't contain the wrong route and is empty
+                            }
+                            // Case 2: We have the ok path, so it returns the packet to send
+                            else if !routes.is_empty() {
+                                let source_routing_header = SourceRoutingHeader::initialize(routes.clone());
+                                packet.routing_header = source_routing_header; // Perform the update
+                                println!("DEBUGGING ERROR NODE IS: {} AND THE ROUTES: {:#?}", node_id, routes);
+                                Some(packet.clone())
+                            }
+                            // Case 3: When the routing table doesn't contain the wrong route and is empty
+                            else {
                                 None
                             }
                         }
+
+                        // No corresponding entry in the routing table
                         None => None,
                     };
-                    pack  // packet_to_send
+
+                    pack  // Packet to send
                 } else {
-                    None // packet_to_send
+                    None // Packet to send
                 }
             } else {
                 warn!("Packet not found in output buffer (Session: {}, Fragment: {})", session_id, fragment_index);
@@ -219,8 +225,10 @@ impl PacketResponseHandler for ClientChen {
         };
 
         // Send the packet when conditions are satisfied
-        if let Some(p) = packet_to_send {
+        if let Some(p) = option_packet_to_send {
+            // Notice that by sending, it will automatically update the PacketStatus
             self.send(p);
+            println!("DEBUGGING PACKET SESSION ID SENT: {}", session_id);
         }
     }
 }
