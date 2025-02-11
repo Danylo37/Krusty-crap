@@ -558,7 +558,7 @@
         <!-- Legend container (initially collapsed) -->
         <div id="legend-container" class="select-user-none">
             <div class="legend-item">
-                <img src="content_objects/drone_top.png" alt="Drone" class="legend-icon" />
+                <img src="content_objects/drone_top.jpeg" alt="Drone" class="legend-icon" />
                 <span>Drone</span>
             </div>
             <div class="legend-item">
@@ -1451,7 +1451,14 @@
 
                 case "web_client":
                     if (parsedData.node_id == currentClientId){
-                        updateFileList(parsedData.curr_received_file_list);
+                        let filesObject = {};
+                        if(parsedData.curr_received_file_list){
+                            console.log(parsedData.curr_received_file_list)
+                            for (const file of parsedData.curr_received_file_list) {
+                                filesObject[file] = "";
+                            }
+                        }
+                        updateFileList(filesObject);
                         updateFile(parsedData.chosen_file_text);
                         updateMedia(parsedData.serialized_media)
                     }
