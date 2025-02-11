@@ -4,12 +4,16 @@
     <title>Network Manager & Real-Time Monitor</title>
     <link rel="icon" href="content_objects/site_icon.png" type="image/png"></link>
 
+
     <link rel="stylesheet" href="styles/controller.css">
     <link rel="stylesheet" href="styles/client.css">
 
+
     <style>
 
+
         /* GENERAL CSS */
+
 
         html, body, #controller-view, #monitoring-container, #client-view{
             margin: 0;
@@ -17,11 +21,13 @@
             height: 100%; /* Ensure the body fits within the viewport */
         }
 
+
         body {
             font-family: Arial, sans-serif;
             background-color: #f5f7fa; /* Pleasant light background color */
             overflow: hidden;
         }
+
 
         img {
             -webkit-user-drag: none;
@@ -36,7 +42,10 @@
         }
 
 
+
+
         /* PRE-DONE CLASSes */
+
 
         .flex-center-all{
             display:flex;
@@ -44,9 +53,11 @@
             align-content: center;
         }
 
+
         .rounded{
             border-radius: 0.25rem;
         }
+
 
         .select-user-none{
             user-select: none;
@@ -62,11 +73,21 @@
 
 
 
+
+
+
+
+
+
+
+
         /*
+
 
             ROLE-CHOOSING
             -> FIRST PAGE + CLIENT CHOOSING PAGE
         */
+
 
         .popup {
             position: fixed;
@@ -83,6 +104,7 @@
             padding-right: 20px;
         }
 
+
         .main-popup-content {
             background: white;
             padding: 30px;
@@ -93,6 +115,7 @@
             width: 90%;
             max-height: 70%;
         }
+
 
         .main-popup-content::-webkit-scrollbar {
             width: 10px;
@@ -110,11 +133,13 @@
             background: #A5ACB5;
         }
 
+
         .container-roles {
             display: flex;
             justify-content: space-around;
             align-items: center;
         }
+
 
         .role {
             position: relative;
@@ -122,14 +147,17 @@
             text-align: center;
         }
 
+
         .role-image {
             max-width: 150px;
             transition: opacity 0.3s ease;
         }
 
+
         .role:hover .role-image {
             opacity: 0.4; /* Decrease image opacity on hover */
         }
+
 
         .role-text {
             position: absolute;
@@ -142,6 +170,7 @@
             opacity: 0;
             transition: opacity 0.3s ease;
 
+
             padding: 5px 10px;
             margin: 10px;
             background-color: #007bff;
@@ -149,12 +178,16 @@
             border-radius: 5px;
         }
 
+
         .role:hover .role-text {
             opacity: 1; /* Show the text on hover */
         }
 
 
+
+
         /*JUMPING ANIMATION*/
+
 
         @keyframes jump {
             0%   {transform: translate3d(0,-5%,0) scale3d(1,1,1);}
@@ -162,12 +195,15 @@
             100% {transform: translate3d(0,40%,0) scale3d(1.5,.7,1);}
         }
 
+
         .jump {
             transform-origin: 50% 50%;
             animation: jump .6s linear alternate infinite;
         }
 
+
         /* CLIENTS CHOOSING */
+
 
         .choosing-which-client-container {
             display: flex;
@@ -176,11 +212,14 @@
             margin-top: 20px;
         }
 
+
         .client-option {
             background: #007bffc9;
             color: white;
 
+
             padding: 5px 15px;
+
 
             margin: 10px 0;
             border-radius: 5px;
@@ -189,6 +228,7 @@
             text-align: center;
             transition: background 0.3s ease;
         }
+
 
         .client-option:hover {
             background: #0056b3;
@@ -216,11 +256,37 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         /*
+
 
             EXTRA FOR NOW
 
+
         */
+
 
         .panel {
             margin: 20px auto;
@@ -247,6 +313,7 @@
             color: white;
         }
 
+
         /* Receiver Box */
         .receiver-box {
             display: flex;
@@ -265,6 +332,11 @@
 
 
 
+
+
+
+
+
         /* Receiver Item */
         .receiver-item {
             padding: 10px;
@@ -276,10 +348,12 @@
             text-align: left;
         }
 
+
         .receiver-item:hover {
             background-color: #007bff;
             color: white;
         }
+
 
         .server-container {
             margin-bottom: 20px;
@@ -289,6 +363,7 @@
             background-color: #f9f9f9;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+
 
         .server-header {
             font-size: 18px;
@@ -301,6 +376,8 @@
         }
 
 
+
+
     </style>
 </head>
 <body>
@@ -308,7 +385,12 @@
 
 
 
+
+
+
+
 <!-- CHOOSING ROLE -->
+
 
 <div id="role-popup" class="popup">
     <div class="main-popup-content">
@@ -337,9 +419,27 @@
 
 
 
+
+
+
+
+
+
+
 <!-- CONTROLLER VIEW -->
 
+
 <div id="controller-view" style="display: none;">
+
+
+
+
+
+
+
+
+
+    <img id="nonono" src="content_objects/nonono.gif" alt="NoNoNo Animation">
 
 
 
@@ -364,6 +464,13 @@
 
 
 
+
+
+
+
+
+
+
     <!-- Clients Display -->
     <div id="network-container">
         <!-- Drone Details Side Tab -->
@@ -380,8 +487,15 @@
             </div>
             <div class="side-tab-footer">
                 <button id="crash-btn">Crash Drone</button>
+                <button id="crashResponse-btn" onclick="crashDroneReview()">crashcrash Drone</button>
             </div>
         </div>
+
+
+
+
+
+
 
 
 
@@ -407,7 +521,16 @@
 
 
 
+
+
+
+
         <svg id="network-canvas"></svg>
+
+
+
+
+
 
 
 
@@ -423,10 +546,13 @@
                 <span>Use mouse wheel</span>
             </div>
 
+
             <div id="legend-toggle" onclick="toggleLegend()" style="display: block; text-align: center; margin-top: 10px;">
                 <img src="content_objects/down_arrow.png" alt="Toggle Legend" id="down-arrow-btn" />
             </div>
         </div>
+
+
 
 
         <!-- Legend container (initially collapsed) -->
@@ -467,6 +593,16 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
     <div id="monitoring-container" style="position: relative;">
         <!-- Top Buttons (inside monitoring-container, below header) -->
         <div id="monitoring-tabs">
@@ -480,10 +616,22 @@
 
 
 
+
+
+
+
+
+
         <!-- Sections -->
         <div id="clients-container" class="section active"></div>
         <div id="servers-container" class="section" style="display: none;"></div>
         <div id="drones-container" class="section" style="display: none;"></div>
+
+
+
+
+
+
 
 
 
@@ -510,12 +658,23 @@
 
 
 
+
+
+
+
+
+
+
+
 <!-- CLIENT VIEW -->
+
 
 <div id="client-view" style="display: none;">
 
+
     <!-- COMMUNICATION APPLICATION -->
     <div id="communication-ui">
+
 
         <div class="header-whatsapp">
             <div class="flex-center-all" style="  user-select: none; ">
@@ -531,16 +690,28 @@
 
 
 
+
+
+
+
+
+
+
         <div class="flex-center-all" style="flex: 1; height: 20%">
+
 
             <!-- Sidebar for Chats -->
             <div id="chat-sidebar" style="width: 30%; display: flex; flex-direction: column;">
+
+
 
 
                 <div id="sidebar-header">
                     <span>Chats</span>
                     <img src="content_objects/new_chat_icon.png" alt="create_chat" onclick="createNewChat()" style="width:100%; max-width:30px; padding: 5px 10px; cursor: pointer;">
                 </div>
+
+
 
 
                 <div id="chat-list">
@@ -565,6 +736,12 @@
 
 
 
+
+
+
+
+
+
             <!-- Chat Window -->
             <div id="chat-window">
                 <div id="chat-header">
@@ -581,8 +758,18 @@
                 </div>
             </div>
 
+
         </div>
     </div>
+
+
+
+
+
+
+
+
+
 
 
 
@@ -595,11 +782,16 @@
     <!-- CONTENT APPLICATION -->
     <div id="content-ui">
 
+
         <!-- Header -->
         <div id="header-content-ui">
 
 
+
+
             <img src="content_objects/chrome_logo.png" alt="Google Drive" class="drive-logo">
+
+
 
 
             <div class="search-bar">
@@ -618,25 +810,36 @@
             </div>
 
 
+
+
             <!-- Logout Button -->
             <img src="content_objects/logout_icon.png" alt="Log Out" class="content-ui-log_out_button" onclick="logOut()">
         </div>
 
 
 
+
+
+
         <!-- Body -->
         <div id="body-content-ui">
+
 
             <div id="side-bar-content-ui" style="display:none"></div>
 
 
 
+
+
+
             <div id="content-container-content-ui">
+
 
                 <!-- SERVER SELECTOR -->
                 <div id="server-selector">
                     <div style="display:flex">
                         <span id="current-server"></span>
+
 
                         <div class="server-nav">
                             <img src="content_objects/up_arrow.png" alt="Up" class="server-arrow" onclick="navigateServer(1)">
@@ -644,8 +847,13 @@
                         </div>
                     </div>
 
+
                     <img src="content_objects/reload.png" alt="reload" class="reload-button" onclick="reloadFilesServer(get_server_id_from_current_server_index())">
                 </div>
+
+
+
+
 
 
 
@@ -653,6 +861,9 @@
                 <!-- File List -->
                 <table class="file-list">
                 </table>
+
+
+
 
 
 
@@ -667,16 +878,21 @@
         </div>
 
 
+
+
         <!-- Pop-up file -->
         <div id="file-popup" class="file-popup-overlay" onclick="closePopup()">
             <div class="file-popup-content" onclick="event.stopPropagation();">
                 <!-- Close Button -->
                 <button class="file-close-button" onclick="closePopup()">X</button>
 
+
                 <!-- File Title -->
                 <h2 id="file-popup-title"></h2>
 
+
                 <!-- File Content -->
+
 
                 <div id="file-popup-file-content"></div>
             </div>
@@ -687,7 +903,12 @@
 
 
 
+
+
+
+
 <!-- Pop Ups for CLIENT VIEW -->
+
 
 <div id="chat-popup" class="popup-container">
     <div class="popup-content">
@@ -712,15 +933,30 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 <script>
+
+
 
 
     // Create a WebSocket connection to the Rust server
     const wsHost = window.location.hostname || 'localhost';
     const ws = new WebSocket(`ws://${wsHost}:8080`);
 
+
     // Nodes-tracker
     let data = {};
+
 
     // Role-tracker
     const roles_vector = [
@@ -732,6 +968,7 @@
     let current_role_chosen = roles_vector[0];
     let currentClientId = null; // Global variable
 
+
     // Container for all panels
     const monitoringContainer = document.getElementById("monitoring-container");
     const requestedMedia = new Set(); // Track requested media references
@@ -739,11 +976,18 @@
 
 
 
+
+
+
+
     /*
+
 
         CHOOSE ROLE
 
+
     */
+
 
     function changeIconSite(newIconUrl) {
         let favicon = document.querySelector("link[rel*='icon']");
@@ -756,20 +1000,24 @@
         favicon.href = newIconUrl;
     }
 
+
     function selectRole(role) {
         const popupTitle = document.getElementById('popup-title');
         const roleSelection = document.getElementById('role-selection');
         const clientSelection = document.getElementById('client-selection');
         const clientsDisplayDiv = document.getElementById('clients-container');
 
+
         if (role === 'controller') {
             //Set role and icon
             current_role_chosen = roles_vector[1];
             changeIconSite("content_objects/controller_icon.png")
 
+
             // Hide the pop-up and show the controller view
             document.getElementById('role-popup').style.display = 'none';
             document.getElementById('controller-view').style.display = 'block';
+
 
             translateX = -500; // move 200px to the left
             translateY = -500; // move 200px up
@@ -778,6 +1026,7 @@
             const canvas = document.getElementById("network-canvas");
             canvas.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
 
+
         } else if (role === 'client') {
             // Update the pop-up for client selection
             popupTitle.textContent = 'Select a Client';
@@ -785,9 +1034,11 @@
             roleSelection.style.display = 'none';
             clientSelection.style.display = 'flex';
 
+
             // Dynamically create client options
             const panelsArray = Array.from(clientsDisplayDiv.querySelectorAll('.panel'));
             clientSelection.innerHTML = ''; // Clear existing options
+
 
             if (panelsArray.length === 0) {
                 // No nodes found, show error message
@@ -798,11 +1049,15 @@
                 clientSelection.appendChild(errorMessage);
             } else {
 
+
                 // Create buttons for each panel (node)
                 panelsArray.forEach((panel) => {
 
+
                     const nodeId = panel.dataset.nodeId || 'Unknown'; // Retrieve node_id from panel's dataset
                     const nodeType = panel.dataset.nodeType || 'Unknown'; // Retrieve node_type from panel's dataset
+
+
 
 
                     // Create the button-option
@@ -811,11 +1066,13 @@
                     clientButton.className = "client-option";
                     clientButton.onclick = () => chooseClient(nodeId);
 
+
                     // Create the image associated with client Type
                     const img = document.createElement('img');
                     img.style.width = "100%";
                     img.style.maxWidth = "30px";
                     img.style.borderRadius = "7px";
+
 
                     if (nodeType === "Chat Client") {
                         img.src = "content_objects/whatsapp.jpg"; // Default image
@@ -825,13 +1082,16 @@
                         img.alt = "google_drive";
                     }
 
+
                     // Create text next to the image
                     const text = document.createElement('p');
                     text.textContent = `Client nodeId: ${nodeId}`;
                     text.style = "margin-left: 10px";
 
+
                     clientButton.appendChild(img);
                     clientButton.appendChild(text);
+
 
                     clientSelection.appendChild(clientButton);
                 });
@@ -839,23 +1099,24 @@
         }
     }
 
+
     function chooseClient(nodeId) {
         currentClientId = nodeId;
         document.querySelector('.whatsapp-title').textContent = `WhatsApp - Current Client Id: ${currentClientId}`;
 
-        console.log(`Client chosen: Node ${nodeId}`);
-
         // Find the panel corresponding to the selected nodeId
         const panel = document.querySelector(`.panel[data-node-id="${nodeId}"]`);
+
 
         if (!panel) {
             console.error(`No panel found for Node ${nodeId}`);
             return;
         }
 
+
         // retrieving nodeType
         const nodeType = panel.dataset.nodeType;
-        console.log(`Type chosen ${nodeType}`)
+
 
         // Show the appropriate UI based on the nodeType
         const communicationUI = document.getElementById('communication-ui');
@@ -866,21 +1127,27 @@
             changeIconSite("content_objects/whatsapp_logo.png")
 
 
+
+
             // Add placeholder image and text in chat messages
             const chatMessages = document.getElementById('chat-messages');
             chatMessages.innerHTML = `
-                <div style="text-align: center; padding: 20px;">
-                    <img src="content_objects/whatsapp_light_icon.png" alt="WhatsApp Icon" style="max-width: 150px; opacity: 0.7;">
-                    <p style="color: #555; margin-top: 10px; font-size: 16px; color: #54656f">Here there will be shown your personal chats!</p>
-                </div>
-            `;
+               <div style="text-align: center; padding: 20px;">
+                   <img src="content_objects/whatsapp_light_icon.png" alt="WhatsApp Icon" style="max-width: 150px; opacity: 0.7;">
+                   <p style="color: #555; margin-top: 10px; font-size: 16px; color: #54656f">Here there will be shown your personal chats!</p>
+               </div>
+           `;
+
 
             chatMessages.style.background = 'none'; // Clear background for placeholder
             chatMessages.style.backgroundColor = '#111B21'
 
 
+
+
             communicationUI.style.display = 'flex';
             contentUI.style.display = 'none';
+
 
             populateChatListForClient();
             populateChatReceiversForClient();
@@ -889,17 +1156,22 @@
             current_role_chosen = roles_vector[3];
             changeIconSite("content_objects/chrome_logo.png")
 
+
             communicationUI.style.display = 'none';
             contentUI.style.display = 'flex';
 
+
             populateContentServersForClient()
         }
+
 
         // Transition to the client view
         document.getElementById('role-popup').style.display = 'none';
         document.getElementById('client-view').style.display = 'block';
 
+
     }
+
 
     function populateChatListForClient() {
         // Find the panel in the clients-container for this clientId.
@@ -908,6 +1180,7 @@
             console.error("No panel found for client", currentClientId);
             return;
         }
+
 
         // Parse the stored history, if available.
         let history = {};
@@ -919,11 +1192,11 @@
             }
         }
 
-        console.log(history)
 
         // Clear the existing chat list.
         const chatList = document.getElementById('chat-list');
         chatList.innerHTML = "";
+
 
         // For each chat partner in the history, create a chat item.
         for (let partnerId in history) {
@@ -932,17 +1205,21 @@
             chatItem.dataset.id = partnerId;
             chatItem.dataset.history = JSON.stringify(history[partnerId]);
 
+
             // Use the partnerId as the chat name (or look it up if you have a mapping).
             chatItem.innerHTML = `<span class="chat-name">${partnerId}</span><span class="update-dot" style="display: none;"></span>`;
+
 
             // When the chat is clicked, open it.
             chatItem.onclick = function() {
                 openChat(partnerId, partnerId);
             };
 
+
             chatList.appendChild(chatItem);
         }
     }
+
 
     function populateChatReceiversForClient() {
         // Find the panel for the current client.
@@ -951,6 +1228,7 @@
             console.error("No panel found for client", currentClientId);
             return;
         }
+
 
         // Try to parse the available_clients field; if it doesn't exist, use an empty array.
         let availableClients = [];
@@ -962,19 +1240,23 @@
             }
         }
 
+
         //populate phonebooks
         for (const serverId in availableClients){
             phonebooks[serverId] = availableClients[serverId];
         }
 
+
         // Get the container where the receivers will be listed.
         const receiverListContainer = document.getElementById('receiver-list');
+
 
         // If there are no available clients, display a message.
         if (!availableClients || availableClients.length === 0) {
             receiverListContainer.innerHTML = `<div style="text-align: center; color: red;">No available clients</div>`;
         }
     }
+
 
     function populateContentServersForClient(){
         // Find the panel for the current client.
@@ -984,16 +1266,17 @@
             return;
         }
 
+
         // Try to parse the available_clients field; if it doesn't exist, use an empty array.
         let available_servers = [];
         if (panel.dataset.content_servers) {
             try {
                 available_servers = JSON.parse(panel.dataset.content_servers);
-                console.log(available_servers)
             } catch (e) {
                 console.error("Error parsing available_servers:", e);
             }
         }
+
 
         for (const serverId of available_servers) {
             file_lists[serverId] = {
@@ -1002,6 +1285,7 @@
             }
         }
 
+
         // Update the current-server display.
         if (available_servers.length > 0) {
             document.getElementById("current-server").innerHTML = `${file_lists[get_server_id_from_current_server_index()].name}`;
@@ -1009,7 +1293,6 @@
             document.getElementById("current-server").innerHTML = "No server available";
         }
 
-        console.log(available_servers)
         // Hide or show the server navigation arrows based on the number of available servers.
         const serverNav = document.querySelector('.server-nav');
         if (serverNav) {
@@ -1021,9 +1304,11 @@
         }
     }
 
+
     function logOut() {
         // Redirect to the login or home screen
         console.log('Logging out...');
+
 
         // Optional: Redirect to the login page
         window.location.reload(); // Reload the page to reset state
@@ -1047,26 +1332,48 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     /*
 
+
            WEB SOCKET FUNCTIONS
+
 
      */
 
 
+
+
     ws.onmessage = async (event) => {
         try {
-            // Log only critical information
-            console.time("PacketProcessing");
-
             const text = event.data; // Removed unnecessary `await`
             const parsedData = JSON.parse(text);
+
+            console.log(parsedData)
             switch (current_role_chosen) {
                 case "undefined":
                     // Handle only data with "data_title" field
                     if (parsedData.hasOwnProperty("data_title")) {
-                        console.log("Processing full dataset for undefined role...");
                         createMonitoringSections(parsedData);
+
 
                         if (parsedData.topology) {
                             globalTopologyData = parsedData.topology;
@@ -1077,11 +1384,12 @@
                             console.error("Fuck topology")
                         }
                     } else {
-                        console.log("Discarded data without 'data_title' for undefined role.");
                     }
                     break;
 
+
                 case "controller":
+
                     if (parsedData.hasOwnProperty("node_type")) {
                         let container;
                         if (parsedData.node_type === "WebBrowser" || parsedData.node_type === "ChatClient") {
@@ -1095,6 +1403,7 @@
                         //Destructing data in more easy to use data
                         const { node_id, ...fields } = parsedData;
 
+
                         // Locate the panel for this node_id:
                         const panel = container.querySelector(`.panel[data-node-id="${node_id}"]`);
                         if (panel) {
@@ -1106,13 +1415,26 @@
                             // const newPanel = createPanel(parsedData.node_id, parsedData.node_type, parsedData.fields);
                             // container.appendChild(newPanel);
                         }
-                    } else {
-                        console.warn("Discarded data without 'node_type' for controller role.");
+                    } else if(parsedData.hasOwnProperty('DroneCrashed')){
+                        updateCrashedDrone(1, parsedData);
+
+
+                    }else if(parsedData.hasOwnProperty('NotCrashed')){
+                        updateCrashedDrone(0, parsedData);
+
+
+                    }else if (parsedData.hasOwnProperty('PdrChanged')){
+                        updatePdrDrone(parsedData)
+
+
                     }
                     break;
 
 
+
+
                 case "chat_client":
+
 
                     if (parsedData.hasOwnProperty("chats")){
                         if (parsedData.node_id == currentClientId){
@@ -1123,25 +1445,27 @@
                         console.warn("Discarded not chat Client.");
                     }
 
+
                     break;
+
 
                 case "web_client":
                     if (parsedData.node_id == currentClientId){
-                        console.log("arrivedData_web_client")
                         updateFileList(parsedData.curr_received_file_list);
                         updateFile(parsedData.chosen_file_text);
                         updateMedia(parsedData.serialized_media)
                     }
                     break;
 
+
                 default:
                     console.warn(`Unhandled role: ${current_role_chosen}`);
             }
-            console.timeEnd("PacketProcessing");
         } catch (error) {
             console.error("Error processing WebSocket message:", error);
         }
     };
+
 
     // Handle WebSocket connection close
     ws.onclose = () => {
@@ -1150,6 +1474,7 @@
         msgDiv.textContent = 'WebSocket connection closed.';
     };
 
+
     // Handle WebSocket connection open
     ws.onopen = () => {
         console.log('WebSocket connection established');
@@ -1157,17 +1482,17 @@
     };
     // Handle page refresh/visibility changes
     window.addEventListener('beforeunload', () => {
-        console.log("ciao4");
         sendUpdateCommand(); // Optional: Send cleanup command if needed
     });
 
+
     // Request update when the page becomes visible again
     document.addEventListener('visibilitychange', () => {
-        console.log("ciao5");
         if (document.visibilityState === 'visible') {
             sendUpdateCommand();
         }
     });
+
 
     // Handle WebSocket errors
     ws.onerror = (error) => {
@@ -1175,11 +1500,12 @@
     };
 
 
+
+
     function sendUpdateCommand() {
         if (ws.readyState === WebSocket.OPEN) {
             const message = { "WsUpdateData": null }; // Use null or an empty object
             ws.send(JSON.stringify(message));
-            console.log("Sent:", JSON.stringify(message)); // Debugging output
         } else {
             console.error("WebSocket is not open. Unable to send request.");
         }
@@ -1210,12 +1536,41 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     /*
+
 
        WEB SOCKET FUNCTIONS
        -> UPDATING FIELDS
 
+
      */
+
 
     let globalTopologyData = {}; // Will hold the latest topology data from the server
     function createTopology(topologyData) {
@@ -1223,29 +1578,50 @@
         drawn_nodes.length = 0;
         connections.length = 0;
 
+
         // Get all unique node IDs from the topology object.
         const nodeIds = Object.keys(topologyData);
         const totalNodes = nodeIds.length;
+
 
         // Set up parameters for a circle layout.
         const centerX = 1000; // adjust as needed
         const centerY = 1000; // adjust as needed
         const radius = 400;   // distance from center
 
+
         // Position each node on a circle.
         nodeIds.forEach((nodeId, i) => {
             // Expect each value to be a tuple: [targetNodes, specificNodeType]
+
+
             const data = topologyData[nodeId];
-            const targetNodes = data[0]; // not used for positioning but later for connections
             const specificType = data[1]; // e.g., "ChatClient", "Drone", etc.
+
+
+            let pdr = 0;
+            if (specificType === "Drone") {
+                // Look for a panel with data-node-id equal to this nodeId
+                const panel = document.querySelector(`.panel[data-node-id="${nodeId}"]`);
+                if (panel && panel.dataset.pdr) {
+                    // Convert the dataset value (a string) to a number.
+                    pdr = parseFloat(panel.dataset.pdr);
+                }
+            }
+
 
             const angle = (2 * Math.PI * i) / totalNodes;
             const x = centerX + radius * Math.cos(angle);
             const y = centerY + radius * Math.sin(angle);
 
-            // Use the specific type provided by the server
-            drawn_nodes.push({ id: nodeId, type: specificType, x: x, y: y });
+
+            const nodeObj = { id: nodeId, type: specificType, x: x, y: y };
+            if (specificType === "Drone") {
+                nodeObj.pdr = pdr;
+            }
+            drawn_nodes.push(nodeObj);
         });
+
 
         // Build connections using the targetNodes from each node's data.
         for (const [nodeId, data] of Object.entries(topologyData)) {
@@ -1255,12 +1631,14 @@
             });
         }
 
+
         // Now update the SVG canvas.
         const canvas = document.getElementById("network-canvas");
         // Clear any existing children.
         while (canvas.firstChild) {
             canvas.removeChild(canvas.firstChild);
         }
+
 
         connections.forEach(conn => {
             const fromNode = drawn_nodes.find(n => n.id == conn.from);
@@ -1279,6 +1657,7 @@
             }
         });
 
+
         drawn_nodes.forEach(node => {
             const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             circle.setAttribute("cx", node.x);
@@ -1286,6 +1665,8 @@
             circle.setAttribute("r", 15);
             circle.classList.add("node", node.type);
             circle.dataset.nodeId = node.id;
+            circle.dataset.pdr = node.pdr;
+
             // If the node is a Drone, set up a custom click handler.
             if (node.type === "Drone") {
                 circle.addEventListener("click", () => showDroneDetails(node));
@@ -1295,7 +1676,7 @@
             canvas.appendChild(circle);
         });
 
-        console.log(topologyImagesToggled)
+
         if (topologyImagesToggled !== false){
             topologyImagesToggled = !topologyImagesToggled
             toggleTopologyAppearance()
@@ -1303,13 +1684,16 @@
         }
     }
 
+
     function createTopologyGrid(topologyData) {
         // Clear any previous data
         drawn_nodes.length = 0;
         connections.length = 0;
 
+
         const nodeIds = Object.keys(topologyData);
         const totalNodes = nodeIds.length;
+
 
         // Grid layout parameters:
         const cellWidth = 100;
@@ -1323,19 +1707,36 @@
         const startX = centerX - gridWidth / 2;
         const startY = centerY - gridHeight / 2;
 
+
         // Position each node in a grid.
         nodeIds.forEach((nodeId, i) => {
             const data = topologyData[nodeId];
             const targetNodes = data[0];
             const specificType = data[1]; // e.g., "ChatClient", "Drone", etc.
+            let pdr = 0;
+            if (specificType === "Drone") {
+                const panel = document.querySelector(`.panel[data-node-id="${nodeId}"]`);
+                if (panel && panel.dataset.pdr) {
+                    pdr = parseFloat(panel.dataset.pdr);
+                }
+            }
+
+
+
 
             const col = i % cols;
             const row = Math.floor(i / cols);
             const x = startX + col * cellWidth;
             const y = startY + row * cellHeight;
 
-            drawn_nodes.push({ id: nodeId, type: specificType, x: x, y: y });
+
+            const nodeObj = { id: nodeId, type: specificType, x: x, y: y };
+            if (specificType === "Drone") {
+                nodeObj.pdr = pdr;
+            }
+            drawn_nodes.push(nodeObj);
         });
+
 
         // Build connections (same as before)
         for (const [nodeId, data] of Object.entries(topologyData)) {
@@ -1345,11 +1746,13 @@
             });
         }
 
+
         // Redraw the SVG canvas:
         const canvas = document.getElementById("network-canvas");
         while (canvas.firstChild) {
             canvas.removeChild(canvas.firstChild);
         }
+
 
         connections.forEach(conn => {
             const fromNode = drawn_nodes.find(n => n.id == conn.from);
@@ -1368,6 +1771,7 @@
             }
         });
 
+
         drawn_nodes.forEach(node => {
             const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             circle.setAttribute("cx", node.x);
@@ -1375,6 +1779,9 @@
             circle.setAttribute("r", 15);
             circle.classList.add("node", node.type);
             circle.dataset.nodeId = node.id;
+            circle.dataset.pdr = node.pdr;
+
+
             // For a drone, use a special click handler; otherwise a generic one.
             if (node.type === "Drone") {
                 circle.addEventListener("click", () => showDroneDetails(node));
@@ -1384,8 +1791,7 @@
             canvas.appendChild(circle);
         });
 
-        console.log(topologyImagesToggled);
-        console.log(topologyImagesToggled !== false);
+
         if (topologyImagesToggled !== false) {
             topologyImagesToggled = !topologyImagesToggled;
             toggleTopologyAppearance();
@@ -1405,16 +1811,31 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
     function createMonitoringSections(data) {
         // Sections for monitoring
         const clientsContainer = document.getElementById("clients-container");
         const serversContainer = document.getElementById("servers-container");
         const dronesContainer = document.getElementById("drones-container");
 
+
         // Clear existing panels
         clientsContainer.innerHTML = '';
         serversContainer.innerHTML = '';
         dronesContainer.innerHTML = '';
+
 
         // Helper function to create a panel for a node
         function createPanel(nodeId, nodeType, fields) {
@@ -1423,10 +1844,12 @@
             panel.dataset.nodeId = nodeId;
             panel.dataset.nodeType = nodeType;
 
+
             // Title with node_id and node_type
             const title = document.createElement("h3");
             title.textContent = `Node ID: ${nodeId} | Type: ${nodeType}`;
             panel.appendChild(title);
+
 
             // Display all fields
             const fieldsContainer = document.createElement("div");
@@ -1439,8 +1862,10 @@
             });
             panel.appendChild(fieldsContainer);
 
+
             return panel;
         }
+
 
         // Add panels for web_clients_data
         Object.entries(data.web_clients_data).forEach(([nodeId, fields]) => {
@@ -1448,6 +1873,7 @@
             panel.dataset.content_servers = JSON.stringify(fields.discovered_text_servers);
             clientsContainer.appendChild(panel);
         });
+
 
         // Add panels for chat_clients_data
         Object.entries(data.chat_clients_data).forEach(([nodeId, fields]) => {
@@ -1457,11 +1883,13 @@
             clientsContainer.appendChild(panel);
         });
 
+
         // Add panels for comm_servers_data
         Object.entries(data.comm_servers_data).forEach(([nodeId, fields]) => {
             const panel = createPanel(nodeId, "Communication Server", fields);
             serversContainer.appendChild(panel);
         });
+
 
         // Add panels for text_servers_data
         Object.entries(data.text_servers_data).forEach(([nodeId, fields]) => {
@@ -1469,19 +1897,26 @@
             serversContainer.appendChild(panel);
         });
 
+
         // Add panels for media_servers_data
         Object.entries(data.media_servers_data).forEach(([nodeId, fields]) => {
             const panel = createPanel(nodeId, "Media Server", fields);
             serversContainer.appendChild(panel);
         });
 
+
         Object.entries(data.drones_data).forEach(([nodeId, fields]) => {
             const panel = createPanel(nodeId, "Drone", fields);
+            panel.dataset.pdr = (fields.pdr)
+
+
             dronesContainer.appendChild(panel);
         });
 
+
         const panel_padding = document.createElement('p');
         panel_padding.style = "height:10px; width:100%; padding-bottom: 300px;"
+
 
         clientsContainer.appendChild(panel_padding.cloneNode(true));
         serversContainer.appendChild(panel_padding.cloneNode(true));
@@ -1509,11 +1944,36 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     /*
+
 
       EXTRA FOR NOW
 
+
     */
+
 
     // Function to update the visibility of selection squares
     function updateSelectionSquaresVisibility() {
@@ -1525,6 +1985,7 @@
         });
     }
 
+
     // Function to confirm the selection
     function confirmSelection() {
         isSelectionMode = false;
@@ -1533,6 +1994,7 @@
         updateSelectionSquaresVisibility();
         filterPanelsBySelectedNodes();
     }
+
 
     // Function to filter panels based on selected nodes
     function filterPanelsBySelectedNodes() {
@@ -1545,6 +2007,7 @@
             }
         });
     }
+
 
     // Function to go back to monitoring all nodes
     function goBackToAllNodes() {
@@ -1559,6 +2022,7 @@
             }
         });
     }
+
 
     // Function to toggle node selection
     function toggleNodeSelection(nodeId) {
@@ -1579,13 +2043,24 @@
 
 
 
+
+
+
+
+
+
+
+
+
     (function makeDraggable() {
         const sideTab = document.getElementById('drone-details');
+
 
         // Variables to store the offset between mouse position and the element's top-left corner
         let offsetX = 0;
         let offsetY = 0;
         let isDragging = false;
+
 
         // When the mouse button is pressed down on the side tab, start dragging
         sideTab.addEventListener('mousedown', function(e) {
@@ -1597,9 +2072,11 @@
             offsetX = e.clientX - rect.left;
             offsetY = e.clientY - rect.top;
 
+
             // Optionally, you can add a class to change the appearance while dragging
             sideTab.classList.add('dragging');
         });
+
 
         // Update the element's position as the mouse moves
         document.addEventListener('mousemove', function(e) {
@@ -1608,6 +2085,7 @@
             sideTab.style.left = (e.clientX - offsetX) + 'px';
             sideTab.style.top = (e.clientY - offsetY) + 'px';
         });
+
 
         // When the mouse button is released, stop dragging
         document.addEventListener('mouseup', function() {
@@ -1618,8 +2096,10 @@
         });
     })();
 
+
 </script>
 <script src="js/client.js"></script>
 <script src="js/controller.js"></script>
 </body>
 </html>
+
