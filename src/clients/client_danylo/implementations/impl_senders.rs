@@ -58,7 +58,7 @@ impl Senders for ChatClientDanylo {
             }
             Err(err) => {
                 warn!("Client {}: Failed to send ACK for session {} and fragment {}: {}", self.id, session_id, fragment_index, err);
-                self.send_event(ClientEvent::ControllerShortcut(ack))
+                self.send_event(ClientEvent::ControllerShortcut(ack));
             }
         };
     }
