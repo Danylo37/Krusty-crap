@@ -334,6 +334,42 @@
     border-radius: 10px;
 }
 
+#nonono {
+    position: absolute;
+    width: 200px;        /* Adjust the width as needed */
+    left: -220px;        /* Start off-screen to the left */
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1000;
+}
+
+/* Class to start the animation */
+.animate1 {
+    animation: moveAcross-fromLeft 3s linear forwards;
+}
+.animate2 {
+    animation: moveAcross-toTopRight 1.5s ease-in forwards;
+}
+
+/* Keyframes animation: move the image from left to right */
+@keyframes moveAcross-fromLeft {
+    0% {
+        left: -220px;
+    }
+    100% {
+        left: calc(50% - 100px);
+    }
+}
+@keyframes moveAcross-toTopRight {
+    0% {
+        left: calc(50% - 100px);
+        top: 50%;
+    }
+    100% {
+        left: 250%;
+        top:150%;
+    }
+}
 
 
 
