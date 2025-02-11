@@ -155,6 +155,13 @@ pub enum NotSentType{
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum TechnicalOperationOnDrone{
+    DroneCrashed(DroneId),
+    NotCrashed(DroneId),
+    PdrChanged(DroneId, f32),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Speaker {
     Me,
     HimOrHer,

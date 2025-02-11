@@ -87,7 +87,7 @@ impl SimulationControllerMonitoring for SimulationController {
                                 }
                             },
                             ClientEvent::CallTechniciansToFixDrone(id, sender) => {
-                                self.fix_drone(id, sender);
+                                self.fix_drone(id, sender, sender_to_gui.clone());
                             },
                             _ => {}
                         }
@@ -156,7 +156,7 @@ impl SimulationControllerMonitoring for SimulationController {
 
                             },
                             ServerEvent::CallTechniciansToFixDrone(id, sender) => {
-                                self.fix_drone(id, sender);
+                                self.fix_drone(id, sender, sender_to_gui.clone());
                             }
                         }
 

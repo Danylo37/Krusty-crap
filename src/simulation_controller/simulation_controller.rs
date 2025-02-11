@@ -7,12 +7,7 @@ use wg_2024::{
     network::NodeId,
     packet::{NodeType, Packet, PacketType}
 };
-use crate::general_use::{ClientCommand, ClientEvent, ClientType,
-                         ServerCommand, ServerEvent, ServerType, ServerId,
-                         Query,
-                         DisplayDataWebBrowser, DisplayDataCommunicationServer, DisplayDataMediaServer,
-                         DisplayDataChatClient, DisplayDataTextServer, DisplayDataDrone,
-                         SpecificNodeType, DroneId};
+use crate::general_use::{ClientCommand, ClientEvent, ClientType, ServerCommand, ServerEvent, ServerType, ServerId, Query, DisplayDataWebBrowser, DisplayDataCommunicationServer, DisplayDataMediaServer, DisplayDataChatClient, DisplayDataTextServer, DisplayDataDrone, SpecificNodeType, DroneId, TechnicalOperationOnDrone};
 use crate::websocket::WsCommand;
 use std::collections::hash_map::Entry;
 use rand::Rng;
@@ -266,12 +261,16 @@ impl SimulationController {
         Ok(drone)
     }
 
-    pub(super) fn fix_drone(&mut self, drone_id: DroneId, sender: (NodeId, NodeType)) {
-        if self.fixed_drones.contains(&drone_id) {
+    pub(super) fn fix_drone(&mut self, drone_id: DroneId, sender: (NodeId, NodeType), sender_to_gui: Sender<String>) {
+        let mut new_pdr:f32 = 0f32;
+        if self.fixed_drones.contains(&drone_id){
+            if let Some(data)= self.drones_data.get_mut(&drone_id) {
+                new_pdr = data.pdr;
+            }
             info!("Drone {} is already fixed", drone_id);
         } else {
             let mut rng = rand::thread_rng();
-            let new_pdr = rng.gen_range(0.0..=0.1); // Generate random PDR between 0 and 0.1
+            new_pdr = rng.gen_range(0.0..=0.1); // Generate random PDR between 0 and 0.1
             self.set_packet_drop_rate(drone_id, new_pdr); // Update the drone's PDR
             info!("Drone {} has been fixed! New PDR: {}", drone_id, new_pdr);
 
@@ -284,12 +283,16 @@ impl SimulationController {
         match sender.1 {
             NodeType::Client => {
                 if let Some((client_command_sender, _)) = self.command_senders_clients.get(&sender.0) {
+                    let json_enum = serde_json::to_string(&TechnicalOperationOnDrone::PdrChanged(drone_id, new_pdr)).unwrap();
+                    sender_to_gui.send(json_enum).unwrap();
                     if let Err(e) = client_command_sender.send(ClientCommand::DroneFixed(drone_id)) {
                         warn!("Failed to send DroneFixed to client {}: {:?}", sender.0, e);
                     }
                 }
             },
             NodeType::Server => {
+                let json_enum = serde_json::to_string(&TechnicalOperationOnDrone::PdrChanged(drone_id, new_pdr)).unwrap();
+                sender_to_gui.send(json_enum).unwrap();
                 if let Some((server_command_sender, _)) = self.command_senders_servers.get(&sender.0) {
                     if let Err(e) = server_command_sender.send(ServerCommand::DroneFixed(drone_id)) {
                         warn!("Failed to send DroneFixed to server {}: {:?}", sender.0, e);
@@ -346,7 +349,6 @@ impl SimulationController {
     fn get_destination_from_packet(&self, packet: &Packet) -> Option<NodeId> {
         packet.routing_header.hops.last().copied()
     }
-
     /// Handles `PacketSent` events, adding packet information to the history.
     fn handle_packet_sent(&mut self, packet: Packet) {
         let destination = self.get_destination_from_packet(&packet).unwrap_or(255); // Provide default if None
@@ -466,7 +468,8 @@ It uses the command_senders map to find the appropriate sender channel.
     pub fn request_drone_crash(&mut self, drone_id: NodeId, sender_to_gui: &Sender<String>) -> Result<(), String> {
 
         if self.is_drone_critical(drone_id) {
-            if let Err(e) = sender_to_gui.send("DroneNotCrashed".to_string()) {
+            let json_enum = serde_json::to_string(&TechnicalOperationOnDrone::NotCrashed(drone_id)).unwrap();
+            if let Err(e) = sender_to_gui.send(json_enum) {
                 warn!("Error sending crash result to WebSocket: {}", e);
             }
             return Err(format!("Cannot crash drone {}: critical for connectivity", drone_id));
@@ -511,7 +514,8 @@ It uses the command_senders map to find the appropriate sender channel.
         }
         self.state.topology.remove(&drone_id);
         self.command_senders_drones.remove(&drone_id);
-        if let Err(e) = sender_to_gui.send("DroneCrashed".to_string()) {
+        let json_enum = serde_json::to_string(&TechnicalOperationOnDrone::DroneCrashed(drone_id)).unwrap();
+        if let Err(e) = sender_to_gui.send(json_enum) {
             warn!("Error sending crash result to WebSocket: {}", e);
         }
 
