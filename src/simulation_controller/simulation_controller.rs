@@ -122,40 +122,43 @@ impl SimulationController {
     pub(crate) fn process_controller_shortcut_events(&mut self) {
         if let Ok(event) = self.drone_event_receiver.try_recv() {  // Receive event or continue if none is available
             if let DroneEvent::ControllerShortcut(packet) = event {   // Check event type
+                self.send_shortcut(packet);
+            }
+        }
+    }
 
-                match packet.pack_type {
-                    PacketType::Ack(_) | PacketType::Nack(_) | PacketType::FloodResponse(_) => {
-                        if let Some(destination) = self.get_destination_from_packet(&packet) {  // Try to get destination
+    pub(crate) fn send_shortcut(&self, packet: Packet){
+        match packet.pack_type {
+            PacketType::Ack(_) | PacketType::Nack(_) | PacketType::FloodResponse(_) => {
+                if let Some(destination) = self.get_destination_from_packet(&packet) {  // Try to get destination
 
-                            // Determine where to send the packet based on the destination ID and node type
-                            if self.command_senders_clients.contains_key(&destination) {          //If it's client
+                    // Determine where to send the packet based on the destination ID and node type
+                    if self.command_senders_clients.contains_key(&destination) {          //If it's client
 
-                                if let Some((client_sender, _)) = self.command_senders_clients.get(&destination) {
-                                    if let Err(e) = client_sender.send(ClientCommand::ShortcutPacket(packet.clone())) {
-                                        warn!("Error sending to client {}: {:?}", destination, e);
-                                    }
-                                } else {
-
-                                    warn!("No sender found for client {}", destination);
-                                }
-                            } else if self.command_senders_servers.contains_key(&destination) {   // If it's server
-                                if let Some((server_sender, _)) = self.command_senders_servers.get(&destination) {
-                                    if let Err(e) = server_sender.send(ServerCommand::ShortcutPacket(packet.clone())) {
-                                        warn!("Error sending to server {}: {:?}", destination, e);
-                                    }
-                                } else {
-                                    warn!("No sender found for server {}", destination);
-                                }
-                            } else {
-                                warn!("Invalid destination or unknown node type: {}", destination);
+                        if let Some((client_sender, _)) = self.command_senders_clients.get(&destination) {
+                            if let Err(e) = client_sender.send(ClientCommand::ShortcutPacket(packet.clone())) {
+                                warn!("Error sending to client {}: {:?}", destination, e);
                             }
                         } else {
-                            warn!("Could not determine destination for ControllerShortcut");
+
+                            warn!("No sender found for client {}", destination);
                         }
+                    } else if self.command_senders_servers.contains_key(&destination) {   // If it's server
+                        if let Some((server_sender, _)) = self.command_senders_servers.get(&destination) {
+                            if let Err(e) = server_sender.send(ServerCommand::ShortcutPacket(packet.clone())) {
+                                warn!("Error sending to server {}: {:?}", destination, e);
+                            }
+                        } else {
+                            warn!("No sender found for server {}", destination);
+                        }
+                    } else {
+                        warn!("Invalid destination or unknown node type: {}", destination);
                     }
-                    _ => warn!("Unexpected packet type in ControllerShortcut: {:?}", packet.pack_type),
+                } else {
+                    warn!("Could not determine destination for ControllerShortcut");
                 }
             }
+            _ => warn!("Unexpected packet type in ControllerShortcut: {:?}", packet.pack_type),
         }
     }
 
