@@ -514,10 +514,19 @@ It uses the command_senders map to find the appropriate sender channel.
         }
         self.state.topology.remove(&drone_id);
         self.command_senders_drones.remove(&drone_id);
+
+        // After drone crash, update the routing
+
+        for (_, (sender, _)) in self.command_senders_clients.iter(){
+            sender.send(ClientCommand::StartFlooding).unwrap();
+        }
+
         let json_enum = serde_json::to_string(&TechnicalOperationOnDrone::DroneCrashed(drone_id)).unwrap();
         if let Err(e) = sender_to_gui.send(json_enum) {
             warn!("Error sending crash result to WebSocket: {}", e);
         }
+
+
 
         Ok(())
     }
