@@ -193,7 +193,7 @@ impl CommandHandler for ChatClientDanylo {
 
     /// ###### Requests the list of clients from a specified server.
     fn request_clients_list(&mut self, server_id: ServerId) {
-        println!("Client {}: Requesting clients list from server {}", self.id, server_id);
+        info!("Client {}: Requesting clients list from server {}", self.id, server_id);
 
         let result = self.create_and_send_message(Query::AskListClients, server_id);
 
