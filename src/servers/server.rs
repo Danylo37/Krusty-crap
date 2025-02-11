@@ -265,10 +265,9 @@ pub trait Server{
         }
     }
 
-    fn send_nack(&mut self, nack: Nack, routing_header: SourceRoutingHeader, session_id: u64){
-        let mut packet = Self::create_packet(PacketType::Nack(nack), routing_header, session_id);
-        packet.routing_header.increase_hop_index();
-        self.send_ack_nack(packet);
+    fn send_nack(&self, nack: Nack, routing_header: SourceRoutingHeader, session_id: u64){
+        let packet= Self::create_packet(PacketType::Nack(nack), routing_header, session_id);
+        self.send_packet(packet);
     }
 
     //ACK
@@ -276,18 +275,10 @@ pub trait Server{
         //UI stuff I guess?
     }
 
-    fn send_ack(&mut self, ack: Ack, routing_header: SourceRoutingHeader, session_id: u64) {
+    fn send_ack(&self, ack: Ack, routing_header: SourceRoutingHeader, session_id: u64) {
         let mut packet= Self::create_packet(PacketType::Ack(ack), routing_header, session_id);
         packet.routing_header.increase_hop_index();
-        self.send_ack_nack(packet);
-    }
-
-    fn send_ack_nack(&mut self, packet: Packet) {
-        if !self.get_routes().contains_key(&packet.routing_header.hops[0]) {
-            self.get_event_sender().send(ServerEvent::ControllerShortcut(packet)).unwrap()
-        } else {
-            self.send_packet(packet);
-        }
+        self.send_packet(packet);
     }
 
     //PACKET
@@ -300,10 +291,21 @@ pub trait Server{
     }
 
     fn send_packet(&self, packet: Packet) {
-        let first_carrier = self
-            .get_packet_send_not_mutable()
-            .get(&packet.routing_header.hops[1])
-            .unwrap();
+        let next_hop_id = packet.routing_header.hops[1];
+
+        let Some(first_carrier) = self.get_packet_send_not_mutable().get(&next_hop_id) else {
+            match packet.pack_type {
+                PacketType::Ack(_) | PacketType::Nack(_) => {
+                    self.get_event_sender().send(ServerEvent::ControllerShortcut(packet)).unwrap();
+                    return;
+                }
+                _ => {
+                    error!("Server {}: No sender found for node {}", self.get_id(), next_hop_id);
+                    return;
+                }
+            }
+        };
+
         first_carrier.send(packet).unwrap();
     }
 
