@@ -975,7 +975,7 @@ function updateFile(file_content) {
 
 
 function updateMedia(mediaRef) {
-
+    console.log(mediaRef);
     const fullPath = window.location.pathname;
     // Remove the filename (assumes a filename is present)
     const basePath = fullPath.substring(0, fullPath.lastIndexOf('/'));
