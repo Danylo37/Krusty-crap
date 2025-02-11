@@ -62,11 +62,6 @@ E forse del mio dir poco ti cale."#),
     //2
     ("the_banana.html", r#"<html>
 <head>
-<style type="text/css">
-      p{
-        line-height: 2rem; /*or use value in px*/
-      }
-</style>
 </head>
 <body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#f7f7f7; color:#333;">
 
@@ -98,6 +93,7 @@ E forse del mio dir poco ti cale."#),
 
 </body>
 </html>
+
 "#),
 
     //3
@@ -394,17 +390,18 @@ Tip: Best enjoyed daily. Pairs well with deep conversations, stargazing, and qui
     ("forest_mysteries.html", r#"<html>
 <head>
 <style type="text/css">
-      p{
-        line-height: 2rem; /*or use value in px*/
+      p {
+        line-height: 2rem; /* Увеличенный интервал для читаемости */
+        text-align: justify;
       }
 </style>
 </head>
 <body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#f4f7f2; color:#2c3e3a;">
 
-    <h1 style="margin-top: 0, text-align:center; color:#3e6e5f;">Forest Mysteries</h1>
+    <h1 style="margin-top: 0; text-align:center; color:#3e6e5f;">Forest Mysteries</h1>
 
     <p>
-        The forest is alive with secrets, each tree and rustling leaf hiding a story of ancient times. Walk beneath the canopy of green, and you may feel the weight of history in the air, as if the trees themselves are whispering forgotten tales.
+        The forest is alive with secrets, each tree and rustling leaf whispering a story from ancient times. Walk beneath the emerald canopy, and you may feel the weight of history pressing against your shoulders, as if unseen eyes are watching from the shadows.
     </p>
 
     <div style="text-align:center; margin:20px 0;">
@@ -412,15 +409,15 @@ Tip: Best enjoyed daily. Pairs well with deep conversations, stargazing, and qui
     </div>
 
     <p>
-        Listen closely to the rustling leaves, for in the sounds of the forest, there may be more than meets the eye. Every step you take could lead you closer to uncovering a hidden mystery—a forgotten path, a long-lost relic, or the echo of a voice carried on the wind.
+        Listen closely to the wind weaving through the branches—it carries voices of those who walked these paths long before you. A broken twig underfoot, the distant hoot of an owl, the sudden hush that falls over the trees—all could be signs of something hidden just beyond your sight.
     </p>
 
     <p>
-        The forest holds its secrets well, but to those who seek, it offers glimpses of its hidden world. From the flutter of wings in the distance to the sudden stillness of the air, the forest keeps its story hidden, just waiting for someone to listen.
+        Some say that if you venture deep enough, you may stumble upon a place untouched by time. A forgotten shrine covered in ivy, an ancient tree older than any map, or perhaps a clearing where the world feels just a little different—as if reality itself bends to the will of the forest.
     </p>
 
     <p>
-        Venture deeper, and perhaps you’ll find the key to unlocking its mysteries. But beware: not all secrets are meant to be uncovered. Some stories are better left untold, buried in the heart of the forest forever.
+        But beware. Not all who seek the forest’s secrets return with answers. Some stories are meant to remain hidden, buried beneath roots and shadows, waiting for those who dare to listen.
     </p>
 
 </body>
@@ -449,17 +446,18 @@ The future is already here, and it is learning, evolving, and redefining what’
     ("city_lights.html", r#"<html>
 <head>
 <style type="text/css">
-      p{
-        line-height: 2rem; /*or use value in px*/
-      }
+    p {
+        line-height: 2rem;
+        text-align: justify;
+    }
 </style>
 </head>
 <body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#e9e9e9; color:#333;">
 
-    <h1 style="margin-top: 0, text-align:center; color:#4c4f5c;">City Lights</h1>
+    <h1 style="text-align:center; color:#4c4f5c;">City Lights</h1>
 
     <p>
-        Standing on the rooftop, I watch as the city glows with a million lights, each one representing a story, a life, a moment in time. The streets are alive with movement, but from up here, it all seems so peaceful—almost like a glowing constellation beneath me.
+        From the rooftop, the city stretches before me, a vast sea of lights flickering like distant stars. Each window, each neon sign, each glowing streetlamp tells a silent story—a heartbeat in the metropolis that never truly sleeps.
     </p>
 
     <div style="text-align:center; margin:20px 0;">
@@ -467,15 +465,15 @@ The future is already here, and it is learning, evolving, and redefining what’
     </div>
 
     <p>
-        The skyline stretches endlessly, a jagged line of towering buildings punctuated by the flicker of neon signs and streetlights. It’s as though the city never sleeps, always awake and vibrant, pulsating with energy even in the dead of night.
+        The skyline stands tall, jagged and luminous, cutting through the darkness like a modern constellation. Below, the streets hum with the quiet symphony of life—the distant murmur of conversations, the rhythmic pulse of car horns, the occasional burst of laughter from a late-night café.
     </p>
 
     <p>
-        As I gaze down at the sea of lights, I can’t help but wonder who else is out there, watching the same view, lost in their own thoughts. The city connects us all, even when we’re alone on this rooftop, with the bright lights below casting shadows on our dreams.
+        There’s something surreal about this moment—standing high above the world, watching the city move like an intricate clockwork. Each light below represents a story, a dream, a fleeting moment in time, all woven into the fabric of the night.
     </p>
 
     <p>
-        The distant hum of traffic is like a soft melody, soothing in its predictability, while the occasional car honk or laughter from a nearby street café reminds me that life continues below. The city feels like an eternal dance, its rhythm set by the heartbeat of its inhabitants.
+        And as I take it all in, I wonder—who else stands at their own window, gazing into the same night, lost in thought? For all its chaos, the city has a way of making strangers feel connected, even in solitude.
     </p>
 
 </body>
@@ -507,15 +505,10 @@ And to embrace the beauty of the cold.
     //16
     ("lost_artifact.html", r#"<html>
 <head>
-<style type="text/css">
-      p{
-        line-height: 2rem; /*or use value in px*/
-      }
-</style>
 </head>
 <body style="font-family:Arial, sans-serif; line-height:1.6; max-width:800px; margin:auto; padding:20px; background-color:#fafafa; color:#333;">
 
-    <h1 style="margin-top: 0, text-align:center; color:#4d4b39;">The Lost Artifact</h1>
+    <h1 style="text-align:center; color:#4d4b39;">The Lost Artifact</h1>
 
     <p>
         Deep within the endless expanse of the desert, buried beneath shifting sands, a mysterious artifact has been unearthed. Its origins remain unknown, and the symbols etched onto its surface continue to defy all attempts at deciphering. Some believe it holds the key to an ancient civilization, long forgotten by time.
