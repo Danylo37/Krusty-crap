@@ -295,7 +295,7 @@ pub trait Server{
 
         let Some(first_carrier) = self.get_packet_send_not_mutable().get(&next_hop_id) else {
             match packet.pack_type {
-                PacketType::Ack(_) | PacketType::Nack(_) => {
+                PacketType::Ack(_) | PacketType::Nack(_) | PacketType::FloodResponse(_) => {
                     self.get_event_sender().send(ServerEvent::ControllerShortcut(packet)).unwrap();
                     return;
                 }
