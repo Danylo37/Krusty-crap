@@ -690,9 +690,9 @@ pub const IMAGE_PATHS: [(&str, &str, &str); 15] = [
     ("abandoned_castle.jpeg", "abandoned_castle","/content_objects/content_images/abandoned_castle.jpg"),
 ];
 
-/*pub const AUDIO_PATHS: [(&str, &str); 4] = [
-    ("city_ambience", "path/to/city_ambience.mp3"),
-    ("train_journey", "path/to/train_journey.mp3"),
-    ("haunted_whispers", "path/to/haunted_whispers.mp3"),
-    ("deep_space_hum", "path/to/deep_space_hum.mp3"),
-];*/
+pub const AUDIO_PATHS: [(&str, &str); 4] = [
+    ("city_ambience", "/content_objects/content_audios/city_ambience.mp3"),
+    ("train_journey", "/content_objects/content_audios/train_journey.mp3"),
+    ("haunted_whispers", "/content_objects/content_audios/haunted_whispers.mp3"),
+    ("deep_space_hum", "/content_objects/content_audios/deep_space_hum.mp3"),
+];
