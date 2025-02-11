@@ -1,4 +1,4 @@
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 
 use wg_2024::{
     packet::Packet,
@@ -52,12 +52,13 @@ impl Senders for ChatClientDanylo {
         let ack = Packet::new_ack(routing_header, session_id, fragment_index);
 
         // Attempt to send the ACK packet to the next hop.
-        match self.send_to_next_hop(ack) {
+        match self.send_to_next_hop(ack.clone()) {
             Ok(_) => {
                 info!("Client {}: ACK sent successfully for session {} and fragment {}", self.id, session_id, fragment_index);
             }
             Err(err) => {
-                error!("Client {}: Failed to send ACK for session {} and fragment {}: {}", self.id, session_id, fragment_index, err);
+                warn!("Client {}: Failed to send ACK for session {} and fragment {}: {}", self.id, session_id, fragment_index, err);
+                self.send_event(ClientEvent::ControllerShortcut(ack))
             }
         };
     }
@@ -69,6 +70,7 @@ impl Senders for ChatClientDanylo {
             ClientEvent::KnownServers(_) => "KnownServers",
             ClientEvent::ChatClientData(_, _, _) => "ChatClientData",
             ClientEvent::CallTechniciansToFixDrone(_, _) => "CallTechniciansToFixDrone",
+            ClientEvent::ControllerShortcut(_) => "ControllerShortcut",
             _ => "Unknown",
         };
 

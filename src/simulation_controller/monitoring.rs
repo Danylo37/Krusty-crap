@@ -89,6 +89,9 @@ impl SimulationControllerMonitoring for SimulationController {
                             ClientEvent::CallTechniciansToFixDrone(id, sender) => {
                                 self.fix_drone(id, sender, sender_to_gui.clone());
                             },
+                            ClientEvent::ControllerShortcut(packet) => {
+                                self.send_shortcut(packet);
+                            },
                             _ => {}
                         }
                         if self.updating_nodes.is_empty() && conditional_data_scope == DataScope::UpdateAll {
@@ -119,7 +122,6 @@ impl SimulationControllerMonitoring for SimulationController {
                                         sender_to_gui.send(json_string).expect("error in sending displaying data to the websocket");
                                     },
                                 }
-
                             }
                             ServerEvent::TextServerData(id, data, data_scope) =>{
                                 match data_scope{
@@ -158,6 +160,9 @@ impl SimulationControllerMonitoring for SimulationController {
                             ServerEvent::CallTechniciansToFixDrone(id, sender) => {
                                 self.fix_drone(id, sender, sender_to_gui.clone());
                             }
+                            ServerEvent::ControllerShortcut(packet) => {
+                                self.send_shortcut(packet);
+                            },
                         }
 
                         if self.updating_nodes.is_empty() && conditional_data_scope == DataScope::UpdateAll {

@@ -203,6 +203,7 @@ pub enum ServerEvent {
     // DroneId - id of the drone to be fixed.
     // Node - the node that sent the event.
     CallTechniciansToFixDrone(DroneId, Node),
+    ControllerShortcut(Packet),
 }
 
 #[derive(Debug, Clone, PartialEq, Copy)]
@@ -251,6 +252,7 @@ pub enum ClientEvent {
     // DroneId - id of the drone to be fixed.
     // Node - the node that sent the event.
     CallTechniciansToFixDrone(DroneId, Node),
+    ControllerShortcut(Packet),
 }
 
 //Queries (Client -> Server)
