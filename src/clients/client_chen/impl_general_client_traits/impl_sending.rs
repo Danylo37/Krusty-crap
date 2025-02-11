@@ -1,6 +1,6 @@
 use crate::clients::client_chen::{ClientChen, PacketCreator, Sending};
 use crate::clients::client_chen::prelude::*;
-use crate::general_use::NotSentType::ToBeSent;
+use crate::general_use::NotSentType::{RoutingError, ToBeSent};
 
 impl Sending for ClientChen {
     fn send_packets_in_buffer_with_checking_status(&mut self) {
@@ -82,11 +82,21 @@ impl Sending for ClientChen {
         packet.routing_header.increase_hop_index();
         // Attempt to send packet
         match self.communication_tools.packet_send.get_mut(&target_node_id) {
-            Some(sender) if self.communication.connected_nodes_ids.contains(&target_node_id) => {
+            Some(sender) => {
                 match sender.send(packet.clone()) {
                     Ok(_) => {
                         info!("Successfully sent packet to {}", target_node_id);
-                        self.update_packet_status(session_id, fragment_index, PacketStatus::InProgress);
+                        match packet.pack_type{
+                            PacketType::Ack(_) | PacketType::Nack(_) | PacketType::FloodResponse(_) =>{
+                                self.update_packet_status(session_id, fragment_index, PacketStatus::InProgress);
+                                return;
+                            }
+                            PacketType::MsgFragment(_)| PacketType::FloodRequest(_)=>{
+                                self.update_packet_status(session_id, fragment_index, PacketStatus::InProgress);
+                                return;
+                            }
+                        }
+
                     },
                     Err(e) => {
                         error!("Failed to send to {}: {}", target_node_id, e);
@@ -94,9 +104,22 @@ impl Sending for ClientChen {
                     }
                 }
             }
-            _ => {
+            None => {
                 warn!("No valid connection to {}", target_node_id);
-                self.update_packet_status(session_id, fragment_index, PacketStatus::NotSent(ToBeSent));
+                match packet.pack_type{
+                    PacketType::Ack(_) | PacketType::Nack(_) => {
+                        self.communication_tools.controller_send.send(ClientEvent::ControllerShortcut(packet)).unwrap();
+                        self.update_packet_status(session_id, fragment_index, PacketStatus::Sent);
+                        return
+                    }
+                    PacketType::FloodRequest(_) => {
+                        return
+                    }
+                    PacketType::MsgFragment(_) | PacketType::FloodResponse(_) => {
+                        self.update_packet_status(session_id, fragment_index, PacketStatus::NotSent(RoutingError));
+                        return
+                    }
+                }
             }
         }
     }

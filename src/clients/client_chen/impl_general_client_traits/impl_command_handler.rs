@@ -93,6 +93,10 @@ impl CommandHandler for ClientChen{
                 );*/
             }
 
+            ClientCommand::ShortcutPacket(packet) =>{
+                self.handle_received_packet(packet);
+            }
+
             _ => {}
         }
     }
