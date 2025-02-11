@@ -487,7 +487,6 @@
             </div>
             <div class="side-tab-footer">
                 <button id="crash-btn">Crash Drone</button>
-                <button id="crashResponse-btn" onclick="crashDroneReview()">crashcrash Drone</button>
             </div>
         </div>
 
@@ -558,7 +557,7 @@
         <!-- Legend container (initially collapsed) -->
         <div id="legend-container" class="select-user-none">
             <div class="legend-item">
-                <img src="content_objects/drone_top.png" alt="Drone" class="legend-icon" />
+                <img src="content_objects/drone_top.jpeg" alt="Drone" class="legend-icon" />
                 <span>Drone</span>
             </div>
             <div class="legend-item">
@@ -1104,10 +1103,6 @@
         currentClientId = nodeId;
         document.querySelector('.whatsapp-title').textContent = `WhatsApp - Current Client Id: ${currentClientId}`;
 
-
-        console.log(`Client chosen: Node ${nodeId}`);
-
-
         // Find the panel corresponding to the selected nodeId
         const panel = document.querySelector(`.panel[data-node-id="${nodeId}"]`);
 
@@ -1120,7 +1115,6 @@
 
         // retrieving nodeType
         const nodeType = panel.dataset.nodeType;
-        console.log(`Type chosen ${nodeType}`)
 
 
         // Show the appropriate UI based on the nodeType
@@ -1196,9 +1190,6 @@
                 console.error("Error parsing chat history:", e);
             }
         }
-
-
-        console.log(history)
 
 
         // Clear the existing chat list.
@@ -1280,7 +1271,6 @@
         if (panel.dataset.content_servers) {
             try {
                 available_servers = JSON.parse(panel.dataset.content_servers);
-                console.log(available_servers)
             } catch (e) {
                 console.error("Error parsing available_servers:", e);
             }
@@ -1302,8 +1292,6 @@
             document.getElementById("current-server").innerHTML = "No server available";
         }
 
-
-        console.log(available_servers)
         // Hide or show the server navigation arrows based on the number of available servers.
         const serverNav = document.querySelector('.server-nav');
         if (serverNav) {
@@ -1375,18 +1363,14 @@
 
     ws.onmessage = async (event) => {
         try {
-            // Log only critical information
-            console.time("PacketProcessing");
-
-
             const text = event.data; // Removed unnecessary `await`
-            console.log(text)
             const parsedData = JSON.parse(text);
+
+            console.log(parsedData)
             switch (current_role_chosen) {
                 case "undefined":
                     // Handle only data with "data_title" field
                     if (parsedData.hasOwnProperty("data_title")) {
-                        console.log("Processing full dataset for undefined role...");
                         createMonitoringSections(parsedData);
 
 
@@ -1399,7 +1383,6 @@
                             console.error("Fuck topology")
                         }
                     } else {
-                        console.log("Discarded data without 'data_title' for undefined role.");
                     }
                     break;
 
@@ -1431,20 +1414,18 @@
                             // const newPanel = createPanel(parsedData.node_id, parsedData.node_type, parsedData.fields);
                             // container.appendChild(newPanel);
                         }
-                    } else if(parsedData.hasOwnProperty('crashedDrone')){
+                    } else if(parsedData.hasOwnProperty('DroneCrashed')){
                         updateCrashedDrone(1, parsedData);
 
 
-                    }else if(parsedData.hasOwnProperty('notCrashedDrone')){
+                    }else if(parsedData.hasOwnProperty('NotCrashed')){
                         updateCrashedDrone(0, parsedData);
 
 
-                    }else if (parsedData.hasOwnProperty('pdrDrone')){
+                    }else if (parsedData.hasOwnProperty('PdrChanged')){
                         updatePdrDrone(parsedData)
 
 
-                    }else{
-                        console.log("Discarded data for controller role.");
                     }
                     break;
 
@@ -1469,8 +1450,14 @@
 
                 case "web_client":
                     if (parsedData.node_id == currentClientId){
-                        console.log("arrivedData_web_client")
-                        updateFileList(parsedData.curr_received_file_list);
+                        let filesObject = {};
+                        if(parsedData.curr_received_file_list){
+                            console.log(parsedData.curr_received_file_list)
+                            for (const file of parsedData.curr_received_file_list) {
+                                filesObject[file] = "";
+                            }
+                        }
+                        updateFileList(filesObject);
                         updateFile(parsedData.chosen_file_text);
                         updateMedia(parsedData.serialized_media)
                     }
@@ -1480,7 +1467,6 @@
                 default:
                     console.warn(`Unhandled role: ${current_role_chosen}`);
             }
-            console.timeEnd("PacketProcessing");
         } catch (error) {
             console.error("Error processing WebSocket message:", error);
         }
@@ -1502,14 +1488,12 @@
     };
     // Handle page refresh/visibility changes
     window.addEventListener('beforeunload', () => {
-        console.log("ciao4");
         sendUpdateCommand(); // Optional: Send cleanup command if needed
     });
 
 
     // Request update when the page becomes visible again
     document.addEventListener('visibilitychange', () => {
-        console.log("ciao5");
         if (document.visibilityState === 'visible') {
             sendUpdateCommand();
         }
@@ -1528,7 +1512,6 @@
         if (ws.readyState === WebSocket.OPEN) {
             const message = { "WsUpdateData": null }; // Use null or an empty object
             ws.send(JSON.stringify(message));
-            console.log("Sent:", JSON.stringify(message)); // Debugging output
         } else {
             console.error("WebSocket is not open. Unable to send request.");
         }
@@ -1614,7 +1597,6 @@
 
 
         // Position each node on a circle.
-        console.log(topologyData)
         nodeIds.forEach((nodeId, i) => {
             // Expect each value to be a tuple: [targetNodes, specificNodeType]
 
@@ -1701,7 +1683,6 @@
         });
 
 
-        console.log(topologyImagesToggled)
         if (topologyImagesToggled !== false){
             topologyImagesToggled = !topologyImagesToggled
             toggleTopologyAppearance()
@@ -1817,8 +1798,6 @@
         });
 
 
-        console.log(topologyImagesToggled);
-        console.log(topologyImagesToggled !== false);
         if (topologyImagesToggled !== false) {
             topologyImagesToggled = !topologyImagesToggled;
             toggleTopologyAppearance();
@@ -2129,4 +2108,3 @@
 <script src="js/controller.js"></script>
 </body>
 </html>
-
