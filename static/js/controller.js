@@ -35,16 +35,25 @@ document.querySelector(".previewContainer").addEventListener("click", function()
 
 
 /* GENERAL FUNCTIONS FOR CONTROLLER */
+const fullPath = window.location.pathname;
+// Remove the filename (assumes a filename is present)
+const basePath = fullPath.substring(0, fullPath.lastIndexOf('/'));
+// Combine with the protocol
+const absolutePath = window.location.protocol + basePath;
+
+
+
+
 
 let droneCrashed = "false";
 function crashDrone(drone) {
+
+    droneCrashed = "false";
     const canvas = document.getElementById("network-canvas");
 
-    console.log(drone)
-    createExplosionGif(drone.x, drone.y, canvas);
-    createAirplanes(drone.x, drone.y, canvas);
+    const explosion = createExplosionGif(drone.x, drone.y, canvas);
+    const airplaneElements= createAirplanes(drone.x, drone.y, canvas);
 
-    console.log(drone.id)
     sendCrashController(drone.id);
 
 
@@ -64,6 +73,34 @@ function crashDrone(drone) {
             // Remove the drone from your topology and from the UI.
             removeDroneFromTopology(drone);
             removeDroneFromSection();
+
+            // Stop the interval.
+            clearInterval(intervalId);
+        }else if (droneCrashed === "droneNotCrashed"){
+
+            // Remove the explosion GIF.
+            if (canvas.contains(explosion)) {
+                canvas.removeChild(explosion);
+            }
+            // Remove all airplane elements.
+            airplaneElements.forEach(plane => {
+                if (canvas.contains(plane)) {
+                    canvas.removeChild(plane);
+                }
+            });
+
+            alert("Drone was too powerful sorry, can't be crashed");
+
+            const nononoImg = document.getElementById('nonono');
+
+            nononoImg.classList.remove('animate1');
+            nononoImg.classList.remove('animate2');
+
+            nononoImg.classList.add('animate1');
+            setTimeout(() => {
+                nononoImg.classList.add('animate2');
+            }, 3000);
+
             // Stop the interval.
             clearInterval(intervalId);
         }
@@ -82,6 +119,8 @@ function createExplosionGif(droneX, droneY, canvas){
     explosion.setAttribute("height", "60");
     explosion.classList.add("explosion");
     canvas.appendChild(explosion);
+
+    return explosion;
 }
 
 function createAirplanes(droneX, droneY, canvas){
@@ -105,6 +144,7 @@ function createAirplanes(droneX, droneY, canvas){
         canvas.appendChild(airplane);
         airplaneElements.push(airplane);
     }
+    return airplaneElements;
 }
 
 function sendCrashController(droneId){
@@ -121,9 +161,67 @@ function sendCrashController(droneId){
     }
 }
 
+
+
+/* UPDATES */
+
+function updateCrashedDrone(isCrashed, parsedData){
+    if (isCrashed){
+        droneCrashed = "droneCrashed";
+    }else{
+        droneCrashed = "droneNotCrashed"
+    }
+}
+
+function updatePdrDrone(parsedData) {
+    // Expect parsedData to include node_id and pdr
+    const nodeId = parsedData.node_id;
+    const newPdr = parsedData.pdr;
+
+    // 1. Update the drawn_nodes array.
+    const droneNode = drawn_nodes.find(node => node.id == nodeId);
+    if (droneNode) {
+        droneNode.pdr = newPdr;
+    }
+
+    // 2. Update the monitoring panel's dataset if it exists.
+    const panel = document.querySelector(`.panel[data-node-id="${nodeId}"]`);
+    if (panel) {
+        panel.dataset.pdr = newPdr;
+    }
+
+    // 3. If the drone details side-tab is visible and showing this drone, update its displayed value.
+    const droneDetailsTab = document.getElementById('drone-details');
+    if (droneDetailsTab && droneDetailsTab.style.display !== 'none') {
+        const currentDroneId = document.getElementById('drone-id').textContent;
+        if (currentDroneId == nodeId) {
+            document.getElementById('drone-pdr').textContent = newPdr;
+        }
+    }
+}
+
+function crashDroneReview(){
+    droneCrashed = "droneNotCrashed";
+}
+
+
+
+
+
+
+
+
+
+
+
 // Toggle the legend container open/closed
 function toggleLegend() {
     const legendContainer = document.getElementById('legend-container');
+
+    topologyImagesToggled = !topologyImagesToggled
+    updateLegend()
+    topologyImagesToggled = !topologyImagesToggled
+
     legendContainer.classList.toggle('expanded');
 
     // Optionally, rotate the down arrow for visual feedback:
@@ -194,31 +292,34 @@ function updateLegend() {
             let src = "";
             switch(label) {
                 case "Drone":
-                    src = "content_objects/drone_top.png";
+                    src = "content_objects/drone_top.jpeg";
                     break;
                 case "Communication Server":
-                    src = "content_objects/comm_serv_top.png";
+                    src = "content_objects/comm_serv_top.jpeg";
                     break;
                 case "Chat Client":
-                    src = "content_objects/chat_client_top.png";
+                    src = "content_objects/chat_client_top.jpeg";
                     break;
                 case "Web Browser":
-                    src = "content_objects/web_browser_top.png";
+                    src = "content_objects/web_browser_top.jpeg";
                     break;
                 case "Text Server":
-                    src = "content_objects/text_serv_top.png";
+                    src = "content_objects/text_serv_top.jpeg";
                     break;
                 case "Media Server":
-                    src = "content_objects/media_serv_top.png";
+                    src = "content_objects/media_serv_top.jpeg";
                     break;
                 default:
-                    src = "content_objects/default_top.png";
+                    src = "content_objects/default_top.jpeg";
             }
             // If the current element is not an <img>, replace it.
             if (!iconElem || iconElem.tagName.toLowerCase() !== 'img') {
                 const newImg = document.createElement('img');
                 newImg.classList.add('legend-icon');
                 newImg.src = src;
+                newImg.setAttribute("width", "50");
+                newImg.setAttribute("height", "50");
+                newImg.setAttribute("border-radius", "30");
                 // Replace the current element (if exists) or insert it.
                 if (iconElem) {
                     iconElem.parentNode.replaceChild(newImg, iconElem);
@@ -464,6 +565,11 @@ function removeDroneFromTopology(drone) {
         }
     }
 
+    const imageElem = document.querySelector(`#network-canvas [data-node-id="${drone.id}"]`);
+    if (imageElem) {
+        imageElem.remove();
+    }
+
     // Remove all lines (connections) associated with the drone.
     const lines = canvas.getElementsByClassName("connection");
     // Convert HTMLCollection to an array (since we'll be removing elements)
@@ -549,35 +655,33 @@ function toggleTopologyAppearance() {
         }
 
         if (!topologyImagesToggled) {
-            document.getElementById("img_appearance").src = "content_objects/drone_top.png"
+            document.getElementById("img_appearance").src = "content_objects/drone_top.jpeg"
             // --- Switch from circle to image ---
             const imgElem = document.createElementNS("http://www.w3.org/2000/svg", "image");
-            imgElem.setAttribute("width", "30");
-            imgElem.setAttribute("height", "30");
-            imgElem.setAttribute("border-radius", "15");
+            imgElem.setAttribute("width", "45");
+            imgElem.setAttribute("height", "45");
+            imgElem.style.borderRadius = "30px";
 
             // Choose an image source based on the node type.
             let src = "";
             switch (node.type) {
                 case "Drone":
-                    src = "content_objects/drone_top.png";
-                    imgElem.setAttribute("width", "50")
-                    imgElem.setAttribute("height", "50");
+                    src = "content_objects/drone_top.jpeg";
                     break;
                 case "CommunicationServer":
-                    src = "content_objects/comm_serv_top.png";
+                    src = "content_objects/comm_serv_top.jpeg";
                     break;
                 case "ChatClient":
-                    src = "content_objects/chat_client_top.png";
+                    src = "content_objects/chat_client_top.jpeg";
                     break;
                 case "WebBrowser":
-                    src = "content_objects/web_browser_top.png";
+                    src = "content_objects/web_browser_top.jpeg";
                     break;
                 case "TextServer":
-                    src = "content_objects/text_serv_top.png";
+                    src = "content_objects/text_serv_top.jpeg";
                     break;
                 case "MediaServer":
-                    src = "content_objects/media_serv_top.png";
+                    src = "content_objects/media_serv_top.jpeg";
                     break;
                 default:
                     // Fallback image if needed.
@@ -720,7 +824,7 @@ function updatePanelContent(panel, fields) {
 }
 
 function removeDroneFromSection(){
-    console.error("To fill drone from section removing")
+    //console.error("To fill drone from section removing")
 }
 
 

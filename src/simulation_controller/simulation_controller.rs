@@ -7,16 +7,10 @@ use wg_2024::{
     network::NodeId,
     packet::{NodeType, Packet, PacketType}
 };
-use crate::general_use::{ClientCommand, ClientEvent, ClientType,
-                         ServerCommand, ServerEvent, ServerType, ServerId,
-                         Query,
-                         DisplayDataWebBrowser, DisplayDataCommunicationServer, DisplayDataMediaServer,
-                         DisplayDataChatClient, DisplayDataTextServer, DisplayDataDrone,
-                         SpecificNodeType, DroneId};
+use crate::general_use::{ClientCommand, ClientEvent, ClientType, ServerCommand, ServerEvent, ServerType, ServerId, Query, DisplayDataWebBrowser, DisplayDataCommunicationServer, DisplayDataMediaServer, DisplayDataChatClient, DisplayDataTextServer, DisplayDataDrone, SpecificNodeType, DroneId, TechnicalOperationOnDrone};
 use crate::websocket::WsCommand;
 use std::collections::hash_map::Entry;
 use rand::Rng;
-use crate::ui_traits::SimulationControllerMonitoring;
 
 pub struct SimulationState {
     pub nodes: HashMap<NodeId, NodeType>,
@@ -235,19 +229,19 @@ impl SimulationController {
         }
     }
 
-    /*   pub fn ask_media_from_server(&mut self, client_id: NodeId, server_id: NodeId, query: Query) -> Result<(), String> {
-           if let Some((client_sender, _)) = self.command_senders_clients.get(&client_id) {
-               if let Err(e) = client_sender.send(ClientCommand::RequestMedia(server_id, match query{
-                   Query::AskMedia(reference) => reference,
-                   _ => panic!("Wrong type of Query, supposed to be AskMedia")
-               })) {
-                   return Err(format!("Failed to send command AskMedia to client {}: {:?}", client_id, e));
-               }
-               Ok(())
-           }else {
-               Err(format!("Client with id {} not found", client_id))
-           }
-       }*/
+ /*   pub fn ask_media_from_server(&mut self, client_id: NodeId, server_id: NodeId, query: Query) -> Result<(), String> {
+        if let Some((client_sender, _)) = self.command_senders_clients.get(&client_id) {
+            if let Err(e) = client_sender.send(ClientCommand::RequestMedia(server_id, match query{
+                Query::AskMedia(reference) => reference,
+                _ => panic!("Wrong type of Query, supposed to be AskMedia")
+            })) {
+                return Err(format!("Failed to send command AskMedia to client {}: {:?}", client_id, e));
+            }
+            Ok(())
+        }else {
+            Err(format!("Client with id {} not found", client_id))
+        }
+    }*/
 
     /// Spawns a new drone.
     pub fn create_drone<T: Drone + Send + 'static>(&mut self,
@@ -270,17 +264,16 @@ impl SimulationController {
         Ok(drone)
     }
 
-    pub(super) fn fix_drone(&mut self, drone_id: DroneId, sender: (NodeId, NodeType)) -> Result<(DroneId, f32), ()> {
-        if self.fixed_drones.contains(&drone_id) {
+    pub(super) fn fix_drone(&mut self, drone_id: DroneId, sender: (NodeId, NodeType), sender_to_gui: Sender<String>) {
+        let mut new_pdr:f32 = 0f32;
+        if self.fixed_drones.contains(&drone_id){
+            if let Some(data)= self.drones_data.get_mut(&drone_id) {
+                new_pdr = data.pdr;
+            }
             info!("Drone {} is already fixed", drone_id);
-            Ok((drone_id, if let Some(drone_data) = self.drones_data.get_mut(&drone_id){
-                drone_data.pdr
-            }else{
-                0.0
-            }))
         } else {
             let mut rng = rand::thread_rng();
-            let new_pdr = rng.gen_range(0.0..=0.1); // Generate random PDR between 0 and 0.1
+            new_pdr = rng.gen_range(0.0..=0.1); // Generate random PDR between 0 and 0.1
             self.set_packet_drop_rate(drone_id, new_pdr); // Update the drone's PDR
             info!("Drone {} has been fixed! New PDR: {}", drone_id, new_pdr);
 
@@ -288,30 +281,29 @@ impl SimulationController {
             if let Some(drone_data) = self.drones_data.get_mut(&drone_id) {
                 drone_data.pdr = new_pdr;
             }
-            match sender.1 {
-                NodeType::Client => {
-                    if let Some((client_command_sender, _)) = self.command_senders_clients.get(&sender.0) {
-                        if let Err(e) = client_command_sender.send(ClientCommand::DroneFixed(drone_id)) {
-                            warn!("Failed to send DroneFixed to client {}: {:?}", sender.0, e);
-                        }
-                    }
-                    Ok((drone_id, new_pdr))
-                },
-                NodeType::Server => {
-                    if let Some((server_command_sender, _)) = self.command_senders_servers.get(&sender.0) {
-                        if let Err(e) = server_command_sender.send(ServerCommand::DroneFixed(drone_id)) {
-                            warn!("Failed to send DroneFixed to server {}: {:?}", sender.0, e);
-                        }
-                    }
-                    Ok((drone_id, new_pdr))
-                },
-                _ => {
-                    Err(())
-                }
-            }
         }
 
-
+        match sender.1 {
+            NodeType::Client => {
+                if let Some((client_command_sender, _)) = self.command_senders_clients.get(&sender.0) {
+                    let json_enum = serde_json::to_string(&TechnicalOperationOnDrone::PdrChanged(drone_id, new_pdr)).unwrap();
+                    sender_to_gui.send(json_enum).unwrap();
+                    if let Err(e) = client_command_sender.send(ClientCommand::DroneFixed(drone_id)) {
+                        warn!("Failed to send DroneFixed to client {}: {:?}", sender.0, e);
+                    }
+                }
+            },
+            NodeType::Server => {
+                let json_enum = serde_json::to_string(&TechnicalOperationOnDrone::PdrChanged(drone_id, new_pdr)).unwrap();
+                sender_to_gui.send(json_enum).unwrap();
+                if let Some((server_command_sender, _)) = self.command_senders_servers.get(&sender.0) {
+                    if let Err(e) = server_command_sender.send(ServerCommand::DroneFixed(drone_id)) {
+                        warn!("Failed to send DroneFixed to server {}: {:?}", sender.0, e);
+                    }
+                }
+            },
+            _ => {}
+        }
     }
 
     pub(crate) fn create_topology_with_types(&self) -> HashMap<NodeId, (Vec<NodeId>, SpecificNodeType)> {
@@ -480,7 +472,8 @@ It uses the command_senders map to find the appropriate sender channel.
     pub fn request_drone_crash(&mut self, drone_id: NodeId, sender_to_gui: &Sender<String>) -> Result<(), String> {
 
         if self.is_drone_critical(drone_id) {
-            if let Err(e) = sender_to_gui.send("DroneNotCrashed".to_string()) {
+            let json_enum = serde_json::to_string(&TechnicalOperationOnDrone::NotCrashed(drone_id)).unwrap();
+            if let Err(e) = sender_to_gui.send(json_enum) {
                 warn!("Error sending crash result to WebSocket: {}", e);
             }
             return Err(format!("Cannot crash drone {}: critical for connectivity", drone_id));
@@ -525,9 +518,13 @@ It uses the command_senders map to find the appropriate sender channel.
         }
         self.state.topology.remove(&drone_id);
         self.command_senders_drones.remove(&drone_id);
-        if let Err(e) = sender_to_gui.send("DroneCrashed".to_string()) {
+
+        let json_enum = serde_json::to_string(&TechnicalOperationOnDrone::DroneCrashed(drone_id)).unwrap();
+        if let Err(e) = sender_to_gui.send(json_enum) {
             warn!("Error sending crash result to WebSocket: {}", e);
         }
+
+
 
         Ok(())
     }
@@ -536,33 +533,47 @@ It uses the command_senders map to find the appropriate sender channel.
         // Create a copy of the topology without the drone and its connections
         let mut temp_topology = self.state.topology.clone();
         temp_topology.remove(&drone_id);
-        for (_, neighbors) in temp_topology.iter_mut() {
+        for neighbors in temp_topology.values_mut() {
             neighbors.retain(|&n| n != drone_id);
         }
 
+        let clients:Vec<NodeId> = self.command_senders_clients.keys().cloned().collect::<Vec<NodeId>>();
         // Iterate through all clients and check their reachability to at least one server.
-        for (client_id, _) in &self.command_senders_clients {
-            if !self.check_client_reachability(*client_id, &temp_topology) {
+        for client_id in clients {
+            if !self.check_client_reachability(client_id, temp_topology.clone()) {
                 return true; // Drone is critical if any client loses all server connections.
             }
         }
         false // Drone is not critical.
     }
 
-    fn check_client_reachability(&self, client_id: NodeId, topology: &HashMap<NodeId, Vec<NodeId>>) -> bool{
+    fn check_client_reachability(&self, client_id: NodeId, topology: HashMap<NodeId, Vec<NodeId>>) -> bool{
+        let mut other_clients_than_yourself:HashSet<NodeId> = self.command_senders_clients.keys().cloned().collect::<HashSet<NodeId>>();
+        other_clients_than_yourself.remove(&client_id);
 
-        let mut reachable_servers = HashSet::new();    //To store all reachable servers
+        for neighbors in topology.clone().values_mut() {
+            neighbors.retain(|&n| !other_clients_than_yourself.contains(&n));
+        }
+
+        let mut reachable_servers = Vec::new();    //To store all reachable servers
 
         //Check reachability for every server
         for (server_id, _) in &self.command_senders_servers{
-            if self.is_reachable(client_id, *server_id, topology) {
-                reachable_servers.insert(*server_id);
+            let mut other_servers_than_server_in_question: HashSet<NodeId> = self.command_senders_servers.keys().cloned().collect::<HashSet<NodeId>>();
+            other_servers_than_server_in_question.remove(&server_id);
+            for neighbors in topology.clone().values_mut() {
+                neighbors.retain(|&n| !other_servers_than_server_in_question.contains(&n));
+            }
+
+            if self.is_reachable(client_id, *server_id, topology.clone()) {
+                reachable_servers.push(*server_id);
             }
         }
-        !reachable_servers.is_empty()  //Returns true if there is at least one reachable server.
+        let servers = self.command_senders_servers.keys().cloned().collect::<Vec<_>>();
+        reachable_servers == servers  //Returns true if there is at least one reachable server.
     }
 
-    fn is_reachable(&self, start_node: NodeId, end_node: NodeId, topology: &HashMap<NodeId, Vec<NodeId>>) -> bool {
+    fn is_reachable(&self, start_node: NodeId, end_node: NodeId, topology: HashMap<NodeId, Vec<NodeId>>) -> bool {
         let mut visited = HashSet::new();
         let mut queue = VecDeque::new();
         queue.push_back(start_node);

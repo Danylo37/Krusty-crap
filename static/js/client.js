@@ -64,15 +64,12 @@ const phonebooks = {
 
 
 function createNewChat() {
-    console.log("new Chat")
 
     const chatPopup = document.getElementById('chat-popup');
     const receiverList = document.getElementById('receiver-list');
 
 
     const listBoxes = [];
-
-    console.log(phonebooks)
 
     // Create list boxes dynamically for each server
     Object.keys(phonebooks).forEach((serverId) => {
@@ -131,9 +128,6 @@ function createNewChat() {
         defaultOption.value = '';
         defaultOption.textContent = 'Not Choosed';
         listBox.appendChild(defaultOption);
-
-
-        console.log("lost?")
 
         // Gather existing chats (assuming each chat item’s text is the receiver id)
         const existingChats = Array.from(document.getElementById('chat-list').children)
@@ -289,7 +283,6 @@ function askListRegisteredClientsToServer(clientId, serverId){
             }
         };
         ws.send(JSON.stringify(message));
-        console.log('Sent:', message);
     } else {
         console.error('WebSocket is not open. Unable to send update command.');
     }
@@ -302,7 +295,6 @@ document.getElementById('message-input').addEventListener('keydown', (event) => 
 });
 
 function sendMessage() {
-    console.log("message sent html")
     const messageInput = document.getElementById('message-input');
     const chatMessages = document.getElementById('chat-messages');
     const messageText = messageInput.value.trim();
@@ -361,7 +353,6 @@ function sendMessageController(sourceClientId, destClientId, messageText){
             }
         };
         ws.send(JSON.stringify(message));
-        console.log('Sent:', message);
     } else {
         console.error('WebSocket is not open. Unable to send update command.');
     }
@@ -401,7 +392,6 @@ function updateChatReceivers(HashListReceivers){
             const existingChats = Array.from(document.getElementById('chat-list').children)
                 .map(item => item.dataset.id);
 
-            console.log(existingChats)
             if (Array.isArray(phonebooks[serverId])) {
                 phonebooks[serverId].forEach((receiver) => {
                     if (existingChats.includes(receiver.toString())) {
@@ -422,8 +412,6 @@ function updateChatReceivers(HashListReceivers){
 
 
 function updateChats(ChatHistory) {
-    console.log("updating chats, chatHistory: ");
-    console.log(ChatHistory)
     const old_histories = Array.from(document.getElementById('chat-list').children)
         .reduce((acc, item) => {
             acc[item.dataset.id] = item.dataset.history;
@@ -441,8 +429,6 @@ function updateChats(ChatHistory) {
                 updateDot.style.display = 'inline-block';
             }
         }
-        console.log(JSON.stringify(newHistory))
-        console.log(old_histories[clientId])
         if (JSON.stringify(newHistory) !== old_histories[clientId]){
             const chatItem = document.querySelector(`.chat-item[data-id="${clientId}"]`);
             chatItem.dataset.history = JSON.stringify(newHistory);
@@ -463,7 +449,6 @@ function updateChats(ChatHistory) {
 
 
 function updateChatWindow(history) {
-    console.log("ciao")
     const chatMessages = document.getElementById('chat-messages');
     chatMessages.innerHTML = ""; // Clear current messages
 
@@ -598,8 +583,6 @@ let currentSearchValue = "";
 
 // FUNCTION TO NAVIGATE SERVERS
 function navigateServer(direction) {
-
-    console.log(currentServerIndex)
     const serverKeys = Object.keys(file_lists);
 
     if (direction>0){
@@ -611,16 +594,11 @@ function navigateServer(direction) {
     }else{
 
         if ((currentServerIndex-1) < 0){
-            console.log(
-                serverKeys.length -1
-            )
             currentServerIndex = serverKeys.length -1;
         }else{
             currentServerIndex = currentServerIndex -1;
         }
     }
-    console.log(currentServerIndex)
-    console.log(file_lists)
     updateServerDisplay();
 }
 
@@ -637,10 +615,8 @@ function get_server_id_from_current_server_index(){
 // FUNCTION TO UPDATE UI WHEN SWITCHING SERVERS
 function updateServerDisplay() {
     const currentServerId = get_server_id_from_current_server_index()
-    console.log(currentServerId)
     const currentServer = file_lists[currentServerId];
 
-    console.log(currentServer)
 
     // Update Server Name
     document.getElementById("current-server").textContent = currentServer.name;
@@ -710,12 +686,26 @@ function  openPopup(fileName) {
     const popupFileContent = document.getElementById("file-popup-file-content");
 
     // Get the current server and file content.
+    //console.log(file_lists)
+    //console.log(get_server_id_from_current_server_index())
+    //console.log(file_lists[get_server_id_from_current_server_index()])
+
     const currentServer = file_lists[get_server_id_from_current_server_index()];
+    //console.log(currentServer.files)
+    //console.log(fileName)
     const fileContent = currentServer.files[fileName];
 
     popupTitle.textContent = fileName;
     popupFileContent.innerHTML = '';
 
+    const fullPath = window.location.pathname;
+    // Remove the filename (assumes a filename is present)
+    const basePath = fullPath.substring(0, fullPath.lastIndexOf('/'));
+    // Combine with the protocol
+    const absolutePath = window.location.protocol + basePath;
+
+
+    //console.log(fileContent)
     if (fileContent) {
         // Determine the file extension.
         const extension = fileName.split('.').pop().toLowerCase();
@@ -723,18 +713,10 @@ function  openPopup(fileName) {
             // Use a regular expression to find all occurrences of #Media[...] in the content.
             const processedContent = fileContent.replace(/#Media\[(.*?)\]/g, (match, p1) => {
                 const found = media.find(item => item.reference === p1);
-                if (found && found.media) {
-                    // Use the already loaded media image.
-                    return `<img src="${found.media}" id="reference-${p1}" alt="Media loaded" />`;
-                } else if (!requestedMedia.has(p1)) {
-                    // Request the media only if it hasn't been requested yet.
-                    requestedMedia.add(p1); // Mark as requested
-                    askMedia(currentClientId, p1); // Request the media
-                    return `<img src="content_objects/reload.png" id="reference-${p1}" alt="Loading..." />`;
-                } else {
-                    // Media has already been requested but is not yet loaded.
-                    return `<img src="content_objects/reload.png" id="reference-${p1}" alt="Loading..." />`;
-                }
+                console.log(media)
+                console.log(found)
+                // Use the already loaded media image.
+                return `<img src="${absolutePath + found.media}" id="reference-${p1}" alt="Media loaded" class="image-loaded" />`;
             });
             // Insert the processed HTML into the popup.
             popupFileContent.innerHTML = processedContent;
@@ -755,7 +737,6 @@ function  openPopup(fileName) {
         }
     } else {
         popupFileContent.innerHTML = '';
-        console.log("Requesting file content...");
         askFileContent(currentClientId, get_server_id_from_current_server_index(), fileName);
     }
 
@@ -796,7 +777,6 @@ function askFileList(clientId, serverId) {
         };
 
         ws.send(JSON.stringify(message));
-        console.log("Sent:", JSON.stringify(message)); // Debugging output
     } else {
         console.error("WebSocket is not open. Unable to send request.");
     }
@@ -813,7 +793,6 @@ function askFileContent(clientId, serverId, fileName) {
             }
         };
         ws.send(JSON.stringify(message));
-        console.log('Sent:', message);
     } else {
         console.error('WebSocket is not open. Unable to send update command.');
     }
@@ -831,7 +810,6 @@ function askMedia(clientId, reference_media){
             }
         };
         ws.send(JSON.stringify(message));
-        console.log('Sent:', message);
     } else {
         console.error('WebSocket is not open. Unable to send update command.');
     }
@@ -881,8 +859,6 @@ function updateFileList(files) {
     // Get the current server ID from the sorted array.
     const currentServerId = get_server_id_from_current_server_index();
 
-    console.log(`Received files: ${files}`);
-    console.log(files);
     // Update the file list for the current server.
     if (file_lists[currentServerId]) {
         file_lists[currentServerId].files = files;
@@ -892,8 +868,7 @@ function updateFileList(files) {
 
     if (Object.keys(files).length !== 0){
         // Populate the new file list filtering by the currentFilterType and currentSearchValue.
-        files.forEach(fileName => {
-            // If a filter is set, check the file extension.
+        for (const [fileName, key] of Object.entries(files)) {
             if (currentFilterType) {
                 const extension = fileName.split('.').pop().toLowerCase();
                 if (extension !== currentFilterType.toLowerCase()) {
@@ -916,7 +891,7 @@ function updateFileList(files) {
             // When the row is clicked, open the popup with that file.
             row.addEventListener("click", () => openPopup(fileName));
             fileListTable.appendChild(row);
-        });
+        }
     }
 
     // Stop and hide the loading popup.
@@ -928,12 +903,13 @@ function updateFileList(files) {
 
 
 function updateFile(file_content) {
+
+
     // Get the file name from the popup title.
     const fileName = document.getElementById("file-popup-title").textContent.trim();
 
     // Get the current server from file_lists.
-    const serverKeys = Object.keys(file_lists).map(Number).sort((a, b) => a - b);
-    const currentServerId = serverKeys[currentServerIndex];
+    const currentServerId = get_server_id_from_current_server_index();
     const currentServer = file_lists[currentServerId];
 
     // Update the file content if this file exists.
@@ -981,10 +957,8 @@ function updateMedia(mediaRef) {
     const basePath = fullPath.substring(0, fullPath.lastIndexOf('/'));
     // Combine with the protocol
     const absolutePath = window.location.protocol + basePath;
-    console.log(absolutePath);
 
     for (const key in mediaRef){
-        console.log(mediaRef)
         const reference = key;
         const base64Image = mediaRef[reference];
         // Add the media to the media array.
@@ -997,7 +971,7 @@ function updateMedia(mediaRef) {
         // Find the image element with the corresponding id.
         const imgElem = document.getElementById("reference-" + reference);
         if (imgElem) {
-            console.log(base64Image);
+            //console.log(base64Image);
             imgElem.classList.remove("loading", "rotate");  // Remove any rotation classes
             imgElem.style.animation = "none";  // Stop rotation
             imgElem.style.transform = "none";  // Reset any transforms
@@ -1005,7 +979,7 @@ function updateMedia(mediaRef) {
             imgElem.style.height = "auto";
             imgElem.src = absolutePath + base64Image + "?t=" + new Date().getTime();
         } else {
-            console.warn("No element found with id:", "reference-" + reference);
+            //console.warn("No element found with id:", "reference-" + reference);
         }
     }
 }
