@@ -698,6 +698,13 @@ function  openPopup(fileName) {
     popupTitle.textContent = fileName;
     popupFileContent.innerHTML = '';
 
+    const fullPath = window.location.pathname;
+    // Remove the filename (assumes a filename is present)
+    const basePath = fullPath.substring(0, fullPath.lastIndexOf('/'));
+    // Combine with the protocol
+    const absolutePath = window.location.protocol + basePath;
+
+
     //console.log(fileContent)
     if (fileContent) {
         // Determine the file extension.
@@ -706,9 +713,10 @@ function  openPopup(fileName) {
             // Use a regular expression to find all occurrences of #Media[...] in the content.
             const processedContent = fileContent.replace(/#Media\[(.*?)\]/g, (match, p1) => {
                 const found = media.find(item => item.reference === p1);
-
+                console.log(media)
+                console.log(found)
                 // Use the already loaded media image.
-                return `<img src="${found.media}" id="reference-${p1}" alt="Media loaded" />`;
+                return `<img src="${absolutePath + found.media}" id="reference-${p1}" alt="Media loaded" class="image-loaded" />`;
             });
             // Insert the processed HTML into the popup.
             popupFileContent.innerHTML = processedContent;
@@ -853,20 +861,14 @@ function updateFileList(files) {
 
     // Update the file list for the current server.
     if (file_lists[currentServerId]) {
-        // Create an object where each key is a file name
-        const filesObj = {};
-        files.forEach((file) => {
-            filesObj[file] = ""; // You can store additional info instead of file if needed.
-        });
-        file_lists[currentServerId].files = filesObj;
+        file_lists[currentServerId].files = files;
     } else {
         console.error("No server found for ID", currentServerId);
     }
 
     if (Object.keys(files).length !== 0){
         // Populate the new file list filtering by the currentFilterType and currentSearchValue.
-        files.forEach(fileName => {
-            // If a filter is set, check the file extension.
+        for (const [fileName, key] of Object.entries(files)) {
             if (currentFilterType) {
                 const extension = fileName.split('.').pop().toLowerCase();
                 if (extension !== currentFilterType.toLowerCase()) {
@@ -889,7 +891,7 @@ function updateFileList(files) {
             // When the row is clicked, open the popup with that file.
             row.addEventListener("click", () => openPopup(fileName));
             fileListTable.appendChild(row);
-        });
+        }
     }
 
     // Stop and hide the loading popup.
@@ -910,12 +912,10 @@ function updateFile(file_content) {
     const currentServerId = get_server_id_from_current_server_index();
     const currentServer = file_lists[currentServerId];
 
-    console.log(currentServer.files)
-    console.log(fileName)
-    console.log(currentServer.files[fileName])
-    console.log(file_content)
     // Update the file content if this file exists.
-    currentServer.files[fileName] = file_content;
+    if (currentServer && currentServer.files && currentServer.files.hasOwnProperty(fileName)) {
+        currentServer.files[fileName] = file_content;
+    }
 
     // Update the popup with the new content.
     const popupFileContent = document.getElementById("file-popup-file-content");
@@ -929,8 +929,7 @@ function updateFile(file_content) {
                 const found = media.find(item => item.reference === reference);
                 if (found && found.media) {
                     // Media is already loaded.
-                    return `<img src="${found.media}" id="reference-${reference}" alt="Media loaded" style="width:400px; height:auto" />`;
-
+                    return `<img src="${found.media}" id="reference-${reference}" alt="Media loaded" />`;
                 } else if (!requestedMedia.has(reference)) {
                     // Request the media only if it hasn't been requested yet.
                     requestedMedia.add(reference); // Mark as requested
@@ -967,7 +966,7 @@ function updateMedia(mediaRef) {
         if (!existingMedia) {
             media.push({ reference, media: base64Image });
         } else {
-            existingMedia.media = absolutePath + base64Image;
+            existingMedia.media = base64Image;
         }
         // Find the image element with the corresponding id.
         const imgElem = document.getElementById("reference-" + reference);
@@ -978,7 +977,7 @@ function updateMedia(mediaRef) {
             imgElem.style.transform = "none";  // Reset any transforms
             imgElem.style.width = "400px";
             imgElem.style.height = "auto";
-            imgElem.src = absolutePath + base64Image;
+            imgElem.src = absolutePath + base64Image + "?t=" + new Date().getTime();
         } else {
             //console.warn("No element found with id:", "reference-" + reference);
         }
