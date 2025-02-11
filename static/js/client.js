@@ -997,10 +997,13 @@ function updateMedia(mediaRef) {
         // Find the image element with the corresponding id.
         const imgElem = document.getElementById("reference-" + reference);
         if (imgElem) {
-            console.log(base64Image)
-            imgElem.animation = "";
-            imgElem.width = "400"
-            imgElem.src = absolutePath + base64Image // Update the image source
+            console.log(base64Image);
+            imgElem.classList.remove("loading", "rotate");  // Remove any rotation classes
+            imgElem.style.animation = "none";  // Stop rotation
+            imgElem.style.transform = "none";  // Reset any transforms
+            imgElem.style.width = "400px";
+            imgElem.style.height = "auto";
+            imgElem.src = absolutePath + base64Image + "?t=" + new Date().getTime();
         } else {
             console.warn("No element found with id:", "reference-" + reference);
         }
