@@ -466,51 +466,50 @@ impl SimulationController {
         }
     }
 
-    /*- This function sends a Crash command to the specified drone_id.
-It uses the command_senders map to find the appropriate sender channel.
-*/
-    pub fn request_drone_crash(&mut self, drone_id: NodeId, sender_to_gui: &Sender<String>) -> Result<(), String> {
-
+    pub fn request_drone_crash(
+        &mut self,
+        drone_id: NodeId,
+        sender_to_gui: &Sender<String>,
+    ) -> Result<(), String> {
+        // Check if the drone is critical for connectivity.
         if self.is_drone_critical(drone_id) {
-            let json_enum = serde_json::to_string(&TechnicalOperationOnDrone::NotCrashed(drone_id)).unwrap();
+            let json_enum =
+                serde_json::to_string(&TechnicalOperationOnDrone::NotCrashed(drone_id))
+                    .unwrap();
             if let Err(e) = sender_to_gui.send(json_enum) {
                 warn!("Error sending crash result to WebSocket: {}", e);
             }
-            return Err(format!("Cannot crash drone {}: critical for connectivity", drone_id));
+            return Err(format!(
+                "Cannot crash drone {}: critical for connectivity",
+                drone_id
+            ));
         }
 
-        let neighbors = self.state.topology.get(&drone_id).cloned(); // Get drone's neighbors
+        // Get the neighbors of the drone to crash.
+        let neighbors = self.state.topology.get(&drone_id).cloned();
 
+        // Send the crash command to the drone.
         if let Some(command_sender) = self.command_senders_drones.get(&drone_id) {
             if let Err(e) = command_sender.send(DroneCommand::Crash) {
                 warn!("Failed to send Crash command to drone {}: {:?}", drone_id, e);
-                return Err(format!("Failed to send Crash command to drone {}: {:?}", drone_id, e)); //Return error if send failed
+                return Err(format!(
+                    "Failed to send Crash command to drone {}: {:?}",
+                    drone_id, e
+                ));
             }
         } else {
-            return Err(format!("Drone {} not found in controller", drone_id)); //Return error if drone not found
+            return Err(format!("Drone {} not found in controller", drone_id));
         }
 
+        // Remove the drone from the topology and from our command sender maps.
         self.state.topology.remove(&drone_id);
         self.command_senders_drones.remove(&drone_id);
-        // Remove senders from neighbors.
+
+        // Remove references to the drone from all its neighbors.
         if let Some(neighbors) = neighbors {
             for neighbor in neighbors {
-                if let Some(NodeType::Drone) = self.state.nodes.get(&neighbor){        //If neighbour is a drone
-                    if let Err(err) = self.remove_sender(neighbor, NodeType::Drone, drone_id){  //Remove the sender
-                        warn!("{}", err);
-                    }
-                    if let Some(connected_nodes) = self.state.topology.get_mut(&neighbor) {
-                        connected_nodes.retain(|&id| id != drone_id);
-                    }
-                } else if let Some(NodeType::Client) = self.state.nodes.get(&neighbor){   //If neighbour is a client
-                    if let Err(err) = self.remove_sender(neighbor, NodeType::Client, drone_id){
-                        warn!("{}", err);
-                    }
-                    if let Some(connected_nodes) = self.state.topology.get_mut(&neighbor) {
-                        connected_nodes.retain(|&id| id != drone_id);
-                    }
-                } else if let Some(NodeType::Server) = self.state.nodes.get(&neighbor){   //If neighbour is a server
-                    if let Err(err) = self.remove_sender(neighbor, NodeType::Server, drone_id){
+                if let Some(node_type) = self.state.nodes.get(&neighbor) {
+                    if let Err(err) = self.remove_sender(neighbor, *node_type, drone_id) {
                         warn!("{}", err);
                     }
                     if let Some(connected_nodes) = self.state.topology.get_mut(&neighbor) {
@@ -520,76 +519,85 @@ It uses the command_senders map to find the appropriate sender channel.
             }
         }
 
-
-        let json_enum = serde_json::to_string(&TechnicalOperationOnDrone::DroneCrashed(drone_id)).unwrap();
+        let json_enum =
+            serde_json::to_string(&TechnicalOperationOnDrone::DroneCrashed(drone_id)).unwrap();
         if let Err(e) = sender_to_gui.send(json_enum) {
             warn!("Error sending crash result to WebSocket: {}", e);
         }
 
-
-
         Ok(())
     }
 
+    /// Determines if a given drone is critical—that is, if its removal disconnects any client from any server,
+    /// when clients can only reach servers via intermediate drones.
     fn is_drone_critical(&self, drone_id: NodeId) -> bool {
-        // Create a copy of the topology without the drone and its connections
+        // Create a temporary copy of the topology without the drone and its connections.
         let mut temp_topology = self.state.topology.clone();
         temp_topology.remove(&drone_id);
         for neighbors in temp_topology.values_mut() {
             neighbors.retain(|&n| n != drone_id);
         }
 
-        let clients:Vec<NodeId> = self.command_senders_clients.keys().cloned().collect::<Vec<NodeId>>();
-        // Iterate through all clients and check their reachability to at least one server.
-        for client_id in clients {
-            if !self.check_client_reachability(client_id, temp_topology.clone()) {
-                return true; // Drone is critical if any client loses all server connections.
+        // For every client, check if it can reach every server via a drone-only path.
+        for client_id in self.command_senders_clients.keys() {
+            if !self.check_client_reachability(*client_id, &temp_topology) {
+                return true; // The drone is critical if at least one client loses a valid server path.
             }
         }
-        false // Drone is not critical.
+        false
     }
 
-    fn check_client_reachability(&self, client_id: NodeId, topology: HashMap<NodeId, Vec<NodeId>>) -> bool{
-        let mut other_clients_than_yourself:HashSet<NodeId> = self.command_senders_clients.keys().cloned().collect::<HashSet<NodeId>>();
-        other_clients_than_yourself.remove(&client_id);
-
-        for neighbors in topology.clone().values_mut() {
-            neighbors.retain(|&n| !other_clients_than_yourself.contains(&n));
-        }
-
-        let mut reachable_servers = Vec::new();    //To store all reachable servers
-
-        //Check reachability for every server
-        for (server_id, _) in &self.command_senders_servers{
-            let mut other_servers_than_server_in_question: HashSet<NodeId> = self.command_senders_servers.keys().cloned().collect::<HashSet<NodeId>>();
-            other_servers_than_server_in_question.remove(&server_id);
-            for neighbors in topology.clone().values_mut() {
-                neighbors.retain(|&n| !other_servers_than_server_in_question.contains(&n));
-            }
-
-            if self.is_reachable(client_id, *server_id, topology.clone()) {
-                reachable_servers.push(*server_id);
+    /// Checks if a specific client can reach all servers using a path that uses only drones as intermediate nodes.
+    fn check_client_reachability(
+        &self,
+        client_id: NodeId,
+        topology: &HashMap<NodeId, Vec<NodeId>>,
+    ) -> bool {
+        // Iterate over all servers.
+        for server_id in self.command_senders_servers.keys() {
+            // Use our BFS search that only follows drone nodes (except for the endpoints).
+            if !self.is_reachable(client_id, *server_id, topology) {
+                return false;
             }
         }
-        let servers = self.command_senders_servers.keys().cloned().collect::<Vec<_>>();
-        reachable_servers == servers  //Returns true if there is at least one reachable server.
+        true
     }
 
-    fn is_reachable(&self, start_node: NodeId, end_node: NodeId, topology: HashMap<NodeId, Vec<NodeId>>) -> bool {
+    /// Returns true if there is a path from `start_node` to `end_node` in the given topology,
+    /// where the only allowed intermediate nodes are drones.
+    ///
+    /// * `start_node` is assumed to be a client and `end_node` a server.
+    /// * The search allows the start and end nodes regardless of their type, but every other node must be a drone.
+    fn is_reachable(
+        &self,
+        start_node: NodeId,
+        end_node: NodeId,
+        topology: &HashMap<NodeId, Vec<NodeId>>,
+    ) -> bool {
         let mut visited = HashSet::new();
         let mut queue = VecDeque::new();
         queue.push_back(start_node);
 
-        while let Some(current_node) = queue.pop_front() {
-            if current_node == end_node {
+        while let Some(current) = queue.pop_front() {
+            if current == end_node {
                 return true;
             }
-            visited.insert(current_node);
+            visited.insert(current);
 
-            if let Some(neighbors) = topology.get(&current_node) {
+            if let Some(neighbors) = topology.get(&current) {
                 for &neighbor in neighbors {
-                    if !visited.contains(&neighbor) {
+                    if visited.contains(&neighbor) {
+                        continue;
+                    }
+                    // Allow the neighbor if:
+                    // - It is the destination (server), or
+                    // - Its node type is Drone.
+                    if neighbor == end_node {
                         queue.push_back(neighbor);
+                    } else if let Some(node_type) = self.state.nodes.get(&neighbor) {
+                        if *node_type == NodeType::Drone {
+                            queue.push_back(neighbor);
+                        }
                     }
                 }
             }

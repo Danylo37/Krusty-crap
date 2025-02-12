@@ -120,7 +120,7 @@ impl Sending for ClientChen {
                         return
                     }
                     PacketType::MsgFragment(_) | PacketType::FloodResponse(_) => {
-                        self.update_packet_status(session_id, fragment_index, PacketStatus::NotSent(RoutingError));
+                        self.update_packet_status(session_id, fragment_index, PacketStatus::NotSent(RoutingError(target_node_id)));
                         return
                     }
                 }
@@ -177,7 +177,7 @@ impl Sending for ClientChen {
                     }
                 }
             },
-            NotSentType::BeenInWrongRecipient(drone_id) => {
+            NotSentType::BeenInWrongRecipient(_drone_id) => {
                 if let Some(route) = route
                 {
                     if !route.is_empty(){

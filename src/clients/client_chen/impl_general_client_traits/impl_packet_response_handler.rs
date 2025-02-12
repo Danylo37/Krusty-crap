@@ -1,6 +1,5 @@
 use crate::clients::client_chen::{ClientChen, PacketResponseHandler, Router, Sending};
 use crate::clients::client_chen::prelude::*;
-use crate::clients::client_chen::general_client_traits::*;
 use crate::general_use::PacketStatus::{Sent, WaitingForFixing};
 
 impl PacketResponseHandler for ClientChen {
@@ -68,7 +67,7 @@ impl PacketResponseHandler for ClientChen {
                     let pack = match self.communication.routing_table.get(&destination) {
                         Some(routes) => {
                             // Case 1: Still the wrong path memorized
-                            println!("DEBUGGING ERROR NODE IS: {} AND THE ROUTES: {:#?}", node_id, routes);
+                            println!("FLOODING DEBUGGING ERROR NODE IS: {} AND THE ROUTES: {:#?}", node_id, routes);
                             if routes.clone().contains(&node_id) {
                                 self.do_flooding();
                                 None
