@@ -59,15 +59,16 @@ pub enum DroneBrand {
     RollingDrones,
     BobryWLucie,
     Undefined,
+    KrustyDrone,
 }
 
 impl DroneBrand {
     // Returns an iterator over all variants of DroneBrand
     pub fn iter() -> impl Iterator<Item = DroneBrand> {
         [
-            // DroneBrand::KrustyDrone,
+            //DroneBrand::KrustyDrone,     our drone
             DroneBrand::RustyDrone,
-            DroneBrand::Rustable,
+            //DroneBrand::Rustable,        not working
             DroneBrand::BagelBomber,
             DroneBrand::RustAndFurious,
             DroneBrand::Fungi,
