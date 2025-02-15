@@ -13,6 +13,7 @@ use wg_2024::{
     network::NodeId,
     packet::Packet,
 };
+use crate::clients::client_chen::NodeType;
 
 type FloodId = u64;
 type SessionId = u64;
@@ -29,6 +30,7 @@ pub struct MediaServer{
     //Flood-related
     pub clients: HashSet<NodeId>,                               // Available clients
     pub topology: HashMap<NodeId, HashSet<NodeId>>,             // Nodes and their neighbours
+    pub nodes: HashMap<NodeId, NodeType>,                       // Nodes and their types
     pub routes: HashMap<NodeId, Vec<NodeId>>,                   // Routes to the servers
     pub flood_ids: Vec<FloodId>,
     pub counter: (FloodId, SessionId),
@@ -66,6 +68,7 @@ impl MediaServer {
 
             clients: Default::default(),  // Available clients
             topology: Default::default(),
+            nodes: Default::default(),
             routes: Default::default(),
             flood_ids: Default::default(),
             counter: (0, 0),
@@ -159,6 +162,7 @@ impl MainTrait for MediaServer{
     fn push_flood_id(&mut self, flood_id: FloodId){ self.flood_ids.push(flood_id); }
     fn get_clients(&mut self) -> &mut HashSet<NodeId>{ &mut self.clients }
     fn get_topology(&mut self) -> &mut HashMap<NodeId, HashSet<NodeId>>{ &mut self.topology }
+    fn get_nodes(&mut self) -> &mut HashMap<NodeId, NodeType> { &mut self.nodes }
     fn get_routes(&mut self) -> &mut HashMap<NodeId, Vec<NodeId>>{ &mut self.routes }
 
     fn get_event_sender(&self) -> &Sender<ServerEvent>{ &self.to_controller_event }

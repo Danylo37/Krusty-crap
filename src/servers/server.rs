@@ -23,6 +23,7 @@ pub trait Server{
     fn push_flood_id(&mut self, flood_id: FloodId);
     fn get_clients(&mut self) -> &mut HashSet<NodeId>;
     fn get_topology(&mut self) -> &mut HashMap<NodeId, HashSet<NodeId>>;
+    fn get_nodes(&mut self) -> &mut HashMap<NodeId, NodeType>;
     fn get_routes(&mut self) -> &mut HashMap<NodeId, Vec<NodeId>>;
 
     fn get_event_sender(&self) -> &Sender<ServerEvent>;
@@ -186,19 +187,23 @@ pub trait Server{
     fn update_topology(&mut self, path: &[(NodeId, NodeType)]) {
         info!("Server {}: Updating topology with path: {:?}", self.get_id(), path);
         for i in 0..path.len() - 1 {
-            let current = path[i].0;
-            let next = path[i + 1].0;
+            let current_id = path[i].0;
+            let current_type = path[i].1;
+            let next_id = path[i + 1].0;
 
             // Add the connection between the current and next node in both directions.
             self.get_topology()
-                .entry(current)
+                .entry(current_id)
                 .or_insert_with(HashSet::new)
-                .insert(next);
+                .insert(next_id);
 
             self.get_topology()
-                .entry(next)
+                .entry(next_id)
                 .or_insert_with(HashSet::new)
-                .insert(current);
+                .insert(current_id);
+
+            self.get_nodes().insert(current_id, current_type);
+
         }
     }
 
@@ -497,7 +502,7 @@ pub trait Server{
 
         // Find new routes for the collected client IDs.
         for client_id in clients_to_update {
-            if let Some(new_path) = self.bfs_search(client_id) {
+            if let Some(new_path) = self.bfs(client_id) {
                 if let Some(path) = self.get_routes().get_mut(&client_id) {
                     *path = new_path;
                 }
@@ -507,10 +512,11 @@ pub trait Server{
         }
     }
 
-    fn bfs_search(&mut self, client_id: NodeId) -> Option<Vec<NodeId>> {
+    fn bfs(&mut self, client_id: NodeId) -> Option<Vec<NodeId>> {
         // Initialize a queue for breadth-first search and a set to track visited nodes.
         let mut queue: VecDeque<(NodeId, Vec<NodeId>)> = VecDeque::new();
         let mut visited: HashSet<NodeId> = HashSet::new();
+        let nodes = self.get_nodes().clone();
 
         // Start from the current node with an initial path containing just the current node.
         queue.push_back((self.get_id(), vec![self.get_id()]));
@@ -529,11 +535,21 @@ pub trait Server{
             if let Some(neighbors) = self.get_topology().get(&current) {
                 for neighbor in neighbors {
                     // Only visit unvisited neighbors.
-                    if !visited.contains(&neighbor) {
-                        let mut new_path = path.clone();
-                        new_path.push(*neighbor); // Extend the path to include the neighbor.
-                        queue.push_back((*neighbor, new_path)); // Add the neighbor to the queue.
+                    if visited.contains(neighbor) {
+                        continue;
                     }
+
+                    // Skip servers and clients in the search.
+                    if *neighbor != client_id {
+                        match nodes.get(neighbor) {
+                            Some(NodeType::Server) | Some(NodeType::Client) => continue,
+                            _ => {},
+                        }
+                    }
+
+                    let mut new_path = path.clone();
+                    new_path.push(*neighbor); // Extend the path to include the neighbor.
+                    queue.push_back((*neighbor, new_path)); // Add the neighbor to the queue.
                 }
             }
         }

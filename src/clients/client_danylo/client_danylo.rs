@@ -5,9 +5,8 @@ use log::info;
 
 use wg_2024::{
     network::NodeId,
-    packet::{Fragment, Packet},
+    packet::{Fragment, Packet, NodeType},
 };
-
 use crate::{
     general_use::{
         ClientCommand, ClientEvent, ServerType, ClientId, ServerId, SessionId, FloodId, ChatHistory, DroneId
@@ -42,6 +41,7 @@ pub struct ChatClientDanylo {
 
     // Network
     pub(super) topology: HashMap<NodeId, HashSet<NodeId>>,                   // Nodes and their neighbours
+    pub(super) nodes: HashMap<NodeId, NodeType>,                             // Nodes and their types
     pub(super) routes: HashMap<ServerId, Vec<NodeId>>,                       // Routes to the servers
 
     // Message queues
@@ -81,6 +81,7 @@ impl Client for ChatClientDanylo {
             flood_ids: Vec::new(),
 
             topology: HashMap::new(),
+            nodes: HashMap::new(),
             routes: HashMap::new(),
 
             messages_to_send: HashMap::new(),

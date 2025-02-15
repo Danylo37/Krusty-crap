@@ -197,11 +197,21 @@ impl PacketHandler for ChatClientDanylo {
             if let Some(neighbors) = self.topology.get(&current) {
                 for &neighbor in neighbors {
                     // Only visit unvisited neighbors.
-                    if !visited.contains(&neighbor) {
-                        let mut new_path = path.clone();
-                        new_path.push(neighbor); // Extend the path to include the neighbor.
-                        queue.push_back((neighbor, new_path)); // Add the neighbor to the queue.
+                    if visited.contains(&neighbor) {
+                        continue;
                     }
+
+                    // Skip servers and clients in the search.
+                    if neighbor != server_id {
+                        match self.nodes.get(&neighbor) {
+                            Some(NodeType::Server) | Some(NodeType::Client) => continue,
+                            _ => {},
+                        }
+                    }
+
+                    let mut new_path = path.clone();
+                    new_path.push(neighbor); // Extend the path to include the neighbor.
+                    queue.push_back((neighbor, new_path)); // Add the neighbor to the queue.
                 }
             }
         }
@@ -292,19 +302,22 @@ impl PacketHandler for ChatClientDanylo {
     /// Adds connections between nodes in both directions.
     fn update_topology(&mut self, path: &[Node]) {
         for i in 0..path.len() - 1 {
-            let current = path[i].0;
-            let next = path[i + 1].0;
+            let current_id = path[i].0;
+            let current_type = path[i].1;
+            let next_id = path[i + 1].0;
 
             // Add the connection between the current and next node in both directions.
             self.topology
-                .entry(current)
+                .entry(current_id)
                 .or_insert_with(HashSet::new)
-                .insert(next);
+                .insert(next_id);
 
             self.topology
-                .entry(next)
+                .entry(next_id)
                 .or_insert_with(HashSet::new)
-                .insert(current);
+                .insert(current_id);
+
+            self.nodes.insert(current_id, current_type);
         }
         info!("Client {}: Updated topology with path: {:?}", self.id, path);
     }
