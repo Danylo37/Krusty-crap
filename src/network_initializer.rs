@@ -492,9 +492,8 @@ impl NetworkInitializer {
         &mut self,
         servers: Vec<Server>,
     ) {
-        let mut text_server_used = false;
-        let mut comm_server_used = false;
         let mut vec_files = Vec::new();
+        let mut counter = 0;
 
         for server in servers {
             let (command_sender, command_receiver) = unbounded();
@@ -511,8 +510,7 @@ impl NetworkInitializer {
             let mut server_instance_text: Option<TextServer>= None;
             let mut server_instance_media: Option<MediaServer>= None;
 
-            if (random::<u8>()%2 == 0) && !comm_server_used{
-                comm_server_used = !comm_server_used;
+            if counter % 3 == 0 {
                 server_type = ServerType::Communication;
 
                 server_instance_comm = Some(CommunicationServer::new(
@@ -523,35 +521,30 @@ impl NetworkInitializer {
                     HashMap::new(),
                 ));
 
-            }else{
-                comm_server_used = false;
-                if text_server_used {
-                    text_server_used = !text_server_used;
-                    let content = content::get_media(vec_files.clone());
-                    server_type = ServerType::Media;
+            } else if counter % 3 == 1 {
+                let content = content::get_media(vec_files.clone());
+                server_type = ServerType::Media;
 
-                    server_instance_media = Some(MediaServer::new(
-                        server.id,
-                        content,
-                        server_events_sender_clone,
-                        command_receiver,
-                        packet_receiver,
-                        HashMap::new(),
-                    ));
-                }else{
-                    text_server_used = !text_server_used;
-                    vec_files = content::choose_random_texts();
-                    server_type = ServerType::Text;
+                server_instance_media = Some(MediaServer::new(
+                    server.id,
+                    content,
+                    server_events_sender_clone,
+                    command_receiver,
+                    packet_receiver,
+                    HashMap::new(),
+                ));
+            } else{
+                vec_files = content::choose_random_texts();
+                server_type = ServerType::Text;
 
-                    server_instance_text = Some(TextServer::new(
-                        server.id,
-                        vec_files.iter().cloned().collect::<HashMap<String, String>>(),
-                        server_events_sender_clone,
-                        command_receiver,
-                        packet_receiver,
-                        HashMap::new(),
-                   ));
-                }
+                server_instance_text = Some(TextServer::new(
+                    server.id,
+                    vec_files.iter().cloned().collect::<HashMap<String, String>>(),
+                    server_events_sender_clone,
+                    command_receiver,
+                    packet_receiver,
+                    HashMap::new(),
+                ));
             };
 
             self.simulation_controller.register_server(server.id, command_sender, server_type);
@@ -578,6 +571,7 @@ impl NetworkInitializer {
                     _=> panic!("what?")
                 }
             );
+            counter += 1;
         }
 
         //Comment: when you are running the run_with_monitoring use the tokio:spawn
